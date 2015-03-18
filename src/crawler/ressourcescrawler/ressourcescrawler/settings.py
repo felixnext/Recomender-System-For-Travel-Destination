@@ -13,5 +13,6 @@ BOT_NAME = 'ressourcescrawler'
 SPIDER_MODULES = ['ressourcescrawler.spiders']
 NEWSPIDER_MODULE = 'ressourcescrawler.spiders'
 
+LOG_LEVEL = 'INFO'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'ressourcescrawler (+http://www.yourdomain.com)'

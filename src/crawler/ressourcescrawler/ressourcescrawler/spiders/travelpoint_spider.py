@@ -15,7 +15,7 @@ class TravelSpider(CrawlSpider):
 
 
         # Extract links matching 'item.php' and parse them with the spider's method parse_item
-        Rule(LinkExtractor(allow=('guide', )), callback='parse_item'),
+        Rule(LinkExtractor(allow=('guide', )), callback='parse_item', follow= True),
     )
 
 
@@ -25,5 +25,5 @@ class TravelSpider(CrawlSpider):
         #    f.write(response.body)
         item = RessourcescrawlerItem()
         item['title'] = response.xpath('//title/text()').extract()
-        item['body'] = response.xpath('//div[@id="wiki"]').extract()
+        item['body'] = response.xpath('//div[@id="wikitext"]').extract()
         return item
