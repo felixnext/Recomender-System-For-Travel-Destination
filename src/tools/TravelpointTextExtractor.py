@@ -16,7 +16,7 @@ json_objects = yaml.load(json_encoded)
 
 
 for json_object in json_objects:
-    #json_object['body']
+    json_object['body']
     print json_object['title']
 
 #for key in json_data:
