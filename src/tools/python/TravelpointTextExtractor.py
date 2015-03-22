@@ -5,11 +5,13 @@ import json
 import yaml
 from bs4 import BeautifulSoup
 import codecs
+#from LocationValidator import LocationValidator
 
 path = sys.argv.pop()
 
 data = open(path, "r").read()
 output = open(path + "_cleaned.xml", "w")
+output_title = open(path + "_locations.xml", "w")
 output.write("<data>\n")
 
 json_data = json.dumps(data)
@@ -20,6 +22,8 @@ json_objects = yaml.load(json_encoded)
 
 counter = 0
 
+#validator = LocationValidator()
+
 for json_object in json_objects:
     body = json_object['body']
     if len(body) < 1:
@@ -29,10 +33,18 @@ for json_object in json_objects:
 
     title = json_object['title']
     title1 = title[0].replace("Travellers' Guide To ","")
-    title1 = title1.replace(" - Wiki Travel Guide - Travellerspoint","")
+    title1 = title1.replace(" - Wiki Travel Guide - Travellerspoint","").encode("utf-8")
 
-    print title1
-    output.write("  <place>" + title1.encode("utf-8") + "<\place>\n")
+    #if not validator.isLocation(title1):
+    #    print "DELETED: " + title1
+    #print "ACCEPTED: " + title1
+
+    if title1.__contains__("Project:") or title1.__contains__("How To:") or title1.__contains__("About:"):
+        print "DELETED: " + title1
+        continue
+
+    output.write("  <place>" + title1 + "<\place>\n")
+    output_title.write(title1 + "\n")
 
     soup = BeautifulSoup(body.pop())
     divs = soup.findAll('div',{'id':True})
@@ -61,5 +73,6 @@ for json_object in json_objects:
 
 output.write("<\data>\n")
 output.close()
+output_title.close()
 
-print str(counter) + "object extracted"
+print str(counter) + " objects extracted"
