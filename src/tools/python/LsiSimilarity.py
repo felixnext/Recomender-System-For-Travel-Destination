@@ -10,6 +10,8 @@ class LsiSimilarity:
 
     stop_words = get_stop_words('en')
 
+    #returns maximal similiarities of all documents in doc2 list to documents
+    #in docs1 list within lsi space
     def getLsiSimilarity(self, docs1, docs2):
 
         tokenizer = RegexpTokenizer(r'\w+')
@@ -49,15 +51,15 @@ class LsiSimilarity:
         return max_similarities
 
 
-sim = LsiSimilarity()
-documents = ["Human machine interface for lab abc computer applications",
-              "A survey of user opinion of computer system response time",
-              "The EPS user interface management system",
-              "System and human system engineering testing of EPS",
-              "Relation of user perceived response time to error measurement",
-              "The generation of random binary unordered trees",
-              "The intersection graph of paths in trees",
-              "Graph minors IV Widths of trees and well quasi ordering",
-              "Graph minors A survey"]
+#sim = LsiSimilarity()
+#documents = ["Human machine interface for lab abc computer applications",
+#              "A survey of user opinion of computer system response time",
+#              "The EPS user interface management system",
+#              "System and human system engineering testing of EPS",
+#              "Relation of user perceived response time to error measurement",
+#              "The generation of random binary unordered trees",
+#              "The intersection graph of paths in trees",
+#              "Graph minors IV Widths of trees and well quasi ordering",
+#              "Graph minors A survey"]
 
-print sim.getLsiSimilarity(documents,["computer auto controling","Human computer interaction"])
+#print sim.getLsiSimilarity(documents,["computer auto controling","Human computer interaction"])
