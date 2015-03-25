@@ -2,6 +2,7 @@ import wikipedia
 from wikipedia.exceptions import DisambiguationError
 import pickle
 import copy
+
 #from LsiSimilarity import LsiSimilarity
 
 
@@ -14,7 +15,7 @@ class WikipediaDownloader:
         #download article
         try:
             page = wikipedia.WikipediaPage(title)
-            pages.append(x)
+            pages.append(page)
         except DisambiguationError as de:
             page = self.disambiguateArticles(texts,de.options, title)
             pages = page
@@ -25,7 +26,7 @@ class WikipediaDownloader:
                 pass
             return ""
 
-        return page
+        return pages
 
     #if exception than download all suggestion
     #calculate return with max similarity
@@ -66,9 +67,6 @@ out.write("<pages>\n")
 
 locations =  pickle.load(open("./data/locations.p","rb"))
 
-i = 100
-
-all_location_size = copy.deepcopy(len(locations))
 
 while len(locations) > 1:
     location = locations.pop()
@@ -80,23 +78,21 @@ while len(locations) > 1:
     out.write("  <page request_title=\"" + location + "\">\n")
 
     wiki_pages = wikid.downloadArticle("bla", location)
+
+    print wiki_pages
     if wiki_pages == "":
         out.write("EMPTY")
     else:
         for wiki_page in wiki_pages:
             out.write("    <title>" + wiki_page.title.encode("utf-8") + "</title>\n")
             try:
-                out.write("    <coordinates lat=\"" + wiki_page.coordinates[0] + "\" lon=\""  + wiki_page.coordinates[1] + "\"/>\n")
+                out.write("    <coordinates lat=\"" + str(wiki_page.coordinates[0]) + "\" lon=\""  + str(wiki_page.coordinates[1]) + "\"/>\n")
             except:
                 out.write("    <coordinates lat=\"" + "none" + "\" lon=\""  + "none" + "\"/>\n")
             out.write("    <content>" + wiki_page.content.encode("utf-8") + "</content>\n")
 
     out.write("  </page>\n")
-    i -= 1
-    if i == 0:
-        break
 
 out.write("</pages>\n")
-
 
 #save coordinate of location

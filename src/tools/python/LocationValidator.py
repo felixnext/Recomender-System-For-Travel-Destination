@@ -82,6 +82,8 @@ locations = Set()
 for line in location_file:
     line = line.encode("utf-8", "ignore")
     line = line.strip()
+    if "User" in line or "Image" in line or "Talk" in line or "Wikitravel" in line or "Category" in line:
+        continue
     locations.add(line)
 
 file2_name = "/Users/yevgen/Documents/data/master/virtualpoint/items.json_locations.xml"
@@ -95,6 +97,8 @@ location_file = io.open(file2_name, "r", encoding=charenc)
 for line in location_file:
     line = line.encode("utf-8", "ignore")
     line = line.strip()
+    if "User" in line or "Image" in line or "Talk" in line or "Wikitravel" in line or "Category" in line:
+        continue
     locations.add(line)
 
 print len(locations)
