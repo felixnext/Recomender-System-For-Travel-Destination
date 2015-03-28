@@ -8,7 +8,7 @@ name := """Destination Recomender System"""
 version := "0.1"
 
 
-scalaVersion := "2.11.1"
+scalaVersion := "2.11.6"
 
 javacOptions += "-Xmx6G"
 
@@ -19,5 +19,9 @@ scalacOptions ++= Seq("-deprecation", "-feature")
 
 
 libraryDependencies ++= Seq(
-	"org.apache.spark" % "spark-core_2.10" % "1.3.0"
+  "com.typesafe" % "config" % "1.2.1",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.4",
+  "org.apache.httpcomponents" % "httpclient" % "4.4",
+  "org.scalaj" %% "scalaj-http" % "1.1.4",
+  "com.google.code.gson" % "gson" % "2.3.1"
 )
