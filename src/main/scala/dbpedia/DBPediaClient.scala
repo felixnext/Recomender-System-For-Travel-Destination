@@ -1,4 +1,4 @@
-package spotlight
+package dbpedia
 
 import com.hp.hpl.jena.query._
 import com.hp.hpl.jena.rdf.model.{Model, ModelFactory, Resource}
@@ -24,7 +24,14 @@ class DBPediaClient {
     val resource: Resource = model.getResource(uri)
     val iter = resource.listProperties()
 
-    var resultMap: Map[String,String] = Map()
+    var resultMap: Map[String, Set[String] ] = Map()
+
+    //there could exists multiple value for the same key
+    //e.g. if multiple languages are spoken in a country
+    def addToResultMap(key: String, value: String) = {
+        val set = resultMap.getOrElse(key,Set())
+        resultMap += (key -> (set + value) )
+    }
 
     while (iter.hasNext) {
       val triple = iter.next().toString.split(",")
@@ -33,21 +40,56 @@ class DBPediaClient {
         val tmp = triple(2).split("http")(0)
         val lat = tmp.substring(8,tmp.length-4).split(" ")(1)
         val long = tmp.substring(8,tmp.length-4).split(" ")(0)
-        resultMap += ("lat" -> lat)
-        resultMap += ("long" -> long)
+        addToResultMap("lat", lat)
+        addToResultMap("long", long)
       }
-      
-      //elevation dbpedia-owl:elevation dbpprop:elevationM
-      //language dbpedia-owl:language dbpedia-owl:officialLanguage dbpprop:languages
-      //City of: dbpedia-owl:city of
-      //weather
+
 
       def removeLastBraket (x: String): String = x.substring(0,x.length-1)
+      def removeDBpediaURI (x: String): String = x.replace("http://dbpedia.org/resource/","")
+      def cleanedDBpediaString: String = removeLastBraket(removeDBpediaURI(triple(2))).trim
+      def cleanedDBPedoaNumber: String = triple(2).trim.split("\"")(1)
+
+      def fahrenheitToCelsius(f: String) = (f.toFloat - 32.0)/1.8
 
       if(triple(1).contains("country")) {
-        val country = removeLastBraket(triple(2).replace("http://dbpedia.org/resource/",""))
-        resultMap += ("country" -> country)
+        addToResultMap("country", cleanedDBpediaString)
       }
+
+      if(triple(1).contains("elevation") || triple(1).contains("elevationM")) {
+        addToResultMap("elevation", cleanedDBpediaString)
+      }
+
+      if(triple(1).contains("language") || triple(1).contains("officialLanguage")
+        || triple(1).contains("languages")) {
+        addToResultMap("language", cleanedDBpediaString)
+      }
+
+      if(triple(1).contains("http://dbpedia.org/ontology/areaTotal")) {
+        addToResultMap("areaTotal", cleanedDBPedoaNumber)
+      }
+
+      //April
+      if(triple(1).contains("aprHighC")) {
+        addToResultMap("aprHighC", cleanedDBPedoaNumber)
+      }
+
+      if(triple(1).contains("aprLowC")) {
+        addToResultMap("aprLowC", cleanedDBPedoaNumber)
+      }
+
+      if(triple(1).contains("aprMeanC")) {
+        addToResultMap("aprMeanC", cleanedDBPedoaNumber)
+      }
+      
+
+      if(triple(1).contains("aprSun")) {
+        addToResultMap("aprSun", cleanedDBPedoaNumber)
+      }
+
+
+
+      //TODO weather
 
 
 

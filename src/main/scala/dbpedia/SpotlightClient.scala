@@ -1,4 +1,4 @@
-package spotlight
+package dbpedia
 
 import scalaj.http._
 

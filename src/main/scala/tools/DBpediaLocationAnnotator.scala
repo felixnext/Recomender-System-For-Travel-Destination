@@ -1,7 +1,7 @@
 package tools
 
 import com.google.gson.{Gson, JsonElement}
-import spotlight.{DBPediaClient, RemoteSpotlightClient}
+import dbpedia.{DBPediaClient, RemoteSpotlightClient}
 
 /**
  * Created by yevgen on 28.03.15.
@@ -33,9 +33,11 @@ object DBpediaLocationAnnotator extends App {
 
   }
 
+  annotateLocation("Hurghada")
   annotateLocation("Berlin")
   annotateLocation("Peguera")
   annotateLocation("Germany")
   annotateLocation("Antalya")
+  annotateLocation("Hannover")
 
 }
