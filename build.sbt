@@ -23,5 +23,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "org.apache.httpcomponents" % "httpclient" % "4.4",
   "org.scalaj" %% "scalaj-http" % "1.1.4",
-  "com.google.code.gson" % "gson" % "2.3.1"
+  "com.google.code.gson" % "gson" % "2.3.1",
+  "org.apache.jena" % "jena-core" % "2.13.0",
+  "org.apache.jena" % "jena-arq" % "2.13.0"
 )
