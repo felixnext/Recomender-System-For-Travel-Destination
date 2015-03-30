@@ -50,7 +50,7 @@ class DBPediaClient {
       def cleanedDBpediaString: String = removeLastBraket(removeDBpediaURI(triple(2))).trim
       def cleanedDBPedoaNumber: String = triple(2).trim.split("\"")(1)
 
-      def fahrenheitToCelsius(f: String) = (f.toFloat - 32.0)/1.8
+      def fahrenheitToCelsius = ((cleanedDBPedoaNumber.toFloat - 32.0)/1.8).toString
 
       if(triple(1).contains("country")) {
         addToResultMap("country", cleanedDBpediaString)
@@ -69,31 +69,25 @@ class DBPediaClient {
         addToResultMap("areaTotal", cleanedDBPedoaNumber)
       }
 
-      //April
-      if(triple(1).contains("aprHighC")) {
-        addToResultMap("aprHighC", cleanedDBPedoaNumber)
-      }
+      //Temperature measured in C
+      val weatherC = List("novMeanC", "julLowC", "julMeanC", "aprLowC", "marHighC", "janHighC", "febMeanC", "augLowC",
+        "aprHighC", "decHighC", "octLowC", "decLowC", "junMeanC", "janLowC", "sepHighC", "mayLowC", "marMeanC",
+        "sepMeanC", "julHighC", "janMeanC", "decMeanC", "novHighC", "marLowC", "febLowC", "junHighC", "novLowC",
+        "junLowC", "augMeanC", "mayHighC", "febHighC", "augHighC", "aprMeanC", "octHighC", "octMeanC", "sepLowC", "mayMeanC",
+        "novSun", "sepSun", "octSun", "janSun", "junSun", "augSun", "marSun", "decSun", "maySun", "aprSun", "febSun", "julSun")
 
-      if(triple(1).contains("aprLowC")) {
-        addToResultMap("aprLowC", cleanedDBPedoaNumber)
-      }
+      //Temperature measured in F
+      val weatherF = List("novMeanF", "julLowF", "julMeanF", "aprLowF", "marHighF", "janHighF", "febMeanF", "augLowF",
+        "aprHighF", "deFHighF", "oFtLowF", "deFLowF", "junMeanF", "janLowF", "sepHighF", "mayLowF", "marMeanF",
+        "sepMeanF", "julHighF", "janMeanF", "deFMeanF", "novHighF", "marLowF", "febLowF", "junHighF", "novLowF",
+        "junLowF", "augMeanF", "mayHighF", "febHighF", "augHighF", "aprMeanF", "oFtHighF", "oFtMeanF", "sepLowF", "mayMeanF")
 
-      if(triple(1).contains("aprMeanC")) {
-        addToResultMap("aprMeanC", cleanedDBPedoaNumber)
-      }
-      
-
-      if(triple(1).contains("aprSun")) {
-        addToResultMap("aprSun", cleanedDBPedoaNumber)
-      }
-
-
-
-      //TODO weather
-
-
+      val prop = triple(1).trim.replace("http://dbpedia.org/property/","")
+      if(weatherC.contains(prop)) addToResultMap(prop, cleanedDBPedoaNumber)
+      if(weatherF.contains(prop)) addToResultMap(prop, fahrenheitToCelsius)
 
     }
+
   }
 
   //returns a list of uris, which matches the location name
