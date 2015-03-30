@@ -10,15 +10,12 @@ import scalaj.http.{Http, HttpOptions}
  */
 class DBPediaClient {
 
-
-
-
   def request(uri: String): String = {
     Http(uri).header("Accept", "application/rdf+xml").option(HttpOptions.followRedirects(true)).asString.body
   }
 
   //downloads dbpedia page of given uri
-  def parseDBpediaPageOfLocation(uri: String) = {
+  def parseDBpediaPageOfLocation(uri: String): Map[String, Set[String] ] = {
     val model: Model = ModelFactory.createDefaultModel()
     model.read(uri)
     val resource: Resource = model.getResource(uri)
@@ -88,6 +85,7 @@ class DBPediaClient {
 
     }
 
+    resultMap
   }
 
   //returns a list of uris, which matches the location name

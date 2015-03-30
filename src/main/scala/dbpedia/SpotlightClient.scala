@@ -1,10 +1,12 @@
 package dbpedia
 
-import scalaj.http._
+import scalaj.http.{HttpResponse, Http}
 
 
-//This class represents spotlight client, using remote dbpedia endpoint
-class RemoteSpotlightClient {
+/**
+ * This class represents spotlight client, using remote dbpedia endpoint
+ */
+class SpotlightClient {
 
   //there are two possible rest endpoints
   val url = if (Http("http://spotlight.sztaki.hu:2222/rest/annotate?text=\"\"").method("HEAD").asString.code == 200)
