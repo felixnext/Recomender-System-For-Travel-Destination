@@ -1,6 +1,6 @@
 package tools
 
-import scalax.io.{Output, Resource, Codec}
+import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 
 
 /**
@@ -8,10 +8,16 @@ import scalax.io.{Output, Resource, Codec}
  */
 abstract class DumpXMLReader(var path: String) {
 
-  val output = {
-    val output:Output = Resource.fromFile(path.substring(0,path.length-4)+"_annotated.xml")
-    output.write("<pages>")(Codec.UTF8)
-    output
+  val target = new File(path.substring(0,path.length-4) + "_annotated.xml")
+  val fos = new FileOutputStream(target, true)
+  val br = new BufferedWriter(new OutputStreamWriter(fos))
+  br.write("<pages>\n")
+
+  def write(text: String): Unit = {
+    br.synchronized {
+      br.write(text)
+      br.flush()
+    }
   }
 
   //Map(title -> Map(mytitle -> mytitle), text -> Map(p1 -> contetn, p2 -> content,..),lat -> Map(lat->lat), long -> ..)
@@ -19,22 +25,63 @@ abstract class DumpXMLReader(var path: String) {
 
   def hasMorePages: Boolean
 
+  //Map(title -> Map(par1 -> Set(text), par2->(text)), dbpedia -> Map(lat->Set(12.111,13.22),long-> ..), lat -> ...)
   def writePage(page: Map[String, Map[String, Set[String]]]) = {
-    output.write("  <page>")
+    val sb  = new StringBuilder()
 
+    sb.append("  <page>\n")
 
-    output.write("  </page>")
+    val title =page.getOrElse("title", Map("" -> Set(""))).getOrElse("title", Set("")).head
+    val paragraphs = page.getOrElse(title, Map(""->Set("")))
+    val dbpedia = page.getOrElse("dbpedia", Map(""->Set("")))
+    val lat = page.getOrElse("lat", Map(""->Set(""))).keySet.head
+    val long = page.getOrElse("long", Map(""->Set(""))).keySet.head
 
+    //title
+    sb.append(s"    <title>$title</title>\n")
+
+    //dbpedia
+    sb.append("    <dbpedia>\n")
+    dbpedia.foreach {
+      case(key,value: Set[String]) => {
+        value.foreach {
+          elem => if(!elem.equals("")) sb.append(s"      <$key>$elem</$key>\n")
+        }
+      }
+    }
+    sb.append("    <dbpedia>\n")
+
+    //lat & long
+    sb.append(s"    <lat>$lat</lat>\n")
+    sb.append(s"    <long>$long</long>\n")
+
+    //paragraphs
+    sb.append("    <text>\n")
+    paragraphs.foreach {
+      case (key,value: Set[String]) => {
+        sb.append(s"""      <paragraph name="$key">""")
+        sb.append(value.reduce((a,b) => a + "\n" + b))
+        sb.append("      </paragraph>\n")
+      }
+    }
+    sb.append("    <text>\n")
+
+    sb.append("  </page>\n")
+    val s = sb.toString()
+    write(s)
   }
 
   def close() = {
-    output.write("</pages>")
+    br.write("</pages>\n")
+    br.flush()
+    fos.flush()
   }
 
 }
 
 class TravelerPoint(path: String) extends DumpXMLReader(path) {
 
+  println("Laod file: " + path)
 
   val source = scala.io.Source.fromFile(path)
 
@@ -46,23 +93,28 @@ class TravelerPoint(path: String) extends DumpXMLReader(path) {
 
   for (line <- source.getLines()) {
     if (line.contains("<place>")) {
-      title = line.replace("<place>", "").replace("<\\place>", "")
+      title = line.replace("<place>", "").replace("<\\place>", "").trim
     }
-    if (line.contains("<\\description>")) {
-      pages = pages :+ Map(title -> paragraphs)
+    if (line.contains("<\\descryption>")) {
+      //saves content in the map
+      pages = pages :+ Map(title -> paragraphs,"title"-> Map("title" -> Set(title)))
       title = ""
       paragraphs = Map()
       paragraphsName = ""
     }
     if (line.contains("<paragraph name")) {
-      paragraphsName = line.replace( """<paragraph name="""", "").replace("\">", "")
+      paragraphsName = line.replace( """<paragraph name="""", "").replace("\">", "").trim
     }
-    if (line.contains("<p>") && !line.contains("All Rights Reserved Utrecht")) {
+    if (line.contains("<p>") && !line.contains("All Rights Reserved")) {
       val text = line.substring(3, line.length - 4)
-      val set: Set[String] = paragraphs.getOrElse(paragraphsName,Set()) + text
+      val set: Set[String] = paragraphs.getOrElse(paragraphsName, Set()) + text.replace("<p>","").replace("<\\p>","")
       paragraphs += (paragraphsName -> set)
     }
-
+    if (line.contains("<li>") && !line.contains("All Rights Reserved")) {
+      val text = line.substring(4, line.length - 5)
+      val set: Set[String] = paragraphs.getOrElse(paragraphsName, Set()) + text.replace("<li>","").replace("<\\li>","")
+      paragraphs += (paragraphsName -> set)
+    }
   }
 
   override def readPage: Map[String, Map[String, Set[String]]] = {
@@ -72,18 +124,13 @@ class TravelerPoint(path: String) extends DumpXMLReader(path) {
       page
     }
   }
-
-  override def writePage(page: Map[String, Map[String, Set[String]]]): Unit = {
-
-  }
-
-  override def hasMorePages: Boolean = pages.isEmpty
+  override def hasMorePages: Boolean = !pages.isEmpty
 }
 
 class Wikipedia(path: String) extends DumpXMLReader(path) {
   override def readPage: Map[String, Map[String, Set[String]]] = ???
 
-  override def writePage(page: Map[String, Map[String, Set[String]]]): Unit = ???
+
 
   override def hasMorePages: Boolean = ???
 }
@@ -91,7 +138,6 @@ class Wikipedia(path: String) extends DumpXMLReader(path) {
 class Travelerswiki(path: String) extends DumpXMLReader(path) {
   override def readPage: Map[String, Map[String, Set[String]]] = ???
 
-  override def writePage(page: Map[String, Map[String, Set[String]]]): Unit = ???
 
   override def hasMorePages: Boolean = ???
 }

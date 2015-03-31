@@ -3,9 +3,6 @@ package tools
 import com.google.gson.{Gson, JsonElement}
 import dbpedia.{DBPediaClient, SpotlightClient}
 
-import scala.concurrent._
-import ExecutionContext.Implicits.global
-
 /**
  * This class takes a location name and annotate the location with dbpedia data.
  */
@@ -37,29 +34,33 @@ object DBpediaLocationAnnotator extends App {
     annotations
   }
 
+
+  println(annotateLocation("Majorca"))
   //############
   //Launch App
   //############
+  /*
   if (args.length != 2) {
-    println("Excpetion: Cannot read parameters \n Format: dump_type{wikipedia, trevelerswiki, virtualpoint} path ")
+    println("Excpetion: Cannot read parameters \n Format: dump_type{wikipedia, trevelerswiki, trevelerpoint} path ")
   }
   else {
     val dump_type = args(0)
-    val path = args(2)
+    val path = args(1)
 
 
     val xml: DumpXMLReader = dump_type match {
       case "wikipedia" => new Wikipedia(path)
       case "trevelerswiki" => new Travelerswiki(path)
-      case "virtualpoint" => new TravelerPoint(path)
+      case "trevelerpoint" => new TravelerPoint(path)
       case _ => println("ERROR: Dump source dosn't match any of known sources"); null
     }
 
-    while (xml.hasMorePages) {
-      Future {
+    var i = 10
+    while (xml.hasMorePages && i != 0) {
+      //Future {
         var page: Map[String, Map[String, Set[String]]] = xml.readPage
         //assumption: title is not empty
-        val title = page.getOrElse("title", Map("none" -> "none")).keySet.head
+        val title = page.getOrElse("title", Map("" -> Set(""))).getOrElse("title", Set("")).head
 
         annotateLocation(title) match {
           case Some(annotation) => page += ("dbpedia" -> annotation)
@@ -67,12 +68,13 @@ object DBpediaLocationAnnotator extends App {
         }
 
         xml.writePage(page)
-      }
+      i -= 1
+      //}
     }
 
-
+    xml.close()
 
   }
-
+  */
 
 }

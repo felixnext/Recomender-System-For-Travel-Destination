@@ -25,6 +25,5 @@ libraryDependencies ++= Seq(
   "org.scalaj" %% "scalaj-http" % "1.1.4",
   "com.google.code.gson" % "gson" % "2.3.1",
   "org.apache.jena" % "jena-core" % "2.13.0",
-  "org.apache.jena" % "jena-arq" % "2.13.0",
-  "com.github.scala-incubator.io" % "scala-io-core_2.9.1" % "0.4.1-seq"
+  "org.apache.jena" % "jena-arq" % "2.13.0"
 )
