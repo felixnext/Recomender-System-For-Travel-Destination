@@ -128,14 +128,14 @@ class TravelerPoint(path: String) extends DumpXMLReader(path) {
   override def hasMorePages: Boolean = pages.nonEmpty
 }
 
-class Wikipedia(path: String) extends DumpXMLReader(path) {
+class Travelerswiki(path: String) extends DumpXMLReader(path) {
   override def readPage: Map[String, Map[String, Set[String]]] = ???
 
 
   override def hasMorePages: Boolean = ???
 }
 
-class Travelerswiki(path: String) extends DumpXMLReader(path) {
+class Wikipedia(path: String) extends DumpXMLReader(path) {
 
   println("Laod file: " + path)
 
@@ -153,7 +153,7 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
 
   for (line <- source.getLines()) {
     if (line.contains("<title>")) {
-      title = line.replace("<title>", "").replace("</title>", "")
+      title = line.replace("<title>", "").replace("</title>", "").trim
     }
 
     if (line.contains("<coordinates")) {
@@ -164,19 +164,20 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
     }
 
     if (content) {
-      if (!line.contains("External links") && !line.contains("References") && !line.contains("Further reading")) {
+      if (!line.contains("External links") && !line.contains("References") &&
+        !line.contains("Further reading") && !line.contains("See also")) {
         val subParaRegex = "(===)(.+)(===)".r
         val superParaRegex = "(==)(.+)(==)".r
         val text = line.trim
         try {
           text match {
-            case subParaRegex(a, b, x) => subParagraph = b
+            case subParaRegex(a, b, x) => subParagraph = b.trim
           }
         } catch {
           case e: Exception => {
             try {
               text match {
-                case superParaRegex(a, b, x) => superParagraph = b
+                case superParaRegex(a, b, x) => superParagraph = b.trim
               }
             } catch {
               case e: Exception => {
@@ -193,7 +194,7 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
     }
 
     if (line.contains("<content>")) {
-      val text = line.replace("<content>", "")
+      val text = line.replace("<content>", "").trim
       superParagraph = "abstract"
       paragraphs += (superParagraph -> Set(text))
       content = true
