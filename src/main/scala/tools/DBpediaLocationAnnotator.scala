@@ -3,6 +3,8 @@ package tools
 import com.google.gson.{Gson, JsonElement}
 import dbpedia.{DBPediaClient, SpotlightClient}
 
+import scalaj.http.Http
+
 /**
  * This class takes a location name and annotate the location with dbpedia data.
  */
@@ -20,26 +22,37 @@ object DBpediaLocationAnnotator extends App {
   def annotateLocation(locationName: String): Option[Map[String, Set[String]]] = {
     val dbpedia = new DBPediaClient()
     var annotations: Option[Map[String, Set[String]]] = None
+    val httpRequest = Http("http://dbpedia.org/page/"+ locationName.replaceAll(" ", "_")).method("HEAD").asString
+    
     try {
       annotations = Some(dbpedia.parseDBpediaPageOfLocation(annotationSpotlight(locationName)._2.toString.replaceAll("\"", "")))
     } catch {
-      case e: NullPointerException => {
+      case e: Exception => {
         println("No spotlight results found for: " + locationName)
         //TODO maybe multiple uris
         val result = dbpedia.findDBpediaLocation(locationName)
         if (!result.isEmpty) annotations = Some(dbpedia.parseDBpediaPageOfLocation(result.head))
-        else println("No dbpedia results found for: " + locationName)
+        else {
+          println("No dbpedia results found for: " + locationName)
+          annotations = Some(dbpedia.parseDBpediaPageOfLocation(result.head))
+        }
       }
     }
     annotations
   }
 
+  val dbpedia = new DBPediaClient()
+  //println(dbpedia.parseDBpediaPageOfLocation("http://dbpedia.org/resource/Mallorca"))
+  //println(dbpedia.parseDBpediaPageOfLocation("http://dbpedia.org/resource/Majorca"))
 
-  println(annotateLocation("Majorca"))
+  println(Http("http://dbpedia.org/page/Mallorca").method("HEAD").asString.location)
+
+
+
   //############
   //Launch App
   //############
-  /*
+/*
   if (args.length != 2) {
     println("Excpetion: Cannot read parameters \n Format: dump_type{wikipedia, trevelerswiki, trevelerpoint} path ")
   }
@@ -55,9 +68,8 @@ object DBpediaLocationAnnotator extends App {
       case _ => println("ERROR: Dump source dosn't match any of known sources"); null
     }
 
-    var i = 10
-    while (xml.hasMorePages && i != 0) {
-      //Future {
+    while (xml.hasMorePages) {
+     // Future {
         var page: Map[String, Map[String, Set[String]]] = xml.readPage
         //assumption: title is not empty
         val title = page.getOrElse("title", Map("" -> Set(""))).getOrElse("title", Set("")).head
@@ -68,13 +80,12 @@ object DBpediaLocationAnnotator extends App {
         }
 
         xml.writePage(page)
-      i -= 1
-      //}
-    }
+      }
+//    }
 
     xml.close()
 
   }
-  */
+*/
 
 }

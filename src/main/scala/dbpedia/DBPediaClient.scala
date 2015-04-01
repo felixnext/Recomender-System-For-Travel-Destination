@@ -5,6 +5,7 @@ import com.hp.hpl.jena.rdf.model.{Model, ModelFactory, Resource}
 
 import scalaj.http.{Http, HttpOptions}
 
+
 /**
  * This class represents dppedia client.
  */
