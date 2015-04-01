@@ -24,8 +24,8 @@ class SpotlightClient {
         .header("Accept", "application/json").timeout(connTimeoutMs = 2000, readTimeoutMs = 7000).asString
       response.body
     } catch {
-        case e: java.net.SocketTimeoutException => {println(e); requestLocation(text) }
-        case e: Exception => {println(e);  ""}
+        case e: java.net.SocketTimeoutException => println(e); requestLocation(text)
+        case e: Exception => println(e); ""
     }
   }
 

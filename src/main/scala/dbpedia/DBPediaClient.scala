@@ -16,7 +16,7 @@ class DBPediaClient {
   }
 
   //downloads dbpedia page of given uri
-  def parseDBpediaPageOfLocation(uri: String): Map[String, Set[String]] = {
+  def parseDBpediaPageOfLocation(uri: String): Option[Map[String, Set[String]]] = {
     var resultMap: Map[String, Set[String]] = Map()
 
     try {
@@ -103,7 +103,7 @@ class DBPediaClient {
       case e: Exception => println(e)
     }
 
-    resultMap
+    if(resultMap.isEmpty) None else Some(resultMap)
   }
 
   //returns a list of uris, which matches the location name
