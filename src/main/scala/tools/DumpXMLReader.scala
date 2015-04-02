@@ -2,11 +2,18 @@ package tools
 
 import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 
+import wiki.WikiMarkupCleaner
 
 /**
  * Allows to read and write dumps in xml format
  */
 abstract class DumpXMLReader(var path: String) {
+
+  println("Laod file: " + path)
+
+  val source = scala.io.Source.fromFile(path)
+
+  var pages: List[Map[String, Map[String, Set[String]]]] = List()
 
   val target = new File(path.substring(0, path.length - 4) + "_annotated.xml")
   val fos = new FileOutputStream(target, true)
@@ -20,10 +27,6 @@ abstract class DumpXMLReader(var path: String) {
     }
   }
 
-  //Map(title -> Map(mytitle -> mytitle), text -> Map(p1 -> contetn, p2 -> content,..),lat -> Map(lat->lat), long -> ..)
-  def readPage: Map[String, Map[String, Set[String]]]
-
-  def hasMorePages: Boolean
 
   //Map(title -> Map(par1 -> Set(text), par2->(text)), dbpedia -> Map(lat->Set(12.111,13.22),long-> ..), lat -> ...)
   def writePage(page: Map[String, Map[String, Set[String]]]) = {
@@ -77,15 +80,21 @@ abstract class DumpXMLReader(var path: String) {
     fos.flush()
   }
 
+  //Map(title -> Map(mytitle -> mytitle), text -> Map(p1 -> contetn, p2 -> content,..),lat -> Map(lat->lat), long -> ..)
+  def readPage: Map[String, Map[String, Set[String]]] = {
+    pages.synchronized {
+      val page = pages.head
+      pages = pages.tail
+      page
+    }
+  }
+
+  def hasMorePages: Boolean = pages.nonEmpty
+
 }
 
 class TravelerPoint(path: String) extends DumpXMLReader(path) {
 
-  println("Laod file: " + path)
-
-  val source = scala.io.Source.fromFile(path)
-
-  var pages: List[Map[String, Map[String, Set[String]]]] = List()
 
   var title = ""
   var paragraphs: Map[String, Set[String]] = Map()
@@ -117,31 +126,11 @@ class TravelerPoint(path: String) extends DumpXMLReader(path) {
     }
   }
 
-  override def readPage: Map[String, Map[String, Set[String]]] = {
-    pages.synchronized {
-      val page = pages.head
-      pages = pages.tail
-      page
-    }
-  }
 
-  override def hasMorePages: Boolean = pages.nonEmpty
-}
-
-class Travelerswiki(path: String) extends DumpXMLReader(path) {
-  override def readPage: Map[String, Map[String, Set[String]]] = ???
-
-
-  override def hasMorePages: Boolean = ???
 }
 
 class Wikipedia(path: String) extends DumpXMLReader(path) {
 
-  println("Laod file: " + path)
-
-  val source = scala.io.Source.fromFile(path)
-
-  var pages: List[Map[String, Map[String, Set[String]]]] = List()
 
   var title = ""
   var superParagraph = ""
@@ -182,9 +171,9 @@ class Wikipedia(path: String) extends DumpXMLReader(path) {
             } catch {
               case e: Exception => {
                 if (!text.equals("")) {
-                  val p = if(!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
+                  val p = if (!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
                   val set = paragraphs.getOrElse(p, Set()) + text
-                  paragraphs += (superParagraph -> set)
+                  paragraphs += (p -> set)
                 }
               }
             }
@@ -214,19 +203,41 @@ class Wikipedia(path: String) extends DumpXMLReader(path) {
 
       content = false
     }
-
-
   }
 
+}
 
-  override def readPage: Map[String, Map[String, Set[String]]] = {
-    pages.synchronized {
-      val page = pages.head
-      pages = pages.tail
-      page
+class Travelerswiki(path: String) extends DumpXMLReader(path) {
+
+  var title = ""
+  var superParagraph = ""
+  var subParagraph = ""
+  var paragraphs: Map[String, Set[String]] = Map()
+  var content = false
+
+  for (line <- source.getLines()) {
+    if (line.contains("<title>")) {
+      title = line.replace("<title>", "").replace("</title>", "").trim
     }
-  }
 
-  override def hasMorePages: Boolean = pages.nonEmpty
+    if (line.contains("<text")) {
+      if (line.contains("#REDIRECT") && line.contains("</text>")) {
+        title = ""
+      } else {
+        val dirtyText = line.replace("<text xml:space=\"preserve\">","")
+        val text = WikiMarkupCleaner.clean(dirtyText)
+        content = true
+      }
+    }
+
+    if (line.contains("</text>")) {
+      val dirtyText = line.replace("</text>","")
+      val text = WikiMarkupCleaner.clean(dirtyText)
+      if(!text.equals("")) paragraphs += (superParagraph -> Set(text))
+      pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)))
+      content = false
+    }
+
+  }
 
 }

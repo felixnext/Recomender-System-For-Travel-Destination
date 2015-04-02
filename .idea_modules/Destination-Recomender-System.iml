@@ -52,6 +52,7 @@
     <orderEntry type="library" name="SBT: org.slf4j:jcl-over-slf4j:1.7.6" level="project" />
     <orderEntry type="library" name="SBT: org.apache.commons:commons-csv:1.0" level="project" />
     <orderEntry type="library" name="SBT: org.apache.commons:commons-lang3:3.3.2" level="project" />
+    <orderEntry type="library" name="SBT: net.java.dev.textile-j:textile-j:2.2.864" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="SBT: org.apache.httpcomponents:httpclient:4.2.5:runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="SBT: commons-logging:commons-logging:1.1.1:runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="SBT: org.slf4j:jcl-over-slf4j:1.7.7:runtime" level="project" />

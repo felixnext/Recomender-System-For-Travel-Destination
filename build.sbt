@@ -10,7 +10,7 @@ version := "0.1"
 
 scalaVersion := "2.11.6"
 
-javacOptions += "-Xmx6G"
+//javacOptions += " -Xmx6G"
 
 javaOptions += "-Xmx6G"
 
@@ -24,7 +24,8 @@ libraryDependencies ++= Seq(
   "org.scalaj" %% "scalaj-http" % "1.1.4",
   "com.google.code.gson" % "gson" % "2.3.1",
   "org.apache.jena" % "jena-core" % "2.13.0",
-  "org.apache.jena" % "jena-arq" % "2.13.0"
+  "org.apache.jena" % "jena-arq" % "2.13.0",
+  "net.java.dev.textile-j" % "textile-j" % "2.2.864"
 )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>

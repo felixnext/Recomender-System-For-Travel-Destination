@@ -126,31 +126,33 @@ class DBPediaClient {
          |
          |SELECT DISTINCT *
          |WHERE {
-         | ?place rdf:type dbpedia-owl:Place .
-         | ?place rdfs:label "$name"@en .
-                                     |}
+         |?place rdf:type dbpedia-owl:Place .
+         |?place rdfs:label "$name"@en .
+         |}
       """.stripMargin
-
-    val query: Query = QueryFactory.create(queryString)
-    val qexec: QueryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)
-
     try {
-      val results: ResultSet = qexec.execSelect()
-      while (results.hasNext()) {
-        val uri = results.next().get("place").toString
-        uris = uris :+ uri
+      val query: Query = QueryFactory.create(queryString)
+      val qexec: QueryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)
+
+      try {
+        val results: ResultSet = qexec.execSelect()
+        while (results.hasNext()) {
+          val uri = results.next().get("place").toString
+          uris = uris :+ uri
+        }
       }
+      finally {
+        qexec.close()
+      }
+
     } catch {
       case e: Exception => println(e)
-    }
-    finally {
-      qexec.close()
     }
     uris
   }
 
   //tests if the given name is a person
-  def isPerson(name: String): Boolean  = {
+  def isPerson(name: String): Boolean = {
     val queryString =
       s"""
          |PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -159,22 +161,25 @@ class DBPediaClient {
          |
          |SELECT DISTINCT *
          |WHERE {
-         | ?place rdf:type dbpedia-owl:Person .
-         | ?place rdfs:label "$name"@en .
-                                     |}
+         |?place rdf:type dbpedia-owl:Person .
+         |?place rdfs:label "$name"@en
+         |}
       """.stripMargin
-
-    val query: Query = QueryFactory.create(queryString)
-    val qexec: QueryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)
-
     try {
-      val results: ResultSet = qexec.execSelect()
-      results.hasNext
+
+      val query: Query = QueryFactory.create(queryString)
+      val qexec: QueryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)
+
+      try {
+        val results: ResultSet = qexec.execSelect()
+        results.hasNext
+      }
+      finally {
+        qexec.close()
+      }
+
     } catch {
       case e: Exception => false
-    }
-    finally {
-      qexec.close()
     }
   }
 
