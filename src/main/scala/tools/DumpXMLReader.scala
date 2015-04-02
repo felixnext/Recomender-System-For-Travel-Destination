@@ -152,6 +152,20 @@ class Wikipedia(path: String) extends DumpXMLReader(path) {
       long = split(1).trim.substring(2, split(1).trim.length - 3)
     }
 
+    if (line.contains("</content>")) {
+      pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)), "lat" -> Map("lat" -> Set(lat)),
+        "long" -> Map("long" -> Set(lat)))
+
+      lat = ""
+      long = ""
+      title = ""
+      superParagraph = ""
+      subParagraph = ""
+      paragraphs = Map()
+
+      content = false
+    }
+
     if (content) {
       if (!line.contains("External links") && !line.contains("References") &&
         !line.contains("Further reading") && !line.contains("See also")) {
@@ -166,7 +180,7 @@ class Wikipedia(path: String) extends DumpXMLReader(path) {
           case e: Exception => {
             try {
               text match {
-                case superParaRegex(a, b, x) => superParagraph = b.trim
+                case superParaRegex(a, b, x) => superParagraph = b.trim; subParagraph = ""
               }
             } catch {
               case e: Exception => {
@@ -189,20 +203,6 @@ class Wikipedia(path: String) extends DumpXMLReader(path) {
       content = true
     }
 
-    if (line.contains("</content>")) {
-      val text = line.replace("</content>", "")
-      pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)), "lat" -> Map("lat" -> Set(lat)),
-        "long" -> Map("long" -> Set(lat)))
-
-      lat = ""
-      long = ""
-      title = ""
-      superParagraph = ""
-      subParagraph = ""
-      paragraphs = Map()
-
-      content = false
-    }
   }
 
 }
@@ -214,29 +214,90 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
   var subParagraph = ""
   var paragraphs: Map[String, Set[String]] = Map()
   var content = false
+  var web = false
+  var print = false
 
   for (line <- source.getLines()) {
     if (line.contains("<title>")) {
       title = line.replace("<title>", "").replace("</title>", "").trim
     }
 
+    if (line.contains("</text>") && !line.contains("<text")) {
+      val dirtyText = line.replace("</text>", "")
+      val text = WikiMarkupCleaner.clean(dirtyText)
+      if (!text.equals("")) {
+        val p = if (!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
+        val set = paragraphs.getOrElse(p, Set()) + text
+        paragraphs += (p -> set)
+      }
+      pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)))
+
+      content = false
+      title = ""
+      superParagraph = ""
+      subParagraph = ""
+      paragraphs = Map()
+      web = false
+      print = false
+    }
+
+    if (line.contains("!--WEB-START--")) web = true
+    if (line.contains("!--PRINT")) print = true
+
+    if (content && !web && !print) {
+      val subParaRegex = "(===)(.+)(===)".r
+      val superParaRegex = "(==)(.+)(==)".r
+      val text = line.trim
+
+      try {
+        text match {
+          case subParaRegex(a, b, x) => subParagraph =
+            if (b.contains("="))
+              subParagraph + ":" + b.replace("=", "").trim.replace("[", "").replace("]", "")
+            else b.trim.replace("[", "").replace("]", "")
+        }
+      } catch {
+        case e: Exception => {
+          try {
+            text match {
+              case superParaRegex(a, b, x) => superParagraph = b.trim.replace("[", "").replace("]", ""); subParagraph = ""
+            }
+          } catch {
+            case e: Exception => {
+              val content = WikiMarkupCleaner.clean(text).replaceAll("<.+>", "")
+                .replace("[", "").replace("]", "").replaceAll("&.+;", "").trim
+              if (!content.equals("")) {
+                val p = if (!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
+                val set = paragraphs.getOrElse(p, Set()) + content
+                paragraphs += (p -> set)
+              }
+            }
+          }
+        }
+      }
+
+    }
+
+
+    if (line.contains("!--WEB-END--")) web = false
+    if (line.contains(" PRINT--")) print = false
+
     if (line.contains("<text")) {
-      if (line.contains("#REDIRECT") && line.contains("</text>")) {
+      if (line.contains("#REDIRECT")) {
         title = ""
       } else {
-        val dirtyText = line.replace("<text xml:space=\"preserve\">","")
+        val dirtyText = line.replace("<text xml:space=\"preserve\">", "")
         val text = WikiMarkupCleaner.clean(dirtyText)
+        if (!text.equals("")) {
+          val p = if (!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
+          val set = paragraphs.getOrElse(p, Set()) + text.replaceAll("<.+>", "")
+            .replace("[", "").replace("]", "").replaceAll("&.+;", "").trim
+          paragraphs += (p -> set)
+        }
         content = true
       }
     }
 
-    if (line.contains("</text>")) {
-      val dirtyText = line.replace("</text>","")
-      val text = WikiMarkupCleaner.clean(dirtyText)
-      if(!text.equals("")) paragraphs += (superParagraph -> Set(text))
-      pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)))
-      content = false
-    }
 
   }
 

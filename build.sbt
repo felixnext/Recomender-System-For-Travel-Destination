@@ -1,5 +1,4 @@
 
-
 mainClass in assembly := Some("tools.DBpediaLocationAnnotator")
 
 
@@ -7,12 +6,7 @@ name := """Destination-Recomender-System"""
 
 version := "0.1"
 
-
 scalaVersion := "2.11.6"
-
-//javacOptions += " -Xmx6G"
-
-javaOptions += "-Xmx6G"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
