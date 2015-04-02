@@ -12,7 +12,7 @@ object DBpediaLocationAnnotator extends App {
 
   //spotlight annotation
   val annotationSpotlight = (name: String) => {
-    val response = new SpotlightClient().requestLocation(name)
+    val response = new SpotlightClient().requestLocation(name,10)
     val annotation = new Gson().fromJson(response, classOf[JsonElement]).getAsJsonObject
     val resources = annotation.getAsJsonArray("Resources").iterator().next()
     (annotation.get("@confidence"), resources.getAsJsonObject.get("@URI"), resources.getAsJsonObject.get("@types"))
@@ -21,17 +21,18 @@ object DBpediaLocationAnnotator extends App {
   //annotates location with dbpedia data
   def annotateLocation(locationName: String): Option[Map[String, Set[String]]] = {
     val dbpedia = new DBPediaClient()
-    def httpRequest(numberOfRequests:Int): HttpResponse[String] = {
+    def httpRequest(numberOfRequests: Int): HttpResponse[String] = {
       try {
         Http("http://dbpedia.org/page/" + locationName.replaceAll(" ", "_")).method("HEAD").asString
       }
       catch {
         case e: java.net.SocketTimeoutException => {
           println(e)
-          if(numberOfRequests != 0) httpRequest(numberOfRequests-1)
+          if (numberOfRequests != 0) httpRequest(numberOfRequests - 1)
           //break the recursion
           else new HttpResponse[String]("", 404, Map())
         }
+        case e: Exception => new HttpResponse[String]("", 404, Map())
       }
     }
 
@@ -54,10 +55,9 @@ object DBpediaLocationAnnotator extends App {
     dbpedia.parseDBpediaPageOfLocation(url)
   }
 
-
-  //############
-  //Launch the App
-  //############
+  //##################
+  //#Launched the app#
+  //##################
 
   if (args.length != 2) {
     println("Excpetion: Cannot read parameters \n Format: dump_type{wikipedia, trevelerswiki, trevelerpoint} path ")
@@ -74,18 +74,26 @@ object DBpediaLocationAnnotator extends App {
       case _ => println("ERROR: Dump source doesn't match any of known sources"); null
     }
 
+    val dbpedia = new DBPediaClient()
+
     while (xml.hasMorePages) {
       // Future {
       var page: Map[String, Map[String, Set[String]]] = xml.readPage
       //assumption: title is not empty
       val title = page.getOrElse("title", Map("" -> Set(""))).getOrElse("title", Set("")).head
 
-      annotateLocation(title) match {
-        case Some(annotation) => page += ("dbpedia" -> annotation)
-        case None => page += ("dbpedia" -> Map("" -> Set("")))
+      if (!dbpedia.isPerson(title)) {
+        //doesn't annotate persons
+        annotateLocation(title) match {
+          case Some(annotation) => page += ("dbpedia" -> annotation)
+          case None => page += ("dbpedia" -> Map("" -> Set("")))
+        }
+
+        xml.writePage(page)
+
       }
 
-      xml.writePage(page)
+
     }
     //    }
 
