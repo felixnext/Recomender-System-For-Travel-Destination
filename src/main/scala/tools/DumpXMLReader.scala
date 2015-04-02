@@ -216,13 +216,22 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
   var content = false
   var web = false
   var print = false
+  var wontTitle = false
 
   for (line <- source.getLines()) {
     if (line.contains("<title>")) {
-      title = line.replace("<title>", "").replace("</title>", "").trim
+      val tmpTitle = line.replace("<title>", "").replace("</title>", "").trim
+      if(tmpTitle.contains("Image") ||tmpTitle.contains("image") ||tmpTitle.contains("talk")
+        ||tmpTitle.contains("Talk") ||tmpTitle.contains("MediaWiki") ||tmpTitle.contains("Template") ||
+        tmpTitle.contains("template") ||tmpTitle.contains("User") ||tmpTitle.contains("user")) {
+        wontTitle = true
+      } else {
+        wontTitle = false
+        title = tmpTitle
+      }
     }
-
-    if (line.contains("</text>") && !line.contains("<text")) {
+    //Image talk; Image; MediaWiki; Talk;Template; User
+    if (line.contains("</text>") && !line.contains("<text") && !wontTitle) {
       val dirtyText = line.replace("</text>", "")
       val text = WikiMarkupCleaner.clean(dirtyText)
       if (!text.equals("")) {
@@ -244,7 +253,7 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
     if (line.contains("!--WEB-START--")) web = true
     if (line.contains("!--PRINT")) print = true
 
-    if (content && !web && !print) {
+    if (content && !web && !print && !wontTitle) {
       val subParaRegex = "(===)(.+)(===)".r
       val superParaRegex = "(==)(.+)(==)".r
       val text = line.trim
@@ -253,8 +262,8 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
         text match {
           case subParaRegex(a, b, x) => subParagraph =
             if (b.contains("="))
-              subParagraph + ":" + b.replace("=", "").trim.replace("[", "").replace("]", "")
-            else b.trim.replace("[", "").replace("]", "")
+              subParagraph + ":" + b.replace("=", "").trim.replace("[", "").replace("]", "").replace("{", "").replace("}", "")
+            else b.trim.replace("[", "").replace("]", "").replace("{", "").replace("}", "")
         }
       } catch {
         case e: Exception => {
@@ -264,9 +273,12 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
             }
           } catch {
             case e: Exception => {
-              val content = WikiMarkupCleaner.clean(text).replaceAll("<.+>", "")
+              val content = WikiMarkupCleaner.clean(text).replaceAll("<.+>", "").replaceAll("\\{.+\\}", "")
                 .replace("[", "").replace("]", "").replaceAll("&.+;", "").trim
-              if (!content.equals("")) {
+
+              def contains(x: String): Boolean = if(x.length > 0) !x.charAt(0).equals("|") else true
+
+              if (!content.equals("") && contains(content)) {
                 val p = if (!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
                 val set = paragraphs.getOrElse(p, Set()) + content
                 paragraphs += (p -> set)
@@ -282,7 +294,7 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
     if (line.contains("!--WEB-END--")) web = false
     if (line.contains(" PRINT--")) print = false
 
-    if (line.contains("<text")) {
+    if (line.contains("<text") && !wontTitle) {
       if (line.contains("#REDIRECT")) {
         title = ""
       } else {
