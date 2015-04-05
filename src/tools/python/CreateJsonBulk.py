@@ -1,19 +1,32 @@
 #!/usr/bin/python
 
-from lxml import etree
-import xml.etree.ElementTree as ET
 import json
 import re
+import io
+import chardet
 
 #####################
 #Creates json file from xml for loading data into elasticsearch
 #####################
 
-file_path = "/Users/yevgen/Documents/data/master/dumps/annotated/wikitravel_annotated.xml"
+
+def clean_text(text):
+    if len(text.split(" ")) < 3:
+        text = ""
+    else:
+        text = re.sub(r"(?:\@|https?\://)\S+", "", text)
+        text = re.sub(re.compile('\W+'), " ", text)
+    return text
+
+file_name = "/Users/yevgen/Documents/data/master/dumps/annotated/wikitravel_annotated.xml"
 out_path = "/Users/yevgen/Documents/data/master/dumps/annotated/wikitravel_annotated.json"
 index = "wikitravel"
 
-file = open(file_path,"r")
+#r = chardet.detect(open(file_name).read())
+#charenc = r['encoding']
+#print "Encoding: " + charenc
+file = io.open(file_name, "r",  encoding="utf-8")
+
 out = open(out_path, "w")
 
 
@@ -26,6 +39,8 @@ paragraph = ""
 paragraph_names = []
 
 for line in file:
+    line = line.strip().encode("utf-8")
+
     if '<title>' in line:
         dict['title'] = line.replace('<title>', "").replace('</title>', "").strip()
     if '<lat>' in line:
@@ -43,7 +58,7 @@ for line in file:
         dict['paragraph_names'] = paragraph_names
 
         out.write("""{"create": { "_index": "%s", "_type": "traveldata" }}\n""" % index)
-        out.write(json.dumps(dict) + "\n")
+        out.write(json.dumps(dict).encode('utf-8') + "\n")
 
         dict = {}
         paragraphs = []
@@ -89,17 +104,67 @@ for line in file:
 
 
     if text:
-        if '<paragraph name' in line:
-            pass
-            #TODO get name & append name
-        if '</paragraph>' in line:
-            line = line.replace("</paragraph>","")
-            paragraph = paragraph + re.escape(line)
-            paragraphs.append(paragraph)
-            paragraph = ""
 
-        if '<paragraph name' not in line and '</paragraph>' not in line:
-            pass
+        #print "ORIGINAL\n" + line + "\n\n\n\n"
+        switcher = True
+
+        if '<paragraph name' in line and switcher:
+            line = line.replace("<paragraph name=", "")
+
+
+            save = False
+            if '</paragraph>' in line:
+                save = True
+                line = line.replace("</paragraph>","")
+
+            is_title = 0
+            title = ""
+            is_text = False
+            text = ""
+            for c in line:
+                if c == "\"":
+                    is_title += 1
+
+                if is_title == 1:
+                    title = title + c
+
+                if is_text and is_title > 1:
+                    text = text + c
+
+                if c == ">":
+                    is_text = True
+
+
+            title = title.replace("\"","")
+
+
+
+            paragraph_names.append(title)
+            paragraph = paragraph + clean_text(text)
+
+            if save:
+                paragraphs.append(paragraph)
+                paragraph = ""
+
+            switcher = False
+
+        if '</paragraph>' in line and '<paragraph name' not in line and switcher:
+
+            line = line.replace("</paragraph>","")
+            paragraph = paragraph + clean_text(line)
+            paragraphs.append(paragraph)
+
+            print title + "\n\n"
+            print paragraph + "\n\n\n\n\n"
+
+            paragraph = ""
+            switcher = False
+
+        if '<paragraph name' not in line and '</paragraph>' not in line and switcher:
+            paragraph = paragraph + clean_text(line)
+            paragraphs.append(paragraph)
+
+            switcher = False
 
     if '<dbpedia>' in line:
         dbpedia = True

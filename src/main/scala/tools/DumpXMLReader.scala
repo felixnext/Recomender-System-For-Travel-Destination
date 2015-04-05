@@ -19,7 +19,8 @@ abstract class DumpXMLReader(var path: String) {
 
   val target = new File(path.substring(0, path.length - 4) + "_annotated.xml")
   val fos = new FileOutputStream(target, true)
-  val br = new BufferedWriter(new OutputStreamWriter(fos))
+  val os = new OutputStreamWriter(fos, "UTF-8")
+  val br = new BufferedWriter(os)
   br.write("<pages>\n")
 
   def write(text: String): Unit = {
@@ -232,7 +233,12 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
         val set = paragraphs.getOrElse(p, Set()) + text
         paragraphs += (p -> set)
       }
-      pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)))
+
+      //TODO only if title is desired user talk and so on
+      if(!title.contains("Media") && !title.contains("Special") && !title.contains("Talk") && !title.contains("User")
+        && !title.contains("User") && !title.contains("Image") && !title.contains("MediaWiki")&& !title.contains("Template")
+        && !title.contains("Help")&& !title.contains("Category"))
+          pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)))
 
       content = false
       title = ""

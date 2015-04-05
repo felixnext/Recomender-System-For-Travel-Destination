@@ -21,11 +21,11 @@ nohup java -jar -Xmx30G Destination-Recomender-System-assembly-0.1.jar trevelers
 bin/elasticsearch -d -Xmx5g -Xms5g -Des.index.store.type=memory --node.name=RS1
 
 #bulk load data
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @my_file.json
+curl -XPOST '134.169.32.163:9200/_bulk?pretty' --data-binary @my_file.json
 
 #indicies: wikipedia, travellerspoint, wikitravel
 #get status
-curl 'localhost:9200/_cat/indices?v'
+curl '134.169.32.163:9200/_cat/indices?v'
 
 #request mapping: how data was interpreted?
 curl -XGET 'localhost:9200/gb/_mapping/tweet'

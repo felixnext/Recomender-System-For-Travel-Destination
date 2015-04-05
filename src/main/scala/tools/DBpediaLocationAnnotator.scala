@@ -10,6 +10,7 @@ import scalaj.http.{Http, HttpResponse}
  */
 object DBpediaLocationAnnotator extends App {
 
+  //TODO annotate what ?
   //spotlight annotation
   val annotationSpotlight = (name: String) => {
     val response = new SpotlightClient().requestLocation(name,10)
