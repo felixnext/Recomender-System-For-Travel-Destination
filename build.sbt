@@ -19,7 +19,8 @@ libraryDependencies ++= Seq(
   "com.google.code.gson" % "gson" % "2.3.1",
   "org.apache.jena" % "jena-core" % "2.13.0",
   "org.apache.jena" % "jena-arq" % "2.13.0",
-  "net.java.dev.textile-j" % "textile-j" % "2.2.864"
+  "net.java.dev.textile-j" % "textile-j" % "2.2.864",
+  "org.scala-lang" % "scala-xml" % "2.11.0-M4"
 )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>

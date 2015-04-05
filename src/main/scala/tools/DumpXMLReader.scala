@@ -4,6 +4,8 @@ import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 
 import wiki.WikiMarkupCleaner
 
+import scala.xml.Utility
+
 /**
  * Allows to read and write dumps in xml format
  */
@@ -52,18 +54,18 @@ abstract class DumpXMLReader(var path: String) {
         }
       }
     }
-    sb.append("    <dbpedia>\n")
+    sb.append("    </dbpedia>\n")
 
     //lat & long
     sb.append(s"    <lat>$lat</lat>\n")
     sb.append(s"    <long>$long</long>\n")
 
     //paragraphs
-    sb.append("    <text>\n")
+    sb.append("    </text>\n")
     paragraphs.foreach {
       case (key, value: Set[String]) => {
         sb.append( s"""      <paragraph name="$key">""")
-        sb.append(value.reduce((a, b) => a + "\n" + b))
+        sb.append(value.map(a  => Utility.escape(a) ).reduce((a, b) => a + "\n" + b))
         sb.append("      </paragraph>\n")
       }
     }
@@ -121,7 +123,7 @@ class TravelerPoint(path: String) extends DumpXMLReader(path) {
     }
     if (line.contains("<li>") && !line.contains("All Rights Reserved")) {
       val text = line.substring(4, line.length - 5)
-      val set: Set[String] = paragraphs.getOrElse(paragraphsName, Set()) + text.replace("<li>", "").replace("<\\li>", "")
+      val set: Set[String] = paragraphs.getOrElse(paragraphsName, Set()) + text.replace("<li>", "").replace("<\\li>", "").replaceAll("&","and")
       paragraphs += (paragraphsName -> set)
     }
   }
@@ -288,10 +290,10 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
       } else {
         val dirtyText = line.replace("<text xml:space=\"preserve\">", "")
         val text = WikiMarkupCleaner.clean(dirtyText)
-        if (!text.equals("")) {
+        if (!text.equals("") && !text.contains("|")) {
           val p = if (!subParagraph.equals("")) superParagraph + ":" + subParagraph else superParagraph
           val set = paragraphs.getOrElse(p, Set()) + text.replaceAll("<.+>", "")
-            .replace("[", "").replace("]", "").replaceAll("&.+;", "").trim
+            .replace("[", "").replace("]", "").replaceAll("&.+;", "").replaceAll("&","and").trim
           paragraphs += (p -> set)
         }
         content = true

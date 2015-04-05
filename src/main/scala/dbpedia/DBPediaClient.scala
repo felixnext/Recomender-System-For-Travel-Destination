@@ -72,6 +72,10 @@ class DBPediaClient {
             addToResultMap("areaTotal", cleanedDBPedoaNumber)
           }
 
+          if (triple(1).contains("http://dbpedia.org/ontology/populationTotal")) {
+            addToResultMap("populationTotal", cleanedDBPedoaNumber)
+          }
+
           //Temperature measured in C
           val weatherC = List("novMeanC", "julLowC", "julMeanC", "aprLowC", "marHighC", "janHighC", "febMeanC", "augLowC",
             "aprHighC", "decHighC", "octLowC", "decLowC", "junMeanC", "janLowC", "sepHighC", "mayLowC", "marMeanC",
