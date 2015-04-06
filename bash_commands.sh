@@ -17,16 +17,60 @@ nohup java -jar -Xmx5G Destination-Recomender-System-assembly-0.1.jar trevelersw
 #elasticsearch
 ######################
 
-#create elastic search bulk
+#transform data into  elastic search bulk format
 python CreateJsonBulk.py travellerspoint travellerspoint.xml
 
 #start elasticsearch node
 bin/elasticsearch -d -Xmx5g -Xms5g -Des.index.store.type=memory --node.name=RS1
 
+#indicies: wikipedia, travellerspoint, wikitravel
+#create a index with specific settings: english analyzer
+curl -XPUT 'localhost:9200/wikipedia' -d '{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "english_stop": {
+          "type":       "stop",
+          "stopwords":  "_english_"
+        },
+        "english_stemmer": {
+          "type":       "stemmer",
+          "language":   "english"
+        },
+        "english_possessive_stemmer": {
+          "type":       "stemmer",
+          "language":   "possessive_english"
+        }
+      },
+      "char_filter": {
+        "&_to_and": {
+            "type": "mapping",
+            "mappings": [ "& => and"]
+        }
+      },
+      "analyzer": {
+        "english": {
+          "tokenizer":  "standard",
+          "char_filter": [
+            "html_strip",
+             "&_to_and"
+          ],
+          "filter": [
+            "english_possessive_stemmer",
+            "lowercase",
+            "english_stop",
+            "english_stemmer"
+          ]
+        }
+      }
+    }
+  }
+}'
+
 #bulk load data
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @my_file.json
 
-#indicies: wikipedia, travellerspoint, wikitravel
+
 #get status
 curl 'localhost:9200/_cat/indices?v'
 
@@ -39,5 +83,5 @@ curl -XDELETE 'http://localhost:9200/index/'
 #stop elasticsearch
 curl -XPOST 'http://localhost:9200/_shutdown'
 
-#define analyzer
-curl -XPUT 'localhost:9200/wikitravel/_mapping/traveldata'
+#validate a query
+curl -XGET 'localhost:9200/gb/tweet/_validate/query?explain'
