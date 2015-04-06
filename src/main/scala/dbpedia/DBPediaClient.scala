@@ -3,17 +3,11 @@ package dbpedia
 import com.hp.hpl.jena.query._
 import com.hp.hpl.jena.rdf.model.{Model, ModelFactory, Resource}
 
-import scalaj.http.{Http, HttpOptions}
-
 
 /**
  * This class represents dppedia client.
  */
 class DBPediaClient {
-
-  def request(uri: String): String = {
-    Http(uri).header("Accept", "application/rdf+xml").option(HttpOptions.followRedirects(true)).asString.body
-  }
 
   //downloads dbpedia page of given uri
   def parseDBpediaPageOfLocation(uri: String, test: Int): Option[Map[String, Set[String]]] = {
@@ -161,7 +155,7 @@ class DBPediaClient {
     uris
   }
 
-  //tests if the given name is a person
+  //tests if the given entity is a person
   def isPerson(name: String, test: Int): Boolean = {
     val queryString =
       s"""

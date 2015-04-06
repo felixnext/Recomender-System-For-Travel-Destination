@@ -25,7 +25,7 @@ bin/elasticsearch -d -Xmx5g -Xms5g -Des.index.store.type=memory --node.name=RS1
 
 #indicies: wikipedia, travellerspoint, wikitravel
 #create a index with specific settings: english analyzer
-curl -XPUT 'localhost:9200/wikipedia' -d '{
+curl -XPUT 'localhost:9200/testindex' -d '{
   "settings": {
     "analysis": {
       "filter": {
@@ -66,9 +66,43 @@ curl -XPUT 'localhost:9200/wikipedia' -d '{
     }
   }
 }'
+#show analyzer result
+curl -XGET 'localhost:9200/_analyze?analyzer=english&pretty' -d 'The quick & brown fox runs away.'
+
+#define analyzer for some field
+curl -XPUT 'localhost:9200/testindex/wikidump/_mapping' -d '{
+    "my_type": {
+        "_all": { "analyzer": "english" }
+    }
+}'
 
 #bulk load data
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @my_file.json
+
+#search all field
+curl -XGET 'localhost:9200/_search' -d '
+{
+    "match": {
+        "_all": "my search string"
+    }
+}'
+
+#define default template
+curl -XPUT 'localhost:9200/testindex/' -d '
+{
+    "mappings": {
+        "my_type": {
+            "dynamic_templates": [
+                { "en": {
+                      "match":              "*",
+                      "match_mapping_type": "string",
+                      "mapping": {
+                          "type":           "string",
+                          "analyzer":       "english"
+                      }
+                }}
+            ]
+}}}'
 
 
 #get status

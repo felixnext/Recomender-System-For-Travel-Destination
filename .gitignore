@@ -1,5 +1,6 @@
 *.class
 *.log
+*.pyc
 
 # sbt specific
 .cache/
@@ -17,6 +18,7 @@ project/plugins/project/
 .worksheet
 
 # Intelij
-.idea/**
+.idea/
+.idea_modules/
 
 .DS_Store
