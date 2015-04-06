@@ -13,7 +13,7 @@ object DBpediaLocationAnnotator extends App {
   //TODO annotate what ?
   //spotlight annotation
   val annotationSpotlight = (name: String) => {
-    val response = new SpotlightClient().requestLocation(name,10)
+    val response = new SpotlightClient().requestLocation(name, 10)
     val annotation = new Gson().fromJson(response, classOf[JsonElement]).getAsJsonObject
     val resources = annotation.getAsJsonArray("Resources").iterator().next()
     (annotation.get("@confidence"), resources.getAsJsonObject.get("@URI"), resources.getAsJsonObject.get("@types"))
@@ -41,7 +41,7 @@ object DBpediaLocationAnnotator extends App {
     val url = httpRequest(10).location match {
       case Some(l) => l
       case _ =>
-        val urls = dbpedia.findDBpediaLocation(locationName)
+        val urls = dbpedia.findDBpediaLocation(locationName, 10)
         if (urls.nonEmpty) urls.head
         else try {
           annotationSpotlight(locationName)._2.toString.replaceAll("\"", "")
@@ -53,7 +53,7 @@ object DBpediaLocationAnnotator extends App {
           }
         }
     }
-    dbpedia.parseDBpediaPageOfLocation(url)
+    dbpedia.parseDBpediaPageOfLocation(url, 10)
   }
 
   //##################
@@ -78,12 +78,12 @@ object DBpediaLocationAnnotator extends App {
     val dbpedia = new DBPediaClient()
 
     while (xml.hasMorePages) {
-      // Future {
+
       var page: Map[String, Map[String, Set[String]]] = xml.readPage
-      //assumption: title is not empty
+      //assumption: title is not empt
       val title = page.getOrElse("title", Map("" -> Set(""))).getOrElse("title", Set("")).head
 
-      if (!dbpedia.isPerson(title)) {
+      if (!dbpedia.isPerson(title, 10) && !title.equals("")) {
         //doesn't annotate persons
         annotateLocation(title) match {
           case Some(annotation) => page += ("dbpedia" -> annotation)
@@ -96,7 +96,6 @@ object DBpediaLocationAnnotator extends App {
 
 
     }
-    //    }
 
     xml.close()
 

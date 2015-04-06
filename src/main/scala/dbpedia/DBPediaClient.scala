@@ -16,7 +16,7 @@ class DBPediaClient {
   }
 
   //downloads dbpedia page of given uri
-  def parseDBpediaPageOfLocation(uri: String): Option[Map[String, Set[String]]] = {
+  def parseDBpediaPageOfLocation(uri: String, test: Int): Option[Map[String, Set[String]]] = {
     var resultMap: Map[String, Set[String]] = Map()
 
     try {
@@ -112,6 +112,9 @@ class DBPediaClient {
       }
 
     } catch {
+      case e: org.apache.jena.atlas.web.HttpException =>
+        Thread.sleep(1000)
+        if(test != 0) resultMap = parseDBpediaPageOfLocation(uri, test - 1).getOrElse(Map())
       case e: Exception => println(e)
     }
 
@@ -120,7 +123,7 @@ class DBPediaClient {
   }
 
   //returns a list of uris, which matches the location name
-  def findDBpediaLocation(name: String): List[String] = {
+  def findDBpediaLocation(name: String, test: Int): List[String] = {
     var uris: List[String] = List()
     val queryString =
       s"""
@@ -150,13 +153,16 @@ class DBPediaClient {
       }
 
     } catch {
+      case e: org.apache.jena.atlas.web.HttpException =>
+        Thread.sleep(1000)
+        if(test != 0) uris = findDBpediaLocation(name, test -1)
       case e: Exception => println(e)
     }
     uris
   }
 
   //tests if the given name is a person
-  def isPerson(name: String): Boolean = {
+  def isPerson(name: String, test: Int): Boolean = {
     val queryString =
       s"""
          |PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -183,6 +189,10 @@ class DBPediaClient {
       }
 
     } catch {
+      case e: org.apache.jena.atlas.web.HttpException =>
+        Thread.sleep(1000)
+        if(test != 0) isPerson(name, test -1)
+        else false
       case e: Exception => false
     }
   }

@@ -4,6 +4,7 @@ import json
 import re
 import io
 import chardet
+import sys
 
 #####################
 #Creates json file from xml for loading data into elasticsearch
@@ -18,9 +19,14 @@ def clean_text(text):
         text = re.sub(re.compile('\W+'), " ", text)
     return text
 
-file_name = "/Users/yevgen/Documents/data/master/dumps/annotated/wikitravel_annotated.xml"
-out_path = "/Users/yevgen/Documents/data/master/dumps/annotated/wikitravel_annotated.json"
-index = "wikitravel"
+if len(sys.argv) != 3:
+    raise Exception("Path and index were not specified in arguments! \nFORMAT: python CreateJsonBulk.py index pyth")
+
+
+
+file_name = sys.argv[2]
+out_path = sys.argv[2].replace(".xml", ".json")
+index = sys.argv[1]
 
 #r = chardet.detect(open(file_name).read())
 #charenc = r['encoding']
@@ -153,9 +159,6 @@ for line in file:
             line = line.replace("</paragraph>","")
             paragraph = paragraph + clean_text(line)
             paragraphs.append(paragraph)
-
-            print title + "\n\n"
-            print paragraph + "\n\n\n\n\n"
 
             paragraph = ""
             switcher = False

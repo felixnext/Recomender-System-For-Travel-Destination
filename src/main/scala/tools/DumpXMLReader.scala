@@ -62,7 +62,7 @@ abstract class DumpXMLReader(var path: String) {
     sb.append(s"    <long>$long</long>\n")
 
     //paragraphs
-    sb.append("    </text>\n")
+    sb.append("    <text>\n")
     paragraphs.foreach {
       case (key, value: Set[String]) => {
         sb.append( s"""      <paragraph name="$key">""")
@@ -70,7 +70,7 @@ abstract class DumpXMLReader(var path: String) {
         sb.append("      </paragraph>\n")
       }
     }
-    sb.append("    <text>\n")
+    sb.append("    </text>\n")
 
     sb.append("  </page>\n")
     val s = sb.toString()
@@ -237,7 +237,10 @@ class Travelerswiki(path: String) extends DumpXMLReader(path) {
       //TODO only if title is desired user talk and so on
       if(!title.contains("Media") && !title.contains("Special") && !title.contains("Talk") && !title.contains("User")
         && !title.contains("User") && !title.contains("Image") && !title.contains("MediaWiki")&& !title.contains("Template")
-        && !title.contains("Help")&& !title.contains("Category"))
+        && !title.contains("Help")&& !title.contains("Category") && !title.contains("media") && !title.contains("special")
+        && !title.contains("talk") && !title.contains("user") && !title.contains("image") && !title.contains("mediawiki")
+        && !title.contains("template") && !title.contains("help")&& !title.contains("category") && !title.contains("Wikitravel")
+        && !title.contains("wikitravel"))
           pages = pages :+ Map(title -> paragraphs, "title" -> Map("title" -> Set(title)))
 
       content = false
