@@ -1,4 +1,12 @@
 # Recomender-System-For-Travel-Destination
 
-Elasticsearch dump for bulk loading can be downloaded [here](https://www.dropbox.com/s/xl6f9o0edu1u86q/elastic_dump.zip?dl=0). 
-Dataset contains location descriptions, names and metadata (e.g. lat, long).
+
+Build
+-----
+
+    $ sbt assembly
+
+Data
+-----
+Json dump for elasticsearch bulk loading can be downloaded [here](https://www.dropbox.com/s/0jmj6dtnfir4bpo/elastic.tar.bz2?dl=0).
+Dataset contains descriptions, names and metadata (e.g. lat, long) of locations.
