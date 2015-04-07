@@ -1,0 +1,156 @@
+
+######################
+#Annotate raw dumps
+######################
+
+#starts travelerpoint dump dbpedia annotation
+nohup java -jar -Xmx5G Destination-Recomender-System-assembly-0.1.jar trevelerpoint ./items.json_cleaned.xml &
+
+#starts wikipedia dump dbpedia annotation
+nohup java -jar -Xmx5G Destination-Recomender-System-assembly-0.1.jar wikipedia ./wikipedia_articles.xml &
+
+#starts travelerwiki dump annotation
+nohup java -jar -Xmx5G Destination-Recomender-System-assembly-0.1.jar trevelerswiki ./wikitravelorg_wiki_en-20110605-current.xml &
+
+######################
+#elasticsearch
+######################
+
+#transform data into  elastic search bulk format
+python CreateJsonBulk.py travellerspoint travellerspoint.xml
+python CreateJsonBulk.py wikipedia wikipedia.xml
+python CreateJsonBulk.py wikitravel wikitravel.xml
+
+#diasble swapping
+sudo swapoff -a
+
+#start elasticsearch node
+bin/elasticsearch -d -Xmx7g -Xms7g -Des.index.store.type=memory --node.name=RS1
+
+#indicies: wikipedia, travellerspoint, wikitravel
+
+#show analyzer result
+curl -XGET 'localhost:9200/testindex/_analyze?analyzer=my_english&pretty' -d 'The quick & brown fox runs away and Zemplínska šírava.'
+
+#bulk load data
+curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @my_file.json
+
+#search all field
+curl -XGET 'localhost:9200/testindex/_search?pretty' -d '
+{ "query": {
+    "match": {
+        "_all": "john"
+    }}
+}'
+
+
+#get status
+curl 'localhost:9200/_cat/indices?v'
+
+#request mapping: how data was interpreted?
+curl -XGET 'localhost:9200/testindex/_mapping'
+
+#delete index
+curl -XDELETE 'http://localhost:9200/testindex/'
+
+#stop elasticsearch
+curl -XPOST 'http://localhost:9200/_shutdown'
+
+#validate a query
+curl -XGET 'localhost:9200/gb/tweet/_validate/query?explain'
+
+
+#should query should part use match_phrase for better scoring
+curl 'localhost:9200/testindex/_search?pretty' -d '{
+  "query": {
+    "bool": {
+      "must": {
+        "match": {
+          "title": {
+            "query": "jo",
+            "minimum_should_match": "30%"
+          }
+        }
+      },
+      "should": {
+        "match_phrase": {
+          "title": {
+            "query": "quick brown fox",
+            "slop":  50
+          }
+        }
+      }
+    }
+  }
+}'
+
+#rescore query
+curl 'localhost:9200/testindex/_search?pretty' -d '
+{
+    "query": {
+        "match": {
+            "title": {
+                "query": "quick brown fox",
+                "minimum_should_match": "30%"
+            }
+        }
+    },
+    "rescore": {
+        "window_size": 100,
+        "query": {
+            "rescore_query": {
+                "match_phrase": {
+                    "title": {
+                        "query": "quick brown fox",
+                        "slop":  50
+                    }
+                }
+            }
+        }
+    }
+}
+'
+
+#simple search query
+curl -XGET 'localhost:9200/testindex/_search?pretty' -d '
+{
+    "query": {
+        "match": {
+            "tweet": {
+                "query": "Elasticsearch fanboy",
+                "minimum_should_match": "30%"
+            }
+        }
+    }
+}'
+
+#geo distance query
+curl -XGET 'localhost:9200/testindex/_search?pretty' -d '
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "geo_distance": {
+          "distance": "1km",
+          "location": {
+            "lat":  1,
+            "lon": 12
+          }
+        }
+      }
+    }
+  }
+}'
+
+#reasign shard
+curl -XPOST 'localhost:9200/_cluster/reroute' -d '{
+    "commands": [{
+        "allocate": {
+            "index": "travellerspoint",
+            "shard": 2,
+            "node": "RS1",
+            "allow_primary": 1
+        }
+    }]
+}'
+

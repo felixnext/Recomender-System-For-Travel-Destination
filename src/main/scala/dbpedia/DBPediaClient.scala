@@ -85,7 +85,7 @@ class DBPediaClient {
 
           val prop = triple(1).trim.replace("http://dbpedia.org/property/", "")
           if (weatherC.contains(prop)) addToResultMap(prop, cleanedDBPedoaNumber)
-          if (weatherF.contains(prop)) addToResultMap(prop, fahrenheitToCelsius)
+          if (weatherF.contains(prop)) addToResultMap(prop.replace("F","C"), fahrenheitToCelsius)
 
           if (triple(1).contains("http://www.w3.org/2002/07/owl#sameAs")) {
             val Place = "(http://)(\\w\\w)(.dbpedia.org/resource/)(\\w+)".r

@@ -5,6 +5,7 @@ import re
 import io
 import chardet
 import sys
+import os
 
 #####################
 #Creates json file from xml for loading data into elasticsearch
@@ -16,16 +17,16 @@ def clean_text(text):
         text = ""
     else:
         text = re.sub(r"(?:\@|https?\://)\S+", "", text)
-        text = re.sub(re.compile('\W+'), " ", text)
+        #text = re.sub(re.compile('\W+'), " ", text)
     return text
 
 if len(sys.argv) != 3:
     raise Exception("Path and index were not specified in arguments! \nFORMAT: python CreateJsonBulk.py index pyth")
 
 
-
+part = 0
 file_name = sys.argv[2]
-out_path = sys.argv[2].replace(".xml", ".json")
+out_path = sys.argv[2].replace(".xml", "%s.json" % part)
 index = sys.argv[1]
 
 #r = chardet.detect(open(file_name).read())
@@ -43,6 +44,12 @@ dict = {}
 paragraphs = []
 paragraph = ""
 paragraph_names = []
+
+temperature = ["novMeanF", "julLowF", "julMeanF", "aprLowF", "marHighF", "janHighF", "febMeanF", "augLowF",
+            "aprHighF", "deFHighF", "oFtLowF", "deFLowF", "junMeanF", "janLowF", "sepHighF", "mayLowF", "marMeanF",
+            "sepMeanF", "julHighF", "janMeanF", "deFMeanF", "novHighF", "marLowF", "febLowF", "junHighF", "novLowF",
+            "junLowF", "augMeanF", "mayHighF", "febHighF", "augHighF", "aprMeanF", "oFtHighF", "oFtMeanF", "sepLowF", "mayMeanF"]
+doc_id = 0
 
 for line in file:
     line = line.strip().encode("utf-8")
@@ -63,8 +70,24 @@ for line in file:
         dict['paragraph_texts'] = paragraphs
         dict['paragraph_names'] = paragraph_names
 
-        out.write("""{"create": { "_index": "%s", "_type": "traveldata" }}\n""" % index)
+        if dict['lat'] != "" and dict['long'] != "":
+            dict['location'] = {'lat': dict['lat'], 'lon': dict['long']}
+        del dict['lat']
+        del dict['long']
+
+        size = float(os.path.getsize(out_path))/1000000.0
+        #plit file into smaller chnks
+        #if file is greater than 1400mb
+        if (1399.0 - size) < 0.0001:
+            out.close()
+            part = part + 1
+            out_path = sys.argv[2].replace(".xml", "%s.json" % part)
+            out = open(out_path, "w")
+
+        out.write("""{"create": { "_index": "%s", "_type": "traveldata", "_id" : "%s" }}\n""" % (index, doc_id))
         out.write(json.dumps(dict).encode('utf-8') + "\n")
+
+        doc_id = doc_id + 1
 
         dict = {}
         paragraphs = []
@@ -96,11 +119,20 @@ for line in file:
             tmp_value= tmp_value.split("^").pop(0).replace("\"","")
         tmp_value = tmp_value.replace("_", " ")
 
+        if any(tmp_tag in s for s in temperature):
+            tmp_tag = tmp_tag.replace("F","C")
+
         if tmp_value == "lat" and dict['lat'] == "":
             dict['lat'] = tmp_value
         elif tmp_value == "long" and dict['long'] == "":
                 dict['long'] = tmp_value
         elif tmp_tag == "sameAs":
+            if dict.has_key(tmp_tag):
+                dict[tmp_tag].append(tmp_value)
+            else:
+                dict[tmp_tag] = [tmp_value]
+        elif tmp_tag == "country":
+            tmp_value = tmp_value.replace("\"","").split("@")[0]
             if dict.has_key(tmp_tag):
                 dict[tmp_tag].append(tmp_value)
             else:
