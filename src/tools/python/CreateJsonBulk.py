@@ -56,10 +56,14 @@ for line in file:
 
     if '<title>' in line:
         dict['title'] = line.replace('<title>', "").replace('</title>', "").strip()
-    if '<lat>' in line:
-        dict['lat'] = line.replace('<lat>',"").replace('</lat>',"").strip()
-    if '<long>' in line:
-        dict['long'] = line.replace('<long>',"").replace('</long>',"").strip()
+    if '<lat>' in line and not dbpedia:
+         lat = line.replace('<lat>',"").replace('</lat>',"").strip()
+         if lat != "":
+            dict['lat'] = lat
+    if '<long>' in line  and not dbpedia:
+        long = line.replace('<long>',"").replace('</long>',"").strip()
+        if long != "":
+            dict['long'] = long
 
     if '</dbpedia>' in line:
         dbpedia = False
@@ -70,10 +74,10 @@ for line in file:
         dict['paragraph_texts'] = paragraphs
         dict['paragraph_names'] = paragraph_names
 
-        if dict['lat'] != "" and dict['long'] != "":
+        if dict.has_key('lat') and dict.has_key('long'):
             dict['location'] = {'lat': dict['lat'], 'lon': dict['long']}
-        del dict['lat']
-        del dict['long']
+            del dict['lat']
+            del dict['long']
 
         size = float(os.path.getsize(out_path))/1000000.0
         #plit file into smaller chnks
@@ -87,6 +91,8 @@ for line in file:
         out.write("""{"create": { "_index": "%s", "_type": "traveldata", "_id" : "%s" }}\n""" % (index, doc_id))
         out.write(json.dumps(dict).encode('utf-8') + "\n")
 
+        sys.stdout.write('.')
+        
         doc_id = doc_id + 1
 
         dict = {}
@@ -122,9 +128,10 @@ for line in file:
         if any(tmp_tag in s for s in temperature):
             tmp_tag = tmp_tag.replace("F","C")
 
-        if tmp_value == "lat" and dict['lat'] == "":
+        if "lat" == tmp_tag and not dict.has_key("lat"):
             dict['lat'] = tmp_value
-        elif tmp_value == "long" and dict['long'] == "":
+            #print dict['lat']
+        elif "long" == tmp_tag and not dict.has_key("long"):
                 dict['long'] = tmp_value
         elif tmp_tag == "sameAs":
             if dict.has_key(tmp_tag):

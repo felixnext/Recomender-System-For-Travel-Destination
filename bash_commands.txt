@@ -21,6 +21,9 @@ python CreateJsonBulk.py travellerspoint travellerspoint.xml
 python CreateJsonBulk.py wikipedia wikipedia.xml
 python CreateJsonBulk.py wikitravel wikitravel.xml
 
+#all
+python CreateJsonBulk.py travellerspoint travellerspoint.xml && python CreateJsonBulk.py wikipedia wikipedia.xml && python CreateJsonBulk.py wikitravel wikitravel.xml
+
 #diasble swapping
 sudo swapoff -a
 
@@ -85,12 +88,12 @@ curl 'localhost:9200/testindex/_search?pretty' -d '{
 }'
 
 #rescore query
-curl 'localhost:9200/testindex/_search?pretty' -d '
+curl -XGET 'localhost:9200/travellerspoint/_search?pretty' -d '
 {
     "query": {
         "match": {
-            "title": {
-                "query": "quick brown fox",
+            "paragraph_texts": {
+                "query": "The island in spain",
                 "minimum_should_match": "30%"
             }
         }
@@ -112,12 +115,12 @@ curl 'localhost:9200/testindex/_search?pretty' -d '
 '
 
 #simple search query
-curl -XGET 'localhost:9200/testindex/_search?pretty' -d '
+curl -XGET 'localhost:9200/travellerspoint/_search?pretty' -d '
 {
     "query": {
         "match": {
-            "tweet": {
-                "query": "Elasticsearch fanboy",
+            "paragraph_texts": {
+                "query": "The island in spain.",
                 "minimum_should_match": "30%"
             }
         }
@@ -125,15 +128,15 @@ curl -XGET 'localhost:9200/testindex/_search?pretty' -d '
 }'
 
 #geo distance query
-curl -XGET 'localhost:9200/testindex/_search?pretty' -d '
+curl -XGET 'localhost:9200/travellerspoint/_search?pretty' -d '
 {
   "query": {
     "filtered": {
       "filter": {
         "geo_distance": {
-          "distance": "1km",
+          "distance": "1000000km",
           "location": {
-            "lat":  1,
+            "lat":  70,
             "lon": 12
           }
         }
