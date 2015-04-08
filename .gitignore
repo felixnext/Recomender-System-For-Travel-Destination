@@ -17,6 +17,8 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 
+bash_commands.txt
+
 # Intelij
 .idea/
 .idea_modules/
