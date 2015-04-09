@@ -14,10 +14,10 @@ import scalaj.http.Http
 class ElasticsearchClient {
 
   //endpoint if elasticsearch
-  val elasticUrl = Config.getElasticsearchUrl
+  val elasticUrl = Config.elasticsearchUrl
 
   //indices that should be queried
-  val indices = Config.getElasticIndices
+  val indices: List[String] = Config.elasticsearchIndices
 
   //parses the elasticsearch response in json format and wraps the data into location object
   //responseBody is a string in json format

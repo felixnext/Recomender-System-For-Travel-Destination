@@ -8,7 +8,7 @@ version := "0.1"
 
 scalaVersion := "2.11.6"
 
-scalacOptions ++= Seq("-deprecation", "-feature")
+scalacOptions ++= Seq("-deprecation", "-feature", "utf8")
 
 
 
@@ -20,7 +20,9 @@ libraryDependencies ++= Seq(
   "org.apache.jena" % "jena-core" % "2.13.0",
   "org.apache.jena" % "jena-arq" % "2.13.0",
   "net.java.dev.textile-j" % "textile-j" % "2.2.864",
-  "org.scala-lang" % "scala-xml" % "2.11.0-M4"
+  "io.spray" %% "spray-can" % "1.3.3",
+  "io.spray" %%  "spray-routing" % "1.3.3",
+  "io.spray" %%  "spray-json"  % "1.3.1"
 )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>

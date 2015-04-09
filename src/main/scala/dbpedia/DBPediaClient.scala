@@ -2,6 +2,7 @@ package dbpedia
 
 import com.hp.hpl.jena.query._
 import com.hp.hpl.jena.rdf.model.{Model, ModelFactory, Resource}
+import tools.Config
 
 
 /**
@@ -133,7 +134,7 @@ class DBPediaClient {
       """.stripMargin
     try {
       val query: Query = QueryFactory.create(queryString)
-      val qexec: QueryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)
+      val qexec: QueryExecution = QueryExecutionFactory.sparqlService(Config.dbpediaUrl, query)
 
       try {
         val results: ResultSet = qexec.execSelect()
@@ -172,7 +173,7 @@ class DBPediaClient {
     try {
 
       val query: Query = QueryFactory.create(queryString)
-      val qexec: QueryExecution = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query)
+      val qexec: QueryExecution = QueryExecutionFactory.sparqlService(Config.dbpediaUrl, query)
 
       try {
         val results: ResultSet = qexec.execSelect()
