@@ -14,6 +14,8 @@ object Config {
 
   lazy val servicePort = Try(config.getInt("service.port")).getOrElse(8080)
 
+  lazy val serviceHost = Try(config.getString("service.host")).getOrElse("localhost:8080/")
+
   lazy val elasticsearchUrl = Try(config.getString("elastic.url")).getOrElse("localhost:9200/")
 
   lazy val elasticsearchIndices = Try({

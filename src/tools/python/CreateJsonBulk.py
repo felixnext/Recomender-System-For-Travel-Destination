@@ -75,7 +75,10 @@ for line in file:
         dict['paragraph_names'] = paragraph_names
 
         if dict.has_key('lat') and dict.has_key('long'):
-            dict['location'] = {'lat': dict['lat'], 'lon': dict['long']}
+            if dict['lat'] != "none" and dict['long'] != "none":
+                dict['location'] = {'lat': dict['lat'], 'lon': dict['long']}
+            else:
+                print "None"
             del dict['lat']
             del dict['long']
 

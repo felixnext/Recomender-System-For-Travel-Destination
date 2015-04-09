@@ -5,6 +5,7 @@ import core.ElasticLocationDoc
 import tools.Config
 
 import scala.annotation.tailrec
+import scala.util.Try
 import scalaj.http.Http
 
 /**
@@ -31,14 +32,18 @@ class ElasticsearchClient {
         val keyValue = document.next()
         keyValue.getKey.toString match {
           //TODO lat and lon
-          case "country" => location.country = Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)
-          case "title" => location.title = Some(keyValue.getValue.getAsString)
-          case "sameAs" => location.someAs = Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)
-          case "paragraph_texts" => location.paragraphTexts = Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)
-          case "paragraph_names" => location.paragraphNames = Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)
-          case "populationTotal" => location.populationTotal = Some(keyValue.getValue.getAsInt)
-          case "areaTotal" => location.areaTotal = Some(keyValue.getValue.getAsDouble)
-          case _ => location.climate = Some(location.climate.getOrElse(Map()) ++ Map(keyValue.getKey -> keyValue.getValue.getAsString))
+          case "country" => location.country = Try(Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)).getOrElse(None)
+          case "title" => location.title = Try(Some(keyValue.getValue.getAsString)).getOrElse(None)
+          case "sameAs" => location.someAs = Try(Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)).getOrElse(None)
+          case "paragraph_texts" => location.paragraphTexts = Try(Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)).getOrElse(None)
+          case "paragraph_names" => location.paragraphNames = Try(Some(new Gson().fromJson(keyValue.getValue.getAsJsonArray, classOf[Array[String]]).toList)).getOrElse(None)
+          case "populationTotal" => location.populationTotal = Try(Some(keyValue.getValue.getAsInt)).getOrElse(None)
+          case "areaTotal" => location.areaTotal = Try(Some(keyValue.getValue.getAsDouble)).getOrElse(None)
+          case "location" => {
+              location.lat = Try(Some(keyValue.getValue.getAsJsonObject.get("lat").getAsDouble)).getOrElse(None)
+              location.lon = Try(Some(keyValue.getValue.getAsJsonObject.get("lon").getAsDouble)).getOrElse(None)
+          }
+          case _ => location.climate = Some(location.climate.getOrElse(Map()) ++ Try(Map(keyValue.getKey -> keyValue.getValue.getAsString)).getOrElse(Map()))
         }
         fetchData(document, location)
       }
@@ -66,7 +71,7 @@ class ElasticsearchClient {
       val jsonHitsResults = jsonHits.get("hits").getAsJsonArray.iterator()
       iterateOverResults(jsonHitsResults ,List())
     } catch {
-      case e: Exception => println("Excpetion during result parsing"+ e); List()
+      case e: Exception => println("Excpetion during result parsing "+ e); e.printStackTrace(); List()
     }
 
   }
