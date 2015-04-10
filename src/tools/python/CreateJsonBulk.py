@@ -12,13 +12,7 @@ import os
 #####################
 
 
-def clean_text(text):
-    if len(text.split(" ")) < 3:
-        text = ""
-    else:
-        text = re.sub(r"(?:\@|https?\://)\S+", "", text)
-        #text = re.sub(re.compile('\W+'), " ", text)
-    return text
+
 
 if len(sys.argv) != 3:
     raise Exception("Path and index were not specified in arguments! \nFORMAT: python CreateJsonBulk.py index pyth")
@@ -39,6 +33,18 @@ out = open(out_path, "w")
 
 dbpedia = False
 text = False
+
+
+def clean_text(text):
+    if len(text.split(" ")) < 3:
+        text = ""
+    else:
+        text = re.sub(r"(?:\@|https?\://)\S+", "", text)
+        if index == "wikitravel":
+            text = re.sub(re.compile('\W+'), " ", text)
+    return text
+
+
 
 dict = {}
 paragraphs = []
@@ -94,8 +100,6 @@ for line in file:
         out.write("""{"create": { "_index": "%s", "_type": "traveldata", "_id" : "%s" }}\n""" % (index, doc_id))
         out.write(json.dumps(dict).encode('utf-8') + "\n")
 
-        sys.stdout.write('.')
-        
         doc_id = doc_id + 1
 
         dict = {}

@@ -20,7 +20,7 @@ trait PerRequest extends Actor with ActorLogging {
   def target: ActorRef
   def message: UserQuery
 
-  setReceiveTimeout(15.seconds)
+  setReceiveTimeout(10.seconds)
   target ! message
 
   def receive = {

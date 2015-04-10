@@ -1,5 +1,5 @@
 
-mainClass in assembly := Some("tools.DBpediaLocationAnnotator")
+mainClass in assembly := Some("core.Boot")
 
 
 name := """Destination-Recomender-System"""
@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-can" % "1.3.3",
   "io.spray" %%  "spray-routing" % "1.3.3",
   "io.spray" %%  "spray-json"  % "1.3.1",
-  "net.liftweb" % "lift-json_2.10" % "2.6.2"
+  "com.bericotech" % "clavin" % "2.0.0"
 )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
@@ -34,6 +34,9 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   case "org/apache/commons/logging/impl/NoOpLog.class" => MergeStrategy.first
   case "org/apache/commons/logging/impl/SimpleLog$1.class" => MergeStrategy.first
   case "org/apache/commons/logging/impl/SimpleLog.class" => MergeStrategy.first
+  case "org/slf4j/impl/StaticLoggerBinder.class" => MergeStrategy.first
+  case "org/slf4j/impl/StaticMDCBinder.class" => MergeStrategy.first
+  case "org/slf4j/impl/StaticMarkerBinder.class"=> MergeStrategy.first
   case x => old(x)
 }
 }
