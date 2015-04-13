@@ -12,14 +12,14 @@ import edu.knowitall.tool.tokenize.OpenNlpTokenizer
 import elasticsearch.ElasticsearchClient
 
 object Main  extends App{
-  /*
+
   val c = new ElasticsearchClient()
-  val r  = c.matchQuery("tunnel of love ukraine").flatten
+  val r  = c.distanceQuery(1000000,39.616665,2.983333)
 
   r.foreach{
-    a => println(a.title)
+    a => println(a)
   }
-  */
+
 
   /*
   val clavin = new ClavinClient()
@@ -27,8 +27,5 @@ object Main  extends App{
   println(clavin.extractLocations(s))
   */
 
-  val dbpediaLookup = new DBPediaLookup()
-  dbpediaLookup.findDBPediaURI("berlin").foreach{
-    x => println(x)
-  }
+
 }
