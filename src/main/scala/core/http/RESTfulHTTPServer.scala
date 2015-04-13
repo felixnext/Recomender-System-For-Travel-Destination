@@ -15,7 +15,7 @@ import MediaTypes._
 class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  with ActorLogging{
 
   def actorRefFactory = context
-
+  //TODO search route
   def receive = runRoute(aSimpleRoute)
 
   // handles the api path, we could also define these in separate files

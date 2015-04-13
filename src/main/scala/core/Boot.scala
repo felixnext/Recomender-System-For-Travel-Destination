@@ -12,18 +12,9 @@ import scala.concurrent.duration._
 
 
 /**
- * Starts the app.
+ * Starts the http server.
  */
 object Boot extends App{
-
-  /*
-  val c = new ElasticsearchClient()
-  val r  = c.phraseQuery("The island in spain.").flatten
-
-  r.foreach{
-    a => println(a)
-  }
-  */
 
 
   // create our actor system with the name smartjava

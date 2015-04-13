@@ -6,13 +6,24 @@ name := """Destination-Recomender-System"""
 
 version := "0.1"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.10.5"
 
 scalacOptions ++= Seq("-deprecation", "-feature", "utf8")
 
+// custom options for high memory usage
 
+javaOptions += "-Xmx6G"
+
+javaOptions += "-XX:+UseConcMarkSweepGC"
+
+fork in run := true
+
+fork in Test := true
+
+//dependencies
 
 libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.9",
   "org.scalaj" %% "scalaj-http" % "1.1.4",
@@ -23,6 +34,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-can" % "1.3.3",
   "io.spray" %%  "spray-routing" % "1.3.3",
   "io.spray" %%  "spray-json"  % "1.3.1",
+  "edu.washington.cs.knowitall.openie" % "openie_2.10" % "4.1.3",
   "com.bericotech" % "clavin" % "2.0.0"
 )
 
@@ -37,6 +49,8 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   case "org/slf4j/impl/StaticLoggerBinder.class" => MergeStrategy.first
   case "org/slf4j/impl/StaticMDCBinder.class" => MergeStrategy.first
   case "org/slf4j/impl/StaticMarkerBinder.class"=> MergeStrategy.first
+  case "log4j.properties" =>  MergeStrategy.first
+  case "logback.xml" => MergeStrategy.first
   case x => old(x)
 }
 }

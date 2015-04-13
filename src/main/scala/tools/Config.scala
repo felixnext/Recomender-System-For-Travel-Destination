@@ -29,4 +29,6 @@ object Config {
   lazy val dbpediaUrl = Try(config.getString("dbpedia.url")).getOrElse("http://dbpedia.org/sparql")
 
   lazy val spotlightUrl = Try(config.getString("spotlight.url")).getOrElse("http://spotlight.dbpedia.org")
+
+  lazy val clavinUrl = Try(config.getString("clavin.url")).getOrElse("http://134.169.32.169:9093")
 }
