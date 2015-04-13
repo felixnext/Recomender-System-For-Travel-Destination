@@ -1,12 +1,16 @@
 package core.http
 
 import akka.actor.{ActorLogging, Actor}
+import edu.knowitall.openie.OpenIE
 import elasticsearch.ElasticsearchClient
 
 /**
- * Created by yevgen on 09.04.15.
+ * Actor, that handles user requests.
  */
 class LocationFinderActor  extends Actor with ActorLogging{
+
+  val openie2 = new OpenIE()
+
 
   log.debug("LocationFinder created!")
 
@@ -18,8 +22,10 @@ class LocationFinderActor  extends Actor with ActorLogging{
       //TODO make requests
       log.debug(elasticClient.matchQuery(query).flatten.head.title.getOrElse(""))
       log.debug("Query is non empty.")
+      val result2 = openie2.extract(query)
       val result =  Locations(List(Map("name"-> "Mallorca","lat" -> "12", "lon" -> "0.12" ,"score"->"0.23")))
-      context.parent ! result
+      //context.parent ! result
+      sender ! result
     case _ => log.debug("Received unexpected message object.")
   }
 

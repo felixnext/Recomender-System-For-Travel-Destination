@@ -29,6 +29,10 @@ class ClavinClient {
     try {
       val jsonRoot = new Gson().fromJson(responseBody, classOf[JsonObject])
       val  resolvedLocations = jsonRoot.get("resolvedLocations").getAsJsonArray
+
+      //TODO parse importat information
+
+
     } catch {
       case e: Exception => println("Error on parsing clavin response: " + e)
     }

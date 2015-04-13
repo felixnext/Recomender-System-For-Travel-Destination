@@ -6,8 +6,8 @@ import core.http.RESTfulHTTPServer
 import elasticsearch.ElasticsearchClient
 import spray.can.Http
 import akka.pattern.ask
-import akka.util.Timeout
 import tools.Config
+import akka.util.Timeout
 import scala.concurrent.duration._
 
 

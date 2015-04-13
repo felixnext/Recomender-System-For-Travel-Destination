@@ -35,7 +35,8 @@ libraryDependencies ++= Seq(
   "io.spray" %%  "spray-routing" % "1.3.3",
   "io.spray" %%  "spray-json"  % "1.3.1",
   "edu.washington.cs.knowitall.openie" % "openie_2.10" % "4.1.3",
-  "com.bericotech" % "clavin" % "2.0.0"
+  "com.bericotech" % "clavin" % "2.0.0",
+  "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1"
 )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>

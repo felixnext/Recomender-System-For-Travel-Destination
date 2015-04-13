@@ -8,7 +8,7 @@ import edu.knowitall.tool.tokenize.OpenNlpTokenizer
 /**
  * Created by yevgen on 12.04.15.
  */
-object OpenIE {
+object RelationExtractor {
 
   val openie = new OpenIE()
 
