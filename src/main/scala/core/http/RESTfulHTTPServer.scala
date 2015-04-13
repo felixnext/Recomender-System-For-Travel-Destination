@@ -49,7 +49,7 @@ class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  w
   */
 
   implicit val timeout = Timeout(10.seconds)
-  
+
   val aSimpleRoute = {
     post {
       path("search") {

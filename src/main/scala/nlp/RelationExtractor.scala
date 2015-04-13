@@ -10,6 +10,10 @@ import edu.knowitall.tool.tokenize.OpenNlpTokenizer
  */
 object RelationExtractor {
 
+  def apply() = {
+    //TODO
+  }
+
   val openie = new OpenIE()
 
   val tokenizertest = new OpenNlpTokenizer()
