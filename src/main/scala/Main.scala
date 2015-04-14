@@ -3,7 +3,7 @@
  */
 
 import clavin.ClavinClient
-import dbpedia.DBPediaLookup
+import dbpedia.{SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 import edu.knowitall.tool.chunk.OpenNlpChunker
 import edu.knowitall.tool.postag.OpenNlpPostagger
@@ -13,13 +13,9 @@ import elasticsearch.ElasticsearchClient
 
 object Main  extends App{
 
-  val c = new ElasticsearchClient()
-  val r  = c.distanceQuery(1000000,39.616665,2.983333)
-
-  r.foreach{
-    a => println(a)
-  }
-
+  val spotligth = new SpotlightClient()
+  val response = spotligth.discoverEntities("New York is a state in the Northeastern and Mid-Atlantic regions of the United States. New York is the 27th-most extensive, the fourth-most populous, and the seventh-most densely populated of the 50 United States. New York is bordered by New Jersey and Pennsylvania to the south and Connecticut, Massachusetts, and Vermont to the east. The state has a maritime border with Rhode Island east of Long Island, as well as an international border with the Canadian provinces of Quebec to the north and Ontario to the west and north. The state of New York is often referred to as New York State or the State of New York to distinguish it from New York City, the state's most populous city and its economic hub.")
+  println(response.head)
 
   /*
   val clavin = new ClavinClient()

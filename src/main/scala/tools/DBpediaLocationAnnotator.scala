@@ -1,6 +1,5 @@
 package tools
 
-import com.google.gson.{Gson, JsonElement}
 import dbpedia.{DBPediaClient, SpotlightClient}
 
 import scalaj.http.{Http, HttpResponse}
@@ -13,10 +12,7 @@ object DBpediaLocationAnnotator extends App {
   //TODO annotate what ?
   //spotlight annotation
   val annotationSpotlight = (name: String) => {
-    val response = new SpotlightClient().requestLocation(name, 10)
-    val annotation = new Gson().fromJson(response, classOf[JsonElement]).getAsJsonObject
-    val resources = annotation.getAsJsonArray("Resources").iterator().next()
-    (annotation.get("@confidence"), resources.getAsJsonObject.get("@URI"), resources.getAsJsonObject.get("@types"))
+    new SpotlightClient().requestLocation(name, 10).head.uri
   }
 
   //annotates location with dbpedia data
@@ -44,7 +40,7 @@ object DBpediaLocationAnnotator extends App {
         val urls = dbpedia.findDBpediaLocation(locationName, 10)
         if (urls.nonEmpty) urls.head
         else try {
-          annotationSpotlight(locationName)._2.toString.replaceAll("\"", "")
+          annotationSpotlight(locationName)
         }
         catch {
           case e: Exception => {

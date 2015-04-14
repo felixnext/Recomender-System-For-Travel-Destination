@@ -4,7 +4,7 @@ REST api
 --------
     
     $ curl -XPOST 'http://localhost:8080/search' -H "Content-Type: application/json" \
-     -d  '{"query": "My destination description."}'
+     -d  '{"query": "My destination's description...."}'
 
 Build
 -----

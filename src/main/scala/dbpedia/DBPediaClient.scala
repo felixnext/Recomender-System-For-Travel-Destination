@@ -43,12 +43,12 @@ class DBPediaClient {
           }
 
 
-          def removeLastBraket(x: String): String = x.substring(0, x.length - 1)
+          def removeLastBracket(x: String): String = x.substring(0, x.length - 1)
           def removeDBpediaURI(x: String): String = x.replace("http://dbpedia.org/resource/", "")
-          def cleanedDBpediaString: String = removeLastBraket(removeDBpediaURI(triple(2))).trim
-          def cleanedDBPedoaNumber: String = triple(2).trim.split("\"")(1)
+          def cleanedDBpediaString: String = removeLastBracket(removeDBpediaURI(triple(2))).trim
+          def cleanedDBPediaNumber: String = triple(2).trim.split("\"")(1)
 
-          def fahrenheitToCelsius = ((cleanedDBPedoaNumber.toFloat - 32.0) / 1.8).toString
+          def fahrenheitToCelsius = ((cleanedDBPediaNumber.toFloat - 32.0) / 1.8).toString
 
           if (triple(1).contains("country")) {
             addToResultMap("country", cleanedDBpediaString)
@@ -64,11 +64,11 @@ class DBPediaClient {
           }
 
           if (triple(1).contains("http://dbpedia.org/ontology/areaTotal")) {
-            addToResultMap("areaTotal", cleanedDBPedoaNumber)
+            addToResultMap("areaTotal", cleanedDBPediaNumber)
           }
 
           if (triple(1).contains("http://dbpedia.org/ontology/populationTotal")) {
-            addToResultMap("populationTotal", cleanedDBPedoaNumber)
+            addToResultMap("populationTotal", cleanedDBPediaNumber)
           }
 
           //Temperature measured in C
@@ -85,7 +85,7 @@ class DBPediaClient {
             "junLowF", "augMeanF", "mayHighF", "febHighF", "augHighF", "aprMeanF", "oFtHighF", "oFtMeanF", "sepLowF", "mayMeanF")
 
           val prop = triple(1).trim.replace("http://dbpedia.org/property/", "")
-          if (weatherC.contains(prop)) addToResultMap(prop, cleanedDBPedoaNumber)
+          if (weatherC.contains(prop)) addToResultMap(prop, cleanedDBPediaNumber)
           if (weatherF.contains(prop)) addToResultMap(prop.replace("F","C"), fahrenheitToCelsius)
 
           if (triple(1).contains("http://www.w3.org/2002/07/owl#sameAs")) {
