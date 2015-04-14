@@ -1,37 +1,27 @@
 package nlp
 
 import edu.knowitall.openie.{OpenIE, SimpleArgument, SpatialArgument, TemporalArgument}
-import edu.knowitall.tool.chunk.OpenNlpChunker
-import edu.knowitall.tool.postag.OpenNlpPostagger
-import edu.knowitall.tool.tokenize.OpenNlpTokenizer
 
 /**
  * Created by yevgen on 12.04.15.
  */
-object RelationExtractor {
-
-  def apply() = {
-    //TODO
-  }
+class RelationExtractor {
 
   val openie = new OpenIE()
 
-  val tokenizertest = new OpenNlpTokenizer()
-  val postaggertest = new OpenNlpPostagger(tokenizertest)
-  val chunkertest = new OpenNlpChunker(postaggertest)
-
-  def matchArgType(arg: Any): String = {
-    arg match {
-      case SimpleArgument(_, _) => "SimpleArgument"
-      case SpatialArgument(_, _) => "SpatialArgument"
-      case TemporalArgument(_, _) => "TemporalArgument"
-      case _ => ""
-    }
-  }
-
   //TODO extract context
   def extractRelations(s: String) = {
-    val result = openie.extract(s, chunkertest)
+
+    val result = openie.extract(s)
+
+    def matchArgType(arg: Any): String = {
+      arg match {
+        case SimpleArgument(_, _) => "SimpleArgument"
+        case SpatialArgument(_, _) => "SpatialArgument"
+        case TemporalArgument(_, _) => "TemporalArgument"
+        case _ => ""
+      }
+    }
 
     val relations: Seq[Relation] = for (res <- result) yield {
       val arg1Text = res.extraction.arg1.text

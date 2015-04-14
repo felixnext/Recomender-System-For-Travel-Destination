@@ -15,26 +15,26 @@ class ClavinClient {
 
   //annotation request
   //The text param wil be annotated.
-  def extractLocations(text: String) = {
+  def extractLocations(text: String): List[Location] = {
     try {
       val response: HttpResponse[String] = Http(clavin + "/api/v0/geotag")
         .header("Content-Type", "text/plain").timeout(connTimeoutMs = 2000, readTimeoutMs = 10000).postData(text).asString
       parseResponse(response.body)
     } catch {
-      case e: Exception => println("Clavin request error: " + e)
+      case e: Exception => println("Clavin request error: " + e); List()
     }
   }
 
-  def parseResponse(responseBody: String) = {
+  def parseResponse(responseBody: String): List[Location] = {
     try {
       val jsonRoot = new Gson().fromJson(responseBody, classOf[JsonObject])
       val  resolvedLocations = jsonRoot.get("resolvedLocations").getAsJsonArray
 
       //TODO parse importat information
 
-
+    List()
     } catch {
-      case e: Exception => println("Error on parsing clavin response: " + e)
+      case e: Exception => println("Error on parsing clavin response: " + e); List()
     }
   }
 
