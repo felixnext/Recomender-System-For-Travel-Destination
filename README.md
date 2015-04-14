@@ -1,4 +1,4 @@
-# Recomender-System-For-Travel-Destination
+# Recommender System For Travel Destinations
 
 REST api
 --------
