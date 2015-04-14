@@ -1,5 +1,10 @@
 # Recomender-System-For-Travel-Destination
 
+REST api
+--------
+    
+    $ curl -XPOST 'http://localhost:8080/search' -H "Content-Type: application/json" 
+    4 -d  '{"query": "My destination description."}'
 
 Build
 -----
