@@ -39,6 +39,8 @@ libraryDependencies ++= Seq(
 )
 
 
+//resolve assembly conflicts
+
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 {
   case "org/apache/commons/logging/Log.class" => MergeStrategy.first

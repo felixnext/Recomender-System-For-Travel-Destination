@@ -1,9 +1,10 @@
 package clavin
 
 
-import com.google.gson.{Gson, JsonObject}
+import com.google.gson.{JsonElement, Gson, JsonObject}
 import tools.Config
 
+import scala.annotation.tailrec
 import scalaj.http.{Http, HttpResponse}
 
 /**
@@ -25,14 +26,31 @@ class ClavinClient {
     }
   }
 
+  //parses clavin rest response in json format
+  //geotag path
   def parseResponse(responseBody: String): List[Location] = {
     try {
       val jsonRoot = new Gson().fromJson(responseBody, classOf[JsonObject])
-      val  resolvedLocations = jsonRoot.get("resolvedLocations").getAsJsonArray
+      val  resolvedLocations = jsonRoot.get("resolvedLocations").getAsJsonArray.iterator()
 
-      //TODO parse importat information
+      @tailrec
+      def extractInformation(docIterator: java.util.Iterator[JsonElement], results: List[Location] = List()): List[Location] = {
+        if(!docIterator.hasNext) results
+        else {
+          val doc =  docIterator.next.getAsJsonObject
+          val resource = doc.get("geoname")
+          val asciiName = resource.getAsJsonObject.get("asciiName").getAsString
+          val name = resource.getAsJsonObject.get("name").getAsString
+          val lat = resource.getAsJsonObject.get("latitude").getAsDouble
+          val lon = resource.getAsJsonObject.get("longitude").getAsDouble
+          val country = resource.getAsJsonObject.get("primaryCountryName").getAsString
+          val offset = doc.get("location").getAsJsonObject.get("position").getAsInt
+          val population = resource.getAsJsonObject.get("population").getAsInt
+          extractInformation(docIterator, results :+ new Location(name,asciiName,lat,lon, population, country, offset))
+        }
+      }
 
-    List()
+      extractInformation(resolvedLocations)
     } catch {
       case e: Exception => println("Error on parsing clavin response: " + e); List()
     }
@@ -40,4 +58,4 @@ class ClavinClient {
 
 }
 
-case class Location(asciiName: String, lat: Double, lon: Double)
+case class Location(name: String, asciiName: String, lat: Double, lon: Double, population: Int, country: String, offset: Int)
