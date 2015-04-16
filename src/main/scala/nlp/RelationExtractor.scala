@@ -9,10 +9,9 @@ class RelationExtractor {
 
   val openie = new OpenIE()
 
-  //TODO extract context
-  def extractRelations(s: String) = {
+  def extractRelations(sentences: String): Seq[Relation] = {
 
-    val result = openie.extract(s)
+    val result = openie.extract(sentences)
 
     def matchArgType(arg: Any): String = {
       arg match {
