@@ -82,19 +82,23 @@ public class StanfordAnnotator {
         Map<Integer, CorefChain> graph =
                 document.get(CorefCoreAnnotations.CorefChainAnnotation.class);
 
-        /*
+        Set<Integer> keySet = graph.keySet();
         for(Integer key: keySet) {
 
-            CorefChain c =  graph.get(key);
+            CorefChain c = graph.get(key);
             System.out.println("ClusterId: " + key);
             CorefChain.CorefMention cm = c.getRepresentativeMention();
-            System.out.println("Representative Mention: " + cm.startIndex+ "   " +  cm.endIndex);
+            System.out.println("Representative Mention: " + cm.startIndex + "   " + cm.endIndex);
 
             List<CorefChain.CorefMention> cms = c.getMentionsInTextualOrder();
-            for(CorefChain.CorefMention myC : cms)System.out.println(myC);
+            for (CorefChain.CorefMention myC : cms){
+                System.out.println(myC.mentionSpan);
+                System.out.println(myC.startIndex);
+                System.out.println(myC.sentNum);
+            }
 
 
-        */
+        }
         return new StanfordAnnotation(sentenceSentiment, sentencesPos, graph, tokenizedSentences);
     }
 
