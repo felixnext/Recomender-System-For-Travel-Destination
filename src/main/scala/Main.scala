@@ -28,13 +28,20 @@ object Main  extends App{
   val l = "Paris is a nice cite."
   println(clavin.extractLocations(s))
 
-  val spotlightClient = new SpotlightClient
-  println(spotlightClient.discoverEntities(s))
 
   val openie = new RelationExtractor
   println(openie.extractRelations(s))
 
+
+  val spotlightClient = new SpotlightClient
+  println(spotlightClient.discoverEntities(s))
+
   */
 
-
+/*
+  val openie = new RelationExtractor
+  openie.extractRelations(s).foreach{
+    c => println(c)
+  }
+*/
 }
