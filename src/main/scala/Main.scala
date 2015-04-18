@@ -7,7 +7,7 @@ import dbpedia.{SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 
 import elasticsearch.ElasticsearchClient
-import nlp.{RelationExtractor, StanfordAnnotator}
+import nlp.{SparqlQueryCreator, RelationExtractor, StanfordAnnotator}
 
 object Main  extends App{
 
@@ -20,12 +20,10 @@ object Main  extends App{
   //stanford.annotateText(s + "bla")
   */
 
-  val l1 = List(1,2,3)
-  val l2 = List(1,2,3)
+  val query = new SparqlQueryCreator
+  query.createSprqlQuery(s)
 
-  for(x <- l1; y <- l2) println(x + " " + y)
-
-
+  /*
   val clavin = new ClavinClient()
   val l = "Paris is a nice cite."
   println(clavin.extractLocations(s))
@@ -35,6 +33,8 @@ object Main  extends App{
 
   val openie = new RelationExtractor
   println(openie.extractRelations(s))
+
+  */
 
 
 }

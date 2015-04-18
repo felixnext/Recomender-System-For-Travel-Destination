@@ -7,14 +7,12 @@ import dbpedia.{SpotlightClient, SpotlightResult}
 import edu.stanford.nlp.dcoref.CorefChain
 import edu.stanford.nlp.trees.Tree
 import elasticsearch.ElasticsearchClient
-import tools.Levenshtein
 
 import scala.annotation.tailrec
+import scala.collection.convert.wrapAsScala._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-
-import scala.collection.convert.wrapAsScala._
-
+import scala.concurrent.duration._
 import scala.math._
 
 
@@ -76,18 +74,37 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
   def createSprqlQuery(text: String): Unit = {
 
     //spotlight analysis
-    val spotlightAnnotation = future {spotlight.discoverEntities(text)}
+    val spotlightAnnotation = future {
+      spotlight.discoverEntities(text)
+    }
     for (e <- spotlightAnnotation.failed) println("Relation extraction failed. Cannot create sparql query" + e)
 
     //clavin, stanford and opnie
     val annotatedText = analyzeText(text)
+    for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
+
 
     //replaces stanford pos tags with patty tags
-    val posRelations = annotatedText.map(x => posRelAnnotation(x.stanford.sentencesPos,x.relations))
+    val posRelations = annotatedText.map(x => posRelAnnotation(x.stanford.sentencesPos, x.relations))
+    for (e <- posRelations.failed) println("POS annotation failed. Cannot create sparql query" + e)
 
     //maps raw relations into patty dbpedia predicates
-    val pattyRelations = posRelations.map{posRel =>
+    val pattyRelations = posRelations.map { posRel =>
       posRel.map(sentence => sentence.map(relation => elastic.findPattyRelation(relation.rel)))
+    }
+    for (e <- pattyRelations.failed) println("Patty relation retrival failed. Cannot create sparql query" + e)
+
+    val entityCAndidatesAnnotation = for {
+      p <- posRelations
+      ann <- annotatedText
+      sp <- spotlightAnnotation
+    } yield {
+        createEntityCandidates(p, sp, ann.clavin, ann.stanford.coreference)
+      }
+    for (e <- entityCAndidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
+
+    Await.result(posRelations, 1000 seconds).foreach {
+      case x => println(x)
     }
 
 
@@ -106,17 +123,19 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
   //Takes relations and replace predicates with patty pos tags
-  def posRelAnnotation(sentencesPos: Array[String], relations: Array[Seq[Relation]]):  Array[Seq[Relation]] = {
+  def posRelAnnotation(sentencesPos: Array[String], relations: Array[Seq[Relation]]): Array[Seq[Relation]] = {
 
     //split each word in sentece on "/". This converts words form word/pos into tuple (word,pos)
-    val sentences: Array[Array[(String, String)]] = sentencesPos.map { x => x.split(" ").map { x =>
-      val split = x.split("/")
-      try {
-        (split(0), split(1))
-      } catch {
-        case e: Exception => (split(0), "")
+    val sentences: Array[Array[(String, String)]] = sentencesPos.map { x =>
+      x.split(" ").map { x =>
+        val split = x.split("/")
+        try {
+          (split(0), split(1))
+        } catch {
+          case e: Exception => (split(0), "")
+        }
       }
-    }}
+    }
 
     //Annotate with patty tag names
     //sentence: Seq[(Word,Tag)]
@@ -128,20 +147,20 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       val slidingOverSentence = sentence.sliding(relationWords.size)
 
       //if contains patty tag, than replace word with pos tag else take a word
-      val posTaggedRelationList = for (subSentence <- slidingOverSentence if subSentence.map(s => s._1) == relationWords) yield {
-        subSentence.map(tuple =>
-          if (mapToPattyTags.keySet.contains(tuple._2)) mapToPattyTags.get(tuple._2)
-          else tuple._1
-        )
+      val posTaggedRelationList: Iterator[Array[String]] = for (subSentence <- slidingOverSentence if subSentence.map(t => t._1).sameElements(relationWords)) yield {
+        subSentence.map(t =>  mapToPattyTags.getOrElse(t._2, t._1))
       }
-      new Relation(relation.arg1, posTaggedRelationList.toString(), relation.relOffset, relation.arg2)
+
+      val relTagged = if (posTaggedRelationList.isEmpty) relation.rel else posTaggedRelationList.next().reduce((a,b) => a + " " + b)
+
+      new Relation(relation.arg1, relTagged, relation.relOffset, relation.arg2)
     }
 
     //iterate over all sentence and relations
-    val posRelations: Array[Seq[Relation]] = for (sentence <- sentences; relationsPerSentence <- relations) yield {
-      relationsPerSentence.map {
-        relation => annotatePos(relation, sentence)
-      }
+    val posRelations: Array[Seq[Relation]] = for (sr <- sentences.zip(relations)) yield {
+      val sentence = sr._1
+      val relation = sr._2
+      relation.map { r => annotatePos(r, sentence) }
     }
 
     posRelations
@@ -149,28 +168,28 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
   def createEntityCandidates(relations: Array[Seq[Relation]], spotlightResult: List[SpotlightResult],
-                             clavinResult: List[Location], coreference: util.Map[Integer, CorefChain]) ={
+                             clavinResult: List[Location], coreference: util.Map[Integer, CorefChain]) = {
     //get all key of coref clusters
     //value coresponds to cluster id
     val keys: java.util.Set[Integer] = coreference.keySet()
 
     //creates a new RelationTree object, fills the object with relations and groups relations with coreference argument together
     @tailrec
-    def traverseRelationSentences(iterator: Iterator[Seq[Relation]], sentenceCounter: Int = 1, tree:RelationTree = new RelationTree): RelationTree = {
-      if(!iterator.hasNext) tree
+    def traverseRelationSentences(iterator: Iterator[Seq[Relation]], sentenceCounter: Int = 1, tree: RelationTree = new RelationTree): RelationTree = {
+      if (!iterator.hasNext) tree
       else {
         val senteceRel = iterator.next()
-        
+
         //TODO Yago
 
-        for(rel <- senteceRel) {
+        for (rel <- senteceRel) {
           //relation loop
           //if arg1 of relation is in coref than corefID else -1
           //List(1,2,1,-1,-1,-1)
-          val keysInRelation =  for(key <- keys) yield {
-            val c: CorefChain =  coreference.get(key)
+          val keysInRelation = for (key <- keys) yield {
+            val c: CorefChain = coreference.get(key)
             val cms: java.util.List[CorefChain.CorefMention] = c.getMentionsInTextualOrder
-            val r: Int = cms.find(cm => cm.sentNum == sentenceCounter && containsTest(cm.mentionSpan,rel.arg1.arg)) match {
+            val r: Int = cms.find(cm => cm.sentNum == sentenceCounter && containsTest(cm.mentionSpan, rel.arg1.arg)) match {
               case Some(x) => key.intValue()
               case None => -1 //Default cluster id
             }
@@ -178,29 +197,30 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
           }
 
           //converts List(1,2,1,-1,3,-1) to set Set(1,2,3,-1)
-          val reducedClusterIds = keysInRelation.foldLeft(Set(-1))((a,b) => a + b)
+          val reducedClusterIds = keysInRelation.foldLeft(Set(-1))((a, b) => a + b)
 
           //annotates with clavin and spotlight result if exists
           val annotatedRel = {
-            val spotlight = spotlightResult.find(x =>
-              intersect(x.offset, x.offset + x.surfaceForm.length,rel.arg1.argOffset._1,rel.arg1.argOffset._2))
-            val location = clavinResult.find(x =>
-              intersect(x.offset, x.offset + x.asciiName.length,rel.arg1.argOffset._1,rel.arg1.argOffset._2))
+            def intersect(aStart: Int, aEnd: Int, bStart: Int, bEnd: Int) = max(aStart, bStart) < min(aEnd, bEnd)
 
-            def intersect(aStart: Int, aEnd: Int, bStart: Int, bEnd: Int) = max(aStart,bStart) < min(aEnd,bEnd)
+            val spotlight = spotlightResult.find(x =>
+              intersect(x.offset, x.offset + x.surfaceForm.length, rel.arg1.argOffset._1, rel.arg1.argOffset._2))
+
+            val location = clavinResult.find(x =>
+              intersect(x.offset, x.offset + x.asciiName.length, rel.arg1.argOffset._1, rel.arg1.argOffset._2))
 
             new AnnontatedRelation(spotlight = spotlight, clavin = location, relation = rel)
           }
 
-          if(reducedClusterIds.size == 1) {
+          if (reducedClusterIds.size == 1) {
             //No coreference found
-            val relSet = tree.map.getOrElse( -1, Set()) + annotatedRel
+            val relSet = tree.map.getOrElse(-1, Set()) + annotatedRel
             tree.map.+=(-1 -> relSet)
           } else {
             //some coreference found
-            (reducedClusterIds - -1).foreach{
+            (reducedClusterIds - -1).foreach {
               case id => val relSet = tree.map.getOrElse(id, Set()) + annotatedRel
-              tree.map.+=(id -> relSet)
+                tree.map.+=(id -> relSet)
             }
           }
 
@@ -210,7 +230,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       }
     }
 
-    def containsTest(a: String, b:String) = if(a.length < b.length) b.contains(a) else a.contains(b)
+    def containsTest(a: String, b: String) = if (a.length < b.length) b.contains(a) else a.contains(b)
 
     val tree = traverseRelationSentences(relations.iterator)
 
@@ -229,4 +249,4 @@ case class StanfordAnnotation(sentimentTree: Array[Tree], sentencesPos: Array[St
 //Convention: Cluster id = -1 means no coreference is known
 case class RelationTree(map: scala.collection.mutable.Map[Int, Set[AnnontatedRelation]] = scala.collection.mutable.Map())
 
-case class AnnontatedRelation(spotlight: Option[SpotlightResult] = None , clavin: Option[Location] = None, relation: Relation)
+case class AnnontatedRelation(spotlight: Option[SpotlightResult] = None, clavin: Option[Location] = None, relation: Relation)
