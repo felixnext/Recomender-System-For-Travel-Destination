@@ -55,13 +55,14 @@ trait TextAnalyzerPipeline {
       s <- stanfordAnnotation
       r <- rawRel
     } yield {
-      val sentenceBoundaries = s.tokenizedSentences.foldLeft(0,List[(Int,Int)]())((t,s) => (t._1 + s.length + 1, t._2 :+ (t._1,t._1 + s.length) ))._2
+      val sentenceBoundaries = s.tokenizedSentences.foldLeft(0,List[(Int,Int)]())((t,s) =>
+        (t._1 + s.length + 1, t._2 :+ (t._1,t._1 + s.length) ))._2
       val groups: Map[(Int,Int),Seq[Relation] ] = sentenceBoundaries.map(x => x -> Seq[Relation]()).toMap
 
       val occupiedGroups = r.foldLeft(groups){
         (tmpGroups,x) =>
           val minOffset = Seq(x.arg1.argOffset._1,x.relOffset._1, x.arg2.map(x => x.argOffset._1).min).min
-          val maxOffset = Seq(x.arg1.argOffset._2,x.relOffset._2, x.arg2.map(x => x.argOffset._2).min).min
+          val maxOffset = Seq(x.arg1.argOffset._2,x.relOffset._2, x.arg2.map(x => x.argOffset._2).max).max
           val newGroups = tmpGroups.keySet.find(x => x._1.<=(minOffset) && maxOffset < x._2) match {
             case Some(key) => tmpGroups + (key -> (tmpGroups.getOrElse(key,Seq()) :+ x) )
             case _ => tmpGroups
@@ -181,11 +182,14 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       val slidingOverSentence = sentence.sliding(relationWords.size)
 
       //if contains patty tag, than replace word with pos tag else take a word
-      val posTaggedRelationList: Iterator[Array[String]] = for (subSentence <- slidingOverSentence if subSentence.map(t => t._1).sameElements(relationWords)) yield {
+      val posTaggedRelationList: Iterator[Array[String]] = for (subSentence <- slidingOverSentence
+                                                                if subSentence.map(t => t._1).sameElements(relationWords))
+        yield {
         subSentence.map(t =>  mapToPattyTags.getOrElse(t._2, t._1))
       }
 
-      val relTagged = if (posTaggedRelationList.isEmpty) relation.rel else posTaggedRelationList.next().reduce((a,b) => a + " " + b)
+      val relTagged = if (posTaggedRelationList.isEmpty) relation.rel
+      else posTaggedRelationList.next().reduce((a,b) => a + " " + b)
 
       new Relation(relation.arg1, relTagged, relation.relOffset, relation.arg2)
     }
@@ -202,22 +206,21 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
   def createEntityCandidates(relations: Array[Seq[Relation]], spotlightResult: List[SpotlightResult],
-                             clavinResult: List[Location], coreference: util.Map[Integer, CorefChain], sentences: Array[Array[(String, String)]]): RelationTree = {
+                             clavinResult: List[Location], coreference: util.Map[Integer, CorefChain],
+                             sentences: Array[Array[(String, String)]]): RelationTree = {
     //get all key of coref clusters
     //value coresponds to cluster id
     val keys: java.util.Set[Integer] = coreference.keySet()
-
-    println("Number of relations: " + relations.flatten.size)
 
     def intersect(aStartEnd: (Int,Int) , bStartEnd: (Int,Int) ) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
     //creates a new RelationTree object, fills the object with relations and groups relations with coreference argument together
     @tailrec
-    def traverseRelationSentences(iterator: Iterator[Seq[Relation]], sentenceCounter: Int = 1, tree: RelationTree = new RelationTree): RelationTree = {
+    def traverseRelationSentences(iterator: Iterator[Seq[Relation]], sentenceCounter: Int = 1,
+                                  tree: RelationTree = new RelationTree): RelationTree = {
       if (!iterator.hasNext) tree
       else {
         val senteceRel = iterator.next()
-        println("CALL")
 
         //TODO Yago
 
@@ -228,8 +231,10 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int,Int) = {
           try{
             val sentenceOffset = charsPerSentence.dropRight(charsPerSentence.length + 1 - sentenceNr).sum
-            val startOffset = sentencesRaw(sentenceNr - 1).slice(0,tokenBegin - 1).map(a => a.length).foldLeft(0)((a,b) => a + b + 1) + sentenceOffset
-            val endOffsset = sentencesRaw(sentenceNr - 1).slice(tokenBegin - 1, tokenEnd -1).map(a => a.length).foldLeft(0)((a,b) => a + b + 1) + startOffset
+            val startOffset = sentencesRaw(sentenceNr - 1).slice(0,tokenBegin - 1).map(a => a.length).
+              foldLeft(0)((a,b) => a + b + 1) + sentenceOffset
+            val endOffsset = sentencesRaw(sentenceNr - 1).slice(tokenBegin - 1, tokenEnd -1).map(a => a.length)
+              .foldLeft(0)((a,b) => a + b + 1) + startOffset
             (startOffset,endOffsset)
           } catch {
             case e: Exception => (-1,-1)
@@ -245,7 +250,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
             val c: CorefChain = coreference.get(key)
             val cms: java.util.List[CorefChain.CorefMention] = c.getMentionsInTextualOrder
             val r: Int = cms.find(cm => cm.sentNum == sentenceCounter &&
-              intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan), rel.arg1.argOffset) ) match {
+              intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
+                rel.arg1.argOffset) ) match {
               case Some(x) => key.intValue()
               case None => -1 //Default cluster id
             }
@@ -318,12 +324,14 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 }
 
 //relations are annotated per sentence.
-case class AnnotatedText(relations: Array[Seq[Relation]], clavin: List[Location], stanford: StanfordAnnotation, spotlight: List[SpotlightResult])
+case class AnnotatedText(relations: Array[Seq[Relation]], clavin: List[Location], stanford: StanfordAnnotation,
+                         spotlight: List[SpotlightResult])
 
 /**
  * It is a container for stanford core nlp annotation.
  */
-case class StanfordAnnotation(sentimentTree: Array[Tree], sentencesPos: Array[String], coreference: util.Map[Integer, CorefChain], tokenizedSentences: Array[String])
+case class StanfordAnnotation(sentimentTree: Array[Tree], sentencesPos: Array[String], coreference: util.Map[Integer,
+  CorefChain], tokenizedSentences: Array[String])
 
 //Convention: Cluster id = -1 means no coreference is known
 case class RelationTree(map: scala.collection.mutable.Map[Int, Set[AnnontatedRelation]] = scala.collection.mutable.Map())
