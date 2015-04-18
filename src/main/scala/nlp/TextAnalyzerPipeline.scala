@@ -63,7 +63,7 @@ trait TextAnalyzerPipeline {
         (tmpGroups,x) =>
           val minOffset = Seq(x.arg1.argOffset._1,x.relOffset._1, x.arg2.map(x => x.argOffset._1).min).min
           val maxOffset = Seq(x.arg1.argOffset._2,x.relOffset._2, x.arg2.map(x => x.argOffset._2).max).max
-          val newGroups = tmpGroups.keySet.find(x => x._1.<=(minOffset) && maxOffset < x._2) match {
+          val newGroups = tmpGroups.keySet.find(x => x._1.<=(minOffset) && maxOffset <= x._2) match {
             case Some(key) => tmpGroups + (key -> (tmpGroups.getOrElse(key,Seq()) :+ x) )
             case _ => tmpGroups
           }
