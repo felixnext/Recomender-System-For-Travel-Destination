@@ -16,6 +16,7 @@ class SpotlightClient {
   val url = Config.spotlightUrl
   val confidence = Config.spotlightConfidence
   val support = Config.spotlightSupport
+  println("CONFIDENCE: " + confidence)
 
   //tests: if request timeouts occur, number of tryings
   //assumption: the desired entities are of type location

@@ -166,6 +166,9 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     //TODO create query
 
 
+    //TODO Yago
+
+
   }
 
 
@@ -221,8 +224,6 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       if (!iterator.hasNext) tree
       else {
         val senteceRel = iterator.next()
-
-        //TODO Yago
 
         val sentencesRaw: Array[Array[String]] = sentences.map(x => x.map(x => x._1))
         val charsPerSentence: Array[Int] = sentencesRaw.map(x => x.length - 1 + x.foldLeft(0)((l,c) => l + c.length))
