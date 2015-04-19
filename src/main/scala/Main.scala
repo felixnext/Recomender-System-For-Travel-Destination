@@ -20,10 +20,10 @@ object Main  extends App{
   stanford.annotateText(s)
   //stanford.annotateText(s + "bla")
   */
-
+  /*
   val query = new SparqlQueryCreator
   query.createSprqlQuery(s)
-
+*/
   /*
   val clavin = new ClavinClient()
   val l = "Paris is a nice cite."
@@ -45,4 +45,10 @@ object Main  extends App{
     c => println(c)
   }
 */
+
+  val elastic = new ElasticsearchClient
+  elastic.findDBPediaProperties("located in").foreach{
+    x => println(x)
+  }
+
 }

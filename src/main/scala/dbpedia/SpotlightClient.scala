@@ -16,18 +16,19 @@ class SpotlightClient {
   val url = Config.spotlightUrl
   val confidence = Config.spotlightConfidence
   val support = Config.spotlightSupport
-  println("CONFIDENCE: " + confidence)
 
   //tests: if request timeouts occur, number of tryings
   //assumption: the desired entities are of type location
   //return: Result as json string
   def requestLocation(text: String, tests: Int = 3): List[SpotlightResult]  = {
-    discoverEntities(text, paramsArg = Map("confidence" -> s"$confidence", "text" -> text, "support" -> s"$support", "types" -> "Place,YagoGeoEntity,SpatialThing"))
+    discoverEntities(text, paramsArg = Map("confidence" -> s"$confidence", "text" -> text,
+      "support" -> s"$support", "types" -> "Place,YagoGeoEntity,SpatialThing"))
   }
 
   
   //Finds all entities in text
-  def discoverEntities(text:String, tests: Int = 3, paramsArg: Map[String,String] = Map("confidence" -> s"$confidence","support" -> s"$support")):  List[SpotlightResult]  = {
+  def discoverEntities(text:String, tests: Int = 3, paramsArg: Map[String,String] = Map("confidence" -> s"$confidence",
+    "support" -> s"$support")):  List[SpotlightResult]  = {
     try {
       //REST api request
       val response: HttpResponse[String] = Http(url + "/rest/annotate")
@@ -36,7 +37,7 @@ class SpotlightClient {
       parseResponse(response.body)
     } catch {
       case e: java.net.SocketTimeoutException =>
-        println(e)
+        println("Exception in spotlight request: " + e)
         if(tests != 0) requestLocation(text, tests - 1)
         else List()
       case e: HttpException =>
@@ -44,7 +45,7 @@ class SpotlightClient {
         Thread.sleep(1000)
         if(tests != 0) requestLocation(text, tests - 1)
         else List()
-      case e: Exception => println(e); List()
+      case e: Exception => println("Exception in spotlight request: " + e); List()
     }
   }
 

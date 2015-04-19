@@ -7,7 +7,6 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import akka.event.Logging
 
 /**
  * Takes a text and creates corresponding sparql query w.r.t focus of text.
@@ -25,7 +24,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
 
     //split each word in sentece on "/". This converts words form word/pos into tuple (word,pos)
-    val tokenizedSentensesPos:Future[Array[Array[(String, String)]]] = annotatedText.map{ x =>
+    //TODO make method
+    val tokenizedSentensesPos: Future[Array[Array[(String, String)]]] = annotatedText.map{ x =>
       x.stanford.sentencesPos.map { x =>
         x.split(" ").map { x =>
           val split = x.split("/")
@@ -47,7 +47,6 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         posRelAnnotation(s, ann.relations)
       }
 
-
     for (e <- posRelations.failed) println("POS annotation failed. Cannot create sparql query" + e)
 
     //maps raw relations into patty dbpedia predicates
@@ -65,7 +64,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       }
     for (e <- entityCandidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
 
-
+    //maps raw relations into patty dbpedia predicates
     val pattyAnnotation = entityCandidatesAnnotation.map{c =>
       c.groupsMap.map(k => (k._1, k._2.map(r => new AnnontatedRelation(r.arg1,r.rel,r.relOffset,r.arg2,Some(elastic.findPattyRelation(r.rel)))
       )))
@@ -78,9 +77,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
 
-    //TODO finds focus with coreference and extend entitiy candidates
 
-    //TODO combine patty predicates and annotated entities
+    //TODO finds focus with coreference and extend entitiy candidates
 
     //TODO create query
 

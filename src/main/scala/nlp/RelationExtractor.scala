@@ -3,12 +3,13 @@ package nlp
 import edu.knowitall.openie.{OpenIE, SimpleArgument, SpatialArgument, TemporalArgument}
 
 /**
- * Created by yevgen on 12.04.15.
+ * Extracts relation from raw text with help of openie util.
  */
 class RelationExtractor {
 
   val openie = new OpenIE()
 
+  //extracts relations and returns a seq of relations
   def extractRelations(sentences: String): Seq[Relation] = {
 
     val result = openie.extract(sentences)

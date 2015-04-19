@@ -70,7 +70,7 @@ public class StanfordAnnotator {
             }
 
             sentencesPos[i] = sb.toString();
-            System.out.println(sb.toString());
+            //System.out.println(sb.toString());
             tokenizedSentences[i] = sentence.toString();
 
             Tree sentimentTree = sentence.get(SentimentCoreAnnotations.AnnotatedTree.class);

@@ -206,6 +206,55 @@ class ElasticsearchClient {
     }
   }
 
+  //returns all relevant dbpedia properties uris w.r.t. given relation text
+  def findDBPediaProperties(relation: String, topK: Int = 10, from: Int = 0) = {
+    val lowercase = relation.toLowerCase
+    val jsonQuery =
+      s"""
+         |{
+         |  "from":"$from",
+         |  "size":"$topK",
+         |  "query":{
+         |      "match":{
+         |      "text_relation":{
+         |      "query":"$lowercase",
+         |      "minimum_should_match":"30%"
+         |      }
+         |     }
+         |   }
+         | }
+       """.stripMargin
+
+    parseDBpediaPropsResult(request(jsonQuery,"dbpedia_pred"))
+  }
+
+  //parses the dbpedia properties response and returns a list of retried uris of relations
+  //if any relation were found, the list is empty
+  def parseDBpediaPropsResult(response: String) = {
+    try {
+      val jsonRoot = new Gson().fromJson(response, classOf[JsonObject])
+      val jsonHits = jsonRoot.get("hits").getAsJsonObject
+      val jsonHitsResults = jsonHits.get("hits").getAsJsonArray.iterator()
+
+      @tailrec
+      def extractData(docIterator: java.util.Iterator[JsonElement], relations: List[DBPediaProps] = List()): List[DBPediaProps] = {
+        if( !docIterator.hasNext) relations
+        else {
+          val result = docIterator.next().getAsJsonObject
+          val score = result.get("_score").getAsDouble
+          val dbpedia = result.get("_source").getAsJsonObject.get("dbpedia_uri").getAsString
+          val relation = result.get("_source").getAsJsonObject.get("text_relation").getAsString
+          val newList  = relations :+ new DBPediaProps(dbpedia,relation,score)
+          extractData(docIterator, newList)
+        }
+      }
+
+      extractData(jsonHitsResults)
+    } catch {
+      case e: Exception => println("Error occurred during patty response parsing: " + e); List()
+    }
+  }
+
   //makes elastic search request
   //index that should be used for search
   def request(jsonQuery: String, index: String): String = {
@@ -216,6 +265,7 @@ class ElasticsearchClient {
       case e: Exception => println("Elasticsearch request exception" + e); "{}"
     }
   }
+
 }
 
 
@@ -234,3 +284,7 @@ case class ElasticLocationDoc(var title: Option[String] = None,var  country: Opt
  * Represents founded patty relation
  */
 case class PattyRelation(dbpediaRelation: String, rawTextRelation: String, score: Double)
+/**
+ * Represents founded DBPedia uri of relation
+ */
+case class DBPediaProps(dbpediaUri: String, rawTextRelation: String, score: Double)

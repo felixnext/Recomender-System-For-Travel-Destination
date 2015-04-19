@@ -1,4 +1,4 @@
-package nlp
+package dbpedia
 
 /**
  * Created by yevgen on 13.04.15.
