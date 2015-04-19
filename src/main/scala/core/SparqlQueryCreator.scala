@@ -66,8 +66,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
     //maps raw relations into patty dbpedia predicates
     val pattyAnnotation = entityCandidatesAnnotation.map{c =>
-      c.groupsMap.map(k => (k._1, k._2.map(r => new AnnontatedRelation(r.arg1,r.rel,r.relOffset,r.arg2,Some(elastic.findPattyRelation(r.rel)))
-      )))
+      c.groupsMap.map(k => (k._1, k._2.map(r => new AnnontatedRelation(r.arg1,r.rel,r.relOffset,r.arg2,
+        Some(elastic.findPattyRelation(r.rel._2)), Some(elastic.findDBPediaProperties(r.rel._1))))))
     }
 
     Await.result(pattyAnnotation, 1000 seconds).foreach{
@@ -84,6 +84,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
     //TODO Yago
 
+    //TODO test lookup similarity with levenstein
+
   }
 
 
@@ -96,7 +98,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       val mapToPattyTags = Map("CD" -> "[[num]]", "DT" -> "[[det]]", "PRP" -> "[[prp]]",
         "JJ" -> "[[adj]]", "MD" -> "[[mod]]", "IN" -> "[[con]]", "CC" -> "[[con]]")
 
-      val relationWords = relation.rel.split(" ")
+      val relationWords = relation.rel._1.split(" ")
       val slidingOverSentence = sentence.sliding(relationWords.size)
 
       //if contains patty tag, than replace word with pos tag else take a word
@@ -106,10 +108,10 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
           subSentence.map(t =>  mapToPattyTags.getOrElse(t._2, t._1))
         }
 
-      val relTagged = if (posTaggedRelationList.isEmpty) relation.rel
+      val relTagged: String = if (posTaggedRelationList.isEmpty) relation.rel._1
       else posTaggedRelationList.next().reduce((a,b) => a + " " + b)
 
-      new Relation(relation.arg1, relTagged, relation.relOffset, relation.arg2)
+      new Relation(relation.arg1, (relation.rel._1, relTagged), relation.relOffset, relation.arg2)
     }
 
     //iterate over all sentence and relations

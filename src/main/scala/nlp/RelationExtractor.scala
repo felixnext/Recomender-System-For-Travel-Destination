@@ -29,7 +29,7 @@ class RelationExtractor {
       val argType = matchArgType(res.extraction.arg1)
       val arg1 = new Argument(arg1Text, argType, arg1Offset)
       val arg2 = res.extraction.arg2s.map(arg2 => new Argument(arg2.text, matchArgType(arg2), (arg2.offsets.head.start, arg2.offsets.head.end)))
-      new Relation(arg1, res.extraction.rel.text, (res.extraction.rel.offsets.head.start, res.extraction.rel.offsets.head.end), arg2)
+      new Relation(arg1, (res.extraction.rel.text,"") , (res.extraction.rel.offsets.head.start, res.extraction.rel.offsets.head.end), arg2)
     }
 
     relations
@@ -38,6 +38,7 @@ class RelationExtractor {
 
 case class OpenieResponse(result: Seq[Relation])
 
-case class Relation(arg1: Argument, rel: String, relOffset: (Int, Int), arg2: Seq[Argument])
+//in relation tuple (String, String) the first argument is a original relation string and the second one a pos tagged relation
+case class Relation(arg1: Argument, rel: (String, String), relOffset: (Int, Int), arg2: Seq[Argument])
 
 case class Argument(arg: String, argType: String, argOffset: (Int, Int))

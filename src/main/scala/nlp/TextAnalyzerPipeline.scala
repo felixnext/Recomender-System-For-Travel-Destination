@@ -6,7 +6,7 @@ import clavin.{ClavinClient, Location}
 import dbpedia.{DBPediaLookup, LookupResult, SpotlightClient, SpotlightResult}
 import edu.stanford.nlp.dcoref.CorefChain
 import edu.stanford.nlp.trees.Tree
-import elasticsearch.PattyRelation
+import elasticsearch.{DBPediaProps, PattyRelation}
 
 import scala.annotation.tailrec
 import scala.collection.convert.wrapAsScala._
@@ -224,8 +224,8 @@ case class StanfordAnnotation(sentimentTree: Array[Tree], sentencesPos: Array[St
 case class RelationTree(groupsMap: scala.collection.mutable.Map[Int, Set[AnnontatedRelation]] = scala.collection.mutable.Map())
 
 //contains candidate list per relation argument (annotated with dbpedia resourcesd geonames)
-case class AnnontatedRelation(arg1: AnnotatedArgument, rel: String, relOffset: (Int, Int), arg2: Seq[AnnotatedArgument],
-                              pattyResult: Option[List[PattyRelation]] = None )
+case class AnnontatedRelation(arg1: AnnotatedArgument, rel: (String, String), relOffset: (Int, Int), arg2: Seq[AnnotatedArgument],
+                              pattyResult: Option[List[PattyRelation]] = None, dbpediaProps: Option[List[DBPediaProps]] = None )
 
 case class AnnotatedArgument(spotlight: Option[SpotlightResult] = None, clavin: Option[Location] = None,
                              dbpediaLookup: Option[List[LookupResult]] = None,  arg: String, argType: String, argOffset: (Int, Int))

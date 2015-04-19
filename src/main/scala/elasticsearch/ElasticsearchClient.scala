@@ -182,6 +182,9 @@ class ElasticsearchClient {
   //parses the patty index response and returns a list of retried relations
   //if any relation were found, the list is empty
   def parsePattyResult(response: String) = {
+    //converts patty relation into dbpedia uri
+    def pattyToUri(rel: String) = "http://dbpedia.org/ontology/" + rel
+
     try {
         val jsonRoot = new Gson().fromJson(response, classOf[JsonObject])
         val jsonHits = jsonRoot.get("hits").getAsJsonObject
@@ -195,7 +198,7 @@ class ElasticsearchClient {
           val score = result.get("_score").getAsDouble
           val dbpedia = result.get("_source").getAsJsonObject.get("dbpedia_relation").getAsString
           val relation = result.get("_source").getAsJsonObject.get("text_relation").getAsString
-          val newList  = relations :+ new PattyRelation(dbpedia,relation,score)
+          val newList  = relations :+ new PattyRelation(pattyToUri(dbpedia),relation,score)
           extractData(docIterator, newList)
         }
       }

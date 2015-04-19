@@ -3,7 +3,7 @@
  */
 
 import clavin.ClavinClient
-import dbpedia.{SpotlightClient, DBPediaLookup}
+import dbpedia.{YagoGeoTypes, SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 
 import elasticsearch.ElasticsearchClient
@@ -20,10 +20,11 @@ object Main  extends App{
   stanford.annotateText(s)
   //stanford.annotateText(s + "bla")
   */
-  /*
-  val query = new SparqlQueryCreator
-  query.createSprqlQuery(s)
-*/
+
+
+  //val query = new SparqlQueryCreator
+  //query.createSprqlQuery(s)
+
   /*
   val clavin = new ClavinClient()
   val l = "Paris is a nice cite."
@@ -45,10 +46,11 @@ object Main  extends App{
     c => println(c)
   }
 */
-
+  /*
   val elastic = new ElasticsearchClient
-  elastic.findDBPediaProperties("located in").foreach{
+  elastic.findDBPediaProperties("is a").foreach{
     x => println(x)
   }
-
+   */
+  
 }
