@@ -7,7 +7,8 @@ import dbpedia.{SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 
 import elasticsearch.ElasticsearchClient
-import nlp.{SparqlQueryCreator, RelationExtractor, StanfordAnnotator}
+import nlp.{RelationExtractor, StanfordAnnotator}
+import core.SparqlQueryCreator
 
 object Main  extends App{
 
