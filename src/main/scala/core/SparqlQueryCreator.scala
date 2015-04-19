@@ -1,11 +1,13 @@
 package core
 
 import elasticsearch.ElasticsearchClient
-import nlp.{TextAnalyzerPipeline, Relation}
+import nlp.{AnnontatedRelation, TextAnalyzerPipeline, Relation}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.event.Logging
 
 /**
  * Takes a text and creates corresponding sparql query w.r.t focus of text.
@@ -38,7 +40,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
     //replaces stanford pos tags with patty tags
-    val posRelations = for{
+    val posRelations = for {
       ann <- annotatedText
       s <- tokenizedSentensesPos
     } yield {
@@ -49,38 +51,40 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     for (e <- posRelations.failed) println("POS annotation failed. Cannot create sparql query" + e)
 
     //maps raw relations into patty dbpedia predicates
-    val pattyRelations = posRelations.map { posRel =>
-      posRel.map(sentence => sentence.map(relation => elastic.findPattyRelation(relation.rel)))
-    }
-    for (e <- pattyRelations.failed) println("Patty relation retrival failed. Cannot create sparql query" + e)
+    //val pattyRelations = posRelations.map { posRel =>
+     // posRel.map(sentence => sentence.map(relation => elastic.findPattyRelation(relation.rel)))
+    //}
+    ///for (e <- pattyRelations.failed) println("Patty relation retrival failed. Cannot create sparql query" + e)
 
-    val entityCAndidatesAnnotation = for {
+    val entityCandidatesAnnotation = for {
       p <- posRelations
       s <- tokenizedSentensesPos
       ann <- annotatedText
     } yield {
         createEntityCandidates(p, ann.spotlight, ann.clavin, ann.stanford.coreference, s)
       }
-    for (e <- entityCAndidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
+    for (e <- entityCandidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
 
-    Await.result(entityCAndidatesAnnotation, 1000 seconds).map.foreach{
+
+    val pattyAnnotation = entityCandidatesAnnotation.map{c =>
+      c.groupsMap.map(k => (k._1, k._2.map(r => new AnnontatedRelation(r.arg1,r.rel,r.relOffset,r.arg2,Some(elastic.findPattyRelation(r.rel)))
+      )))
+    }
+
+    Await.result(pattyAnnotation, 1000 seconds).foreach{
       x => println("\n\n" + x._1)
         x._2.foreach(x => println(x))
     }
 
-    //TODO finds focus with coreference and extend entities candidates
 
-    //TODO extand entity candidates with clavin and spotlight
 
-    //TODO the unkown entities should be searched with dbpedia lookup
+    //TODO finds focus with coreference and extend entitiy candidates
 
     //TODO combine patty predicates and annotated entities
 
     //TODO create query
 
-
     //TODO Yago
-
 
   }
 

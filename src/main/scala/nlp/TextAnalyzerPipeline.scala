@@ -6,6 +6,7 @@ import clavin.{ClavinClient, Location}
 import dbpedia.{DBPediaLookup, LookupResult, SpotlightClient, SpotlightResult}
 import edu.stanford.nlp.dcoref.CorefChain
 import edu.stanford.nlp.trees.Tree
+import elasticsearch.PattyRelation
 
 import scala.annotation.tailrec
 import scala.collection.convert.wrapAsScala._
@@ -183,13 +184,13 @@ trait TextAnalyzerPipeline {
 
           if (reducedClusterIds.size == 1) {
             //No coreference found
-            val relSet = tree.map.getOrElse(-1, Set()) + annotatedRel
-            tree.map.+=(-1 -> relSet)
+            val relSet = tree.groupsMap.getOrElse(-1, Set()) + annotatedRel
+            tree.groupsMap.+=(-1 -> relSet)
           } else {
             //some coreference found
             (reducedClusterIds - -1).foreach {
-              case id => val relSet = tree.map.getOrElse(id, Set()) + annotatedRel
-                tree.map.+=(id -> relSet)
+              case id => val relSet = tree.groupsMap.getOrElse(id, Set()) + annotatedRel
+                tree.groupsMap.+=(id -> relSet)
             }
           }
 
@@ -220,10 +221,11 @@ case class StanfordAnnotation(sentimentTree: Array[Tree], sentencesPos: Array[St
   CorefChain], tokenizedSentences: Array[String])
 
 //Convention: Cluster id = -1 means no coreference is known
-case class RelationTree(map: scala.collection.mutable.Map[Int, Set[AnnontatedRelation]] = scala.collection.mutable.Map())
+case class RelationTree(groupsMap: scala.collection.mutable.Map[Int, Set[AnnontatedRelation]] = scala.collection.mutable.Map())
 
 //contains candidate list per relation argument (annotated with dbpedia resourcesd geonames)
-case class AnnontatedRelation(arg1: AnnotatedArgument, rel: String, relOffset: (Int, Int), arg2: Seq[AnnotatedArgument])
+case class AnnontatedRelation(arg1: AnnotatedArgument, rel: String, relOffset: (Int, Int), arg2: Seq[AnnotatedArgument],
+                              pattyResult: Option[List[PattyRelation]] = None )
 
 case class AnnotatedArgument(spotlight: Option[SpotlightResult] = None, clavin: Option[Location] = None,
                              dbpediaLookup: Option[List[LookupResult]] = None,  arg: String, argType: String, argOffset: (Int, Int))
