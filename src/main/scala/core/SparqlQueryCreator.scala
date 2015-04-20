@@ -1,7 +1,7 @@
 package core
 
 import elasticsearch.ElasticsearchClient
-import nlp.{AnnontatedRelation, TextAnalyzerPipeline, Relation}
+import nlp.{OffsetConverter, AnnontatedRelation, TextAnalyzerPipeline, Relation}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -55,12 +55,17 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     //}
     ///for (e <- pattyRelations.failed) println("Patty relation retrival failed. Cannot create sparql query" + e)
 
+    //converts stanfrod sentence offset into char offset
+    val offsetConverter = tokenizedSentensesPos.map(s => new OffsetConverter(s))
+
+
     val entityCandidatesAnnotation = for {
       p <- posRelations
       s <- tokenizedSentensesPos
       ann <- annotatedText
+      offS <- offsetConverter
     } yield {
-        createEntityCandidates(p, ann.spotlight, ann.clavin, ann.stanford.coreference, s)
+        createEntityCandidates(p, ann.spotlight, ann.clavin, ann.stanford.coreference, s, offS)
       }
     for (e <- entityCandidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
 
