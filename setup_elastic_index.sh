@@ -16,6 +16,7 @@ curl -XDELETE 'http://localhost:9200/travellerspoint/'
 curl -XDELETE 'http://localhost:9200/wikitravel/'
 curl -XDELETE 'http://localhost:9200/patty/'
 curl -XDELETE 'http://localhost:9200/dbpedia_pred/'
+curl -XDELETE 'http://localhost:9200/dbpedia_classes/'
 
 #create a index with specific settings: english analyzer
 curl -XPUT 'localhost:9200/wikipedia' -d '
@@ -756,6 +757,24 @@ curl -XPUT 'localhost:9200/dbpedia_pred' -d '
     }
 }'
 
+curl -XPUT 'localhost:9200/dbpedia_classes' -d '
+{
+    "mappings":{
+      "props_mapping":{
+        "properties":{
+          "uri":{
+            "type":"string",
+            "index":"not_analyzed"
+          },
+          "text":{
+            "type":"string",
+            "analyzer":"whitespace"
+          }
+        }
+      }
+    }
+}'
+
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @travellerspoint0.json > travellerspoint_load0.log
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikipedia0.json > wikipedia_load0.log
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikipedia1.json > wikipedia_load1.log
@@ -763,3 +782,4 @@ curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikipedia2.json > wikip
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikitravel0.json > wikitravel_load0.log
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @dbpedia-relation-paraphrases.json > patty_load.log
 curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @DbpediaPred.json > dbpedia_props.log
+curl -XPOST '134.169.32.163:9200/_bulk?pretty' --data-binary @classes.json > dbpedia_classes.log

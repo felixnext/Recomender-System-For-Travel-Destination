@@ -102,6 +102,23 @@ trait TextAnalyzerPipeline {
 
     def intersect(aStartEnd: (Int,Int) , bStartEnd: (Int,Int) ) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
+    val sentencesRaw: Array[Array[String]] = sentences.map(x => x.map(x => x._1))
+    val charsPerSentence: Array[Int] = sentencesRaw.map(x => x.length - 1 + x.foldLeft(0)((l,c) => l + c.length))
+
+    //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
+    def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int,Int) = {
+      try{
+        val sentenceOffset = charsPerSentence.dropRight(charsPerSentence.length + 1 - sentenceNr).sum
+        val startOffset = sentencesRaw(sentenceNr - 1).slice(0,tokenBegin - 1).map(a => a.length).
+          foldLeft(0)((a,b) => a + b + 1) + sentenceOffset
+        val endOffsset = sentencesRaw(sentenceNr - 1).slice(tokenBegin - 1, tokenEnd -1).map(a => a.length)
+          .foldLeft(0)((a,b) => a + b + 1) + startOffset
+        (startOffset,endOffsset)
+      } catch {
+        case e: Exception => (-1,-1)
+      }
+    }
+
     //creates a new RelationTree object, fills the object with relations and groups relations with coreference argument together
     @tailrec
     def traverseRelationSentences(iterator: Iterator[Seq[Relation]], sentenceCounter: Int = 1,
@@ -109,23 +126,6 @@ trait TextAnalyzerPipeline {
       if (!iterator.hasNext) tree
       else {
         val senteceRel = iterator.next()
-
-        val sentencesRaw: Array[Array[String]] = sentences.map(x => x.map(x => x._1))
-        val charsPerSentence: Array[Int] = sentencesRaw.map(x => x.length - 1 + x.foldLeft(0)((l,c) => l + c.length))
-
-        //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
-        def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int,Int) = {
-          try{
-            val sentenceOffset = charsPerSentence.dropRight(charsPerSentence.length + 1 - sentenceNr).sum
-            val startOffset = sentencesRaw(sentenceNr - 1).slice(0,tokenBegin - 1).map(a => a.length).
-              foldLeft(0)((a,b) => a + b + 1) + sentenceOffset
-            val endOffsset = sentencesRaw(sentenceNr - 1).slice(tokenBegin - 1, tokenEnd -1).map(a => a.length)
-              .foldLeft(0)((a,b) => a + b + 1) + startOffset
-            (startOffset,endOffsset)
-          } catch {
-            case e: Exception => (-1,-1)
-          }
-        }
 
         //relation loop
         for (rel <- senteceRel) {

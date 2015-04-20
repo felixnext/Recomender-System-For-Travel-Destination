@@ -1,7 +1,7 @@
 package dbpedia
 
 /**
- * Created by yevgen on 13.04.15.
+ * Representative yago geo types with mapings to uri.
  */
 object YagoGeoTypes {
 
@@ -18,6 +18,7 @@ object YagoGeoTypes {
 
   val keys = types.keySet
 
+  //returns a list of relevant uris or empty lists
   def getYagoEntities(text: String): List[String] = {
     val lower = text.toLowerCase
     types.filterKeys(x => lower.contains(x)).map(k => prefix + k._2).toList

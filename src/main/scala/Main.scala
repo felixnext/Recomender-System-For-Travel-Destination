@@ -22,8 +22,8 @@ object Main  extends App{
   */
 
 
-  //val query = new SparqlQueryCreator
-  //query.createSprqlQuery(s)
+  val query = new SparqlQueryCreator
+  query.createSprqlQuery(s)
 
   /*
   val clavin = new ClavinClient()
@@ -46,11 +46,11 @@ object Main  extends App{
     c => println(c)
   }
 */
-  /*
+/*
   val elastic = new ElasticsearchClient
   elastic.findDBPediaProperties("is a").foreach{
     x => println(x)
   }
-   */
-  
+*/
+
 }
