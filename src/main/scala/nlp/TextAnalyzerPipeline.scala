@@ -6,7 +6,7 @@ import clavin.{ClavinClient, Location}
 import dbpedia.{DBPediaLookup, LookupResult, SpotlightClient, SpotlightResult}
 import edu.stanford.nlp.dcoref.CorefChain
 import edu.stanford.nlp.trees.Tree
-import elasticsearch.{DBPediaProps, PattyRelation}
+import elasticsearch.{DBPediaClass, DBPediaProps, PattyRelation}
 
 import scala.annotation.tailrec
 import scala.collection.convert.wrapAsScala._
@@ -243,6 +243,7 @@ case class AnnontatedRelation(arg1: AnnotatedArgument, rel: (String, String), re
                               pattyResult: Option[List[PattyRelation]] = None, dbpediaProps: Option[List[DBPediaProps]] = None)
 
 case class AnnotatedArgument(spotlight: Option[SpotlightResult] = None, clavin: Option[Location] = None,
-                             dbpediaLookup: Option[List[LookupResult]] = None, arg: String, argType: String, argOffset: (Int, Int))
+                             dbpediaLookup: Option[List[LookupResult]] = None, arg: String, argType: String,
+                             argOffset: (Int, Int), yago: Option[List[String]] = None, lemon: Option[List[DBPediaClass]] = None)
 
 

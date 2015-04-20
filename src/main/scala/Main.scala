@@ -9,12 +9,12 @@ import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, 
 import elasticsearch.ElasticsearchClient
 import nlp.{RelationExtractor, StanfordAnnotator}
 import core.SparqlQueryCreator
+import tools.Levenshtein
 
 object Main  extends App{
 
-  val s = "New York is a state in the Northeastern and Mid-Atlantic regions of the United States. New York won 10 time award of a year. The location is the 27th-most extensive, the fourth-most populous, and the seventh-most densely populated of the 50 United States. The place is bordered by New Jersey and Pennsylvania to the south and Connecticut, Massachusetts, and Vermont to the east. The state has a maritime border with Rhode Island east of Long Island, as well as an international border with the Canadian provinces of Quebec to the north and Ontario to the west and north. The state of New York is often referred to as New York State or the State of New York to distinguish it from New York City, the state's most populous city and its economic hub."
+  val s = "Hamburg is a state in the Northeastern and Mid-Atlantic regions of the United States. New York won 10 time award of a year. New York is the 27th-most extensive, the fourth-most populous, and the seventh-most densely populated of the 50 United States. New York is bordered by New Jersey and Pennsylvania to the south and Connecticut, Massachusetts, and Vermont to the east. The state has a maritime border with Rhode Island east of Long Island, as well as an international border with the Canadian provinces of Quebec to the north and Ontario to the west and north. New York state of that place is often referred to as New York State or the State of New York to distinguish it from New York City, the state's most populous city and its economic hub."
 
-  val a = "do not regret"
   /*
   val stanford = new StanfordAnnotator
   stanford.annotateText(s)
@@ -48,7 +48,13 @@ object Main  extends App{
 */
 /*
   val elastic = new ElasticsearchClient
-  elastic.findDBPediaProperties("is a").foreach{
+  elastic.findDBPediaClasses("New York").foreach{
+    x => println(x)
+  }
+*/
+/*
+  val openie = new RelationExtractor
+  openie.extractRelations(s).foreach{
     x => println(x)
   }
 */

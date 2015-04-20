@@ -19,7 +19,7 @@ class ClavinClient {
   def extractLocations(text: String): List[Location] = {
     try {
       val response: HttpResponse[String] = Http(clavin + "/api/v0/geotag")
-        .header("Content-Type", "text/plain").timeout(connTimeoutMs = 2000, readTimeoutMs = 10000).postData(text).asString
+        .header("Content-Type", "text/plain").timeout(connTimeoutMs = 3000, readTimeoutMs = 10000).postData(text).asString
       parseResponse(response.body)
     } catch {
       case e: Exception => println("Clavin request error: " + e); List()

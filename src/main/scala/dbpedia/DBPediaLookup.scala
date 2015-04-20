@@ -1,9 +1,10 @@
 package dbpedia
 
-import tools.Config
+import tools.{Levenshtein, Config}
 
 import scalaj.http.{Http, HttpResponse}
 import scala.xml._
+import scala.math._
 
 /**
  * DBPedia lookup client. Makes lookup requests and parses responses.
@@ -21,7 +22,7 @@ class DBPediaLookup {
       }
       val response: HttpResponse[String] = Http(url)
         .header("Content-Type", "text/plain").timeout(connTimeoutMs = 2000, readTimeoutMs = 10000).params(requestParam).asString
-      parseResponse(response.body)
+      parseResponse(response.body, label)
     } catch {
       case e: Exception => println("DBPedia lookup request error: " + e); List()
     }
@@ -29,7 +30,8 @@ class DBPediaLookup {
 
 
   //parses the xml response
-  def parseResponse(response: String): List[LookupResult] = {
+  private def parseResponse(response: String, text: String): List[LookupResult] = {
+    val l = new Levenshtein
     try {
       val root = XML.loadString(response)
       val results = (root \ "Result").iterator
@@ -40,7 +42,8 @@ class DBPediaLookup {
           val classes = (x \ "Classes" \ "Class" ).toList.map(node => ((node \ "Label").text,(node \ "URI").text) )
           val categories = (x \ "Categories" \ "Category").toList.map(node => ((node \ "Label").text,(node \ "URI").text))
           val refcount = (x \ "Refcount").text.toInt
-         new LookupResult(label, uri, description, classes, categories, refcount)
+          val score = 1.0 - (l.distance(text,label).toDouble / max(text.length,label.length).toDouble)
+         new LookupResult(label, uri, description, classes, categories, refcount, score)
       }
       parsedResults.toList
     }
@@ -51,4 +54,5 @@ class DBPediaLookup {
 }
 
 //Represents DBpedia lookup response
-case class LookupResult(label: String, uri: String, description: String, classes: List[(String,String)], categories: List[(String,String)], refcount: Int)
+case class LookupResult(label: String, uri: String, description: String, classes: List[(String,String)],
+                        categories: List[(String,String)], refcount: Int, score: Double)
