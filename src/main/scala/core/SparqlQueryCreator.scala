@@ -27,8 +27,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
 
     //split each word in sentece on "/". This converts words form word/pos into tuple (word,pos)
-    //TODO change to method
-    val tokenizedSentensesPos: Future[Array[Array[(String, String)]]] = annotatedText.map { x =>
+    //TODO change to method & move to TextAnalyzerPipeline
+    val tokenizedSentencesPos: Future[Array[Array[(String, String)]]] = annotatedText.map { x =>
       x.stanford.sentencesPos.map { x =>
         x.split(" ").map { x =>
           val split = x.split("/")
@@ -45,7 +45,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     //replaces stanford pos tags with patty tags
     val posRelations = for {
       ann <- annotatedText
-      s <- tokenizedSentensesPos
+      s <- tokenizedSentencesPos
     } yield {
         posRelAnnotation(s, ann.relations)
       }
@@ -53,12 +53,12 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     for (e <- posRelations.failed) println("POS annotation failed. Cannot create sparql query" + e)
 
     //converts stanfrod sentence offset into char offset
-    val offsetConverter = tokenizedSentensesPos.map(s => new OffsetConverter(s))
+    val offsetConverter = tokenizedSentencesPos.map(s => new OffsetConverter(s))
 
 
     val entityCandidatesAnnotation = for {
       p <- posRelations
-      s <- tokenizedSentensesPos
+      s <- tokenizedSentencesPos
       ann <- annotatedText
       offS <- offsetConverter
     } yield {
@@ -77,9 +77,9 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       biggerSets + (-1 -> newUnkownGroup)
     }
 
-    val relationScorer = new NaiveScorer
 
-    val trees = predicateAnnotation.map { relations =>
+    //chains relations thus creates trees
+    val trees: Future[Seq[Tree]] = predicateAnnotation.map { relations =>
       //annotate all entities with dbpedia classes and ygo geo types
       def annRelation(r: AnnontatedRelation) = {
         val arg1Lemon = elastic.findDBPediaClasses(r.arg1.arg)
@@ -99,14 +99,14 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       //if annotation doesn't exists then the attribute remains empty list
       val annRelations = relations.map(x => (x._1, x._2.map(y => annRelation(y))))
 
-      //TODO try to create new groups in unknown group
-      val unknownGroup = annRelations.getOrElse(-1, Seq())
 
       val focusWords = Seq("this", "these", "it", "there", "where", "here", "one", "its")
 
-      val subGroups = scala.collection.mutable.Map[String, Seq[AnnontatedRelation]]()
+      val relationScorer = new NaiveScorer
 
       @tailrec
+      //takes all relations of unknown group and tries to find subgroups on common data
+      //all made decision are supported by some weight, which is stored in tree
       def joinEqualNodes(relations: Seq[AnnontatedRelation], trees: Seq[Tree] = Seq(),
                          focusWordsTree: Option[Map[AnnontatedRelation, Weight]] = None): Seq[Tree] = {
         if (relations.isEmpty) {
@@ -179,28 +179,65 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         (s._1 || c._1 || l._1 || y._1 || d._1, Vector(s._2, c._2, l._2, y._2, d._2).foldLeft(0.0)((g, n) => max(g, n)))
       }
 
-      def chainRelations() = ???
+      val unknownGroupTrees = joinEqualNodes(annRelations.getOrElse(-1, Seq()).toSeq)
 
+      //converts annotate relations into tree with score and append trees of unknown group
+      val trees = annRelations.map(relations =>
+        new Tree(relations._2.map(r => r -> new Weight(relationScorer.calculateRelationScore(r), 1.0)).toMap))
+        .toSeq ++ unknownGroupTrees
 
+      //takes one relation (root) and a set of another relations and tries to chain the root with some relations of the set
+      def chainRelations(root: Tree, trees: Seq[Tree]): Tree = {
+        val relations = root.edges.keySet
+
+        //find some children of given parent based on similarity measure
+        //returns a set of subtrees that have matched the parent
+        @tailrec
+        def findChildren(parent: AnnontatedRelation, trees: Seq[Tree], children: Seq[Tree] = Seq()): Seq[Tree] = {
+          if(trees.isEmpty) children
+          else {
+            val tree = trees.head.edges
+            val endNodes = parent.arg2
+            val comparison = for (t <- tree; n <- endNodes) yield {
+              val c = compareArguments(n, t._1.arg1)
+              (c._1, c._2, t)
+            }
+            val bestMatch = comparison.foldLeft((false, 0.0), None: Option[(AnnontatedRelation, Weight)])((t, c) =>
+              if (c._1 && c._2 > t._1._2) ((c._1,c._2),Some(c._3)) else t)
+            bestMatch._2 match {
+              case Some(r) if bestMatch._1._1 => children :+ new Tree(Map(r._1 -> new Weight(r._2.weight, bestMatch._1._2)))
+              case _ => findChildren(parent,trees.tail, children)
+            }
+          }
+        }
+
+        //for each relation in tree finds some children
+        val children = for(relation <- relations) yield {
+          val children = findChildren(relation, trees)
+          relation -> children
+        }
+        new Tree(root.edges, Some(children.toMap))
+      }
+
+      @tailrec
+      //traverse a seq of relations and chain it with some children
+      def traverseTree(head: Seq[Tree], tail: Seq[Tree], trees: Seq[Tree] = Seq()): Seq[Tree] = {
+        val tree = chainRelations(tail.head, head ++ tail.tail)
+        traverseTree(head :+ tail.head, tail.tail, trees :+ tree)
+      }
+      traverseTree(Nil, trees)
     }
 
 
-    Await.result(predicateAnnotation, 1000 seconds).foreach {
-      x => println("\n\n" + x._1)
-      //x._2.foreach(x => println(x.arg1.arg + " " + x.rel._1 + " " + x.arg2.map(y => y.arg).toString))
+    Await.result(trees, 1000 seconds).foreach{
+      x => println(x)
     }
 
-
-
-    def constructTree() = ???
-
-    //TODO finds focus with coreference and extend entitiy candidates
 
     //TODO create query
 
     //TODO Yago rdf: type
 
-    //TODO test lookup similarity with levenstein
 
   }
 
@@ -251,7 +288,7 @@ abstract class RelationScorer {
  */
 class NaiveScorer extends RelationScorer {
 
-  //calculates score of given relation
+  //calculates max score of given relation
   //score is defined between 0 and 1
   override def calculateRelationScore(r: AnnontatedRelation): Double = {
     def calculateArgScore(r: AnnotatedArgument) = {
@@ -282,7 +319,6 @@ class NaiveScorer extends RelationScorer {
 }
 
 //the double value of the map represents the membership score of relation
-//TODO Vector??
 case class Tree(edges: Map[AnnontatedRelation, Weight], children: Option[Map[AnnontatedRelation, Seq[Tree]]] = None)
 
 case class Weight(weight: Double, factor: Double)
