@@ -19,28 +19,14 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
   val elastic = new ElasticsearchClient
 
-  def createSprqlQuery(text: String): Unit = {
+  def createSparqlQuery(text: String): Unit = {
 
-
-    //clavin, stanford and opnie
+    //clavin, stanford and openie
     val annotatedText = analyzeText(text)
     for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
 
-    //split each word in sentece on "/". This converts words form word/pos into tuple (word,pos)
-    //TODO change to method & move to TextAnalyzerPipeline
-    val tokenizedSentencesPos: Future[Array[Array[(String, String)]]] = annotatedText.map { x =>
-      x.stanford.sentencesPos.map { x =>
-        x.split(" ").map { x =>
-          val split = x.split("/")
-          try {
-            (split(0), split(1))
-          } catch {
-            case e: Exception => (split(0), "")
-          }
-        }
-      }
-    }
-
+    //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
+    val tokenizedSentencesPos: Future[Sentences] = annotatedText.map { x => formatPosSentences(x)}
 
     //replaces stanford pos tags with patty tags
     val posRelations = for {
@@ -176,6 +162,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
             .foldLeft((false, 0.0))((t, r) => if (r._2 > t._2) r else t)
           case _ => (false, 0.0)
         }
+        //TODO blanknodes if equals
         (s._1 || c._1 || l._1 || y._1 || d._1, Vector(s._2, c._2, l._2, y._2, d._2).foldLeft(0.0)((g, n) => max(g, n)))
       }
 
@@ -232,8 +219,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     }
 
 
-    Await.result(trees, 1000 seconds).foreach {
-      x => println(x)
+    Await.result(trees, 1000.seconds).foreach {
+      x => println(x.score)
     }
 
 
@@ -246,7 +233,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
   //Takes relations and replace predicates with patty pos tags
-  def posRelAnnotation(sentences: Array[Array[(String, String)]], relations: Array[Seq[Relation]]): Array[Seq[Relation]] = {
+  def posRelAnnotation(sentences: Sentences, relations: Array[Seq[Relation]]): Array[Seq[Relation]] = {
 
     //Annotate with patty tag names
     //sentence: Seq[(Word,Tag)]
@@ -322,6 +309,22 @@ class NaiveScorer extends RelationScorer {
 }
 
 //the double value of the map represents the membership score of relation
-case class Tree(edges: Map[AnnontatedRelation, Weight], children: Option[Map[AnnontatedRelation, Seq[Tree]]] = None)
+class Tree(val edges: Map[AnnontatedRelation, Weight],val children: Option[Map[AnnontatedRelation, Seq[Tree]]] = None) {
+
+  private def extractWeights(t: Tree) = t.edges.map(x => x._2).toSeq
+  private def calculateWeights(s: Seq[Weight]): Double = s.foldLeft(0.0)((g,w) => g + w.weight * w.factor) / s.size.toDouble
+
+  //TODO number of blank nodes
+
+  //score of that tree calculated from score of single relations and support factors
+  val score: Double = {
+    children match {
+      case Some(c) => calculateWeights(extractWeights(this) ++ c.flatMap(x => x._2.flatMap(y => extractWeights(y))))
+      case _ => calculateWeights(extractWeights(this))
+    }
+  }
+
+
+}
 
 case class Weight(weight: Double, factor: Double)

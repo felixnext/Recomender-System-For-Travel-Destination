@@ -91,11 +91,13 @@ trait TextAnalyzerPipeline {
     annText
   }
 
+  type Sentences =  Array[Array[(String, String)]]
+
   //Takes list of relation, annotates subject, object with dbpedia uris and geoname location.
   //Creates tree with help of coreference. The relations with co-referent object are composed to single node in the tree.
   def createEntityCandidates(relations: Array[Seq[Relation]], spotlightResult: List[SpotlightResult],
                              clavinResult: List[Location], coreference: util.Map[Integer, CorefChain],
-                             sentences: Array[Array[(String, String)]], offsetConverter: OffsetConverter): RelationTree = {
+                             sentences: Sentences, offsetConverter: OffsetConverter): RelationTree = {
     //get all key of coref clusters
     //value coresponds to cluster id
     val keys: java.util.Set[Integer] = coreference.keySet()
@@ -194,6 +196,18 @@ trait TextAnalyzerPipeline {
     tree
   }
 
+  def formatPosSentences(x: AnnotatedText):Sentences = {
+    x.stanford.sentencesPos.map { x =>
+      x.split(" ").map { x =>
+        val split = x.split("/")
+        try {
+          (split(0), split(1))
+        } catch {
+          case e: Exception => (split(0), "")
+        }
+      }
+    }
+  }
 
 }
 

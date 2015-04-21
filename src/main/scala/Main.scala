@@ -23,7 +23,7 @@ object Main  extends App{
 
 
   val query = new SparqlQueryCreator
-  query.createSprqlQuery(s)
+  query.createSparqlQuery(s)
 
   /*
   val clavin = new ClavinClient()
