@@ -110,7 +110,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       def joinEqualNodes(relations: Seq[AnnontatedRelation], trees: Seq[Tree] = Seq(),
                          focusWordsTree: Option[Map[AnnontatedRelation, Weight]] = None): Seq[Tree] = {
         if (relations.isEmpty) {
-            trees ++ (if(focusWordsTree.isDefined) Seq(new Tree(focusWordsTree.getOrElse(Map()))) else Nil)
+          trees ++ (if (focusWordsTree.isDefined) Seq(new Tree(focusWordsTree.getOrElse(Map()))) else Nil)
         }
         else {
           val r = relations.head
@@ -194,7 +194,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         //returns a set of subtrees that have matched the parent
         @tailrec
         def findChildren(parent: AnnontatedRelation, trees: Seq[Tree], children: Seq[Tree] = Seq()): Seq[Tree] = {
-          if(trees.isEmpty) children
+          if (trees.isEmpty) children
           else {
             val tree = trees.head.edges
             val endNodes = parent.arg2
@@ -203,16 +203,16 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
               (c._1, c._2, t)
             }
             val bestMatch = comparison.foldLeft((false, 0.0), None: Option[(AnnontatedRelation, Weight)])((t, c) =>
-              if (c._1 && c._2 > t._1._2) ((c._1,c._2),Some(c._3)) else t)
+              if (c._1 && c._2 > t._1._2) ((c._1, c._2), Some(c._3)) else t)
             bestMatch._2 match {
               case Some(r) if bestMatch._1._1 => children :+ new Tree(Map(r._1 -> new Weight(r._2.weight, bestMatch._1._2)))
-              case _ => findChildren(parent,trees.tail, children)
+              case _ => findChildren(parent, trees.tail, children)
             }
           }
         }
 
         //for each relation in tree finds some children
-        val children = for(relation <- relations) yield {
+        val children = for (relation <- relations) yield {
           val children = findChildren(relation, trees)
           relation -> children
         }
@@ -222,14 +222,17 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       @tailrec
       //traverse a seq of relations and chain it with some children
       def traverseTree(head: Seq[Tree], tail: Seq[Tree], trees: Seq[Tree] = Seq()): Seq[Tree] = {
-        val tree = chainRelations(tail.head, head ++ tail.tail)
-        traverseTree(head :+ tail.head, tail.tail, trees :+ tree)
+        if (tail.nonEmpty) {
+          val tree = chainRelations(tail.head, head ++ tail.tail)
+          traverseTree(head :+ tail.head, tail.tail, trees :+ tree)
+        }
+        else trees
       }
       traverseTree(Nil, trees)
     }
 
 
-    Await.result(trees, 1000 seconds).foreach{
+    Await.result(trees, 1000 seconds).foreach {
       x => println(x)
     }
 
