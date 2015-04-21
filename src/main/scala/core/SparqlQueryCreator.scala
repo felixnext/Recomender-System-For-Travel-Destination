@@ -9,6 +9,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.math._
+
 
 /**
  * Takes a text and creates corresponding sparql query w.r.t focus of text.
@@ -26,7 +28,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
     for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
 
     //split each word in sentece on "/". This converts words form word/pos into tuple (word,pos)
-    //TODO make method
+    //TODO change to method
     val tokenizedSentensesPos: Future[Array[Array[(String, String)]]] = annotatedText.map{ x =>
       x.stanford.sentencesPos.map { x =>
         x.split(" ").map { x =>
@@ -76,6 +78,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       biggerSets + (-1 -> newUnkownGroup)
     }
 
+    val relationScorer = new NaiveScorer
 
     val trees = predicateAnnotation.map { relations =>
       //annotate all entities with dbpedia classes and ygo geo types
@@ -105,20 +108,51 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       val subGroups = scala.collection.mutable.Map[String, Seq[AnnontatedRelation]]()
 
       @tailrec
-      def joinEqualNodes(relations: Seq[AnnontatedRelation], trees: Seq[Tree] = Seq()):
-      Seq[Seq[AnnontatedRelation]] = {
+      def joinEqualNodes(relations: Seq[AnnontatedRelation], trees: Seq[Tree] = Seq()): Seq[Tree] = {
         val r = relations.head
+        val firstRelationSubject = r.arg1
 
         val newTree = for(tree <- trees) yield {
           //compare rel and r
-
+          val edges = tree.edges
+          for(edge <- edges ) {
+            val secondRelationSubject = edge._1.arg1
+          }
           //use score !!!
           new Tree(null)
         }
 
-        //newTree + new Tree(Map(r,))
         //TODO claculate relation score
-        joinEqualNodes(relations.tail, trees)
+        //TODO only if not matched then add new root
+        joinEqualNodes(relations.tail, newTree :+ new Tree(Map(r -> new Weight(relationScorer.calculateRelationScore(r),1.0))))
+      }
+
+      //compares two arguments and returns boolean meaning there are some equal mentions
+      // the double value indicates a similarity score
+      def compareArguments(arg1: AnnotatedArgument, arg2: AnnotatedArgument): (Boolean, Double) = {
+        val s = (arg1.spotlight, arg2.spotlight) match {
+          case (Some(x), Some(xy)) => (x.uri.equals(xy.uri), x.score + xy.score - (x.score * xy.score))
+          case _ => (false, 0.0)
+        }
+        val c = (arg1.clavin, arg2.clavin) match {
+          case (Some(x), Some(xy)) => (x.asciiName.equals(xy.asciiName), 1.0)
+          case _ => (false, 0.0)
+        }
+        val l = (arg1.lemon, arg2.lemon) match {
+          case (Some(x), Some(xy)) => (x.map(x => x.uri).intersect(xy.map(y => y.uri)).nonEmpty, 1.0)
+          case _ => (false, 0.0)
+        }
+        val y = (arg1.yago, arg2.yago) match {
+          case (Some(x), Some(xy)) => (x.intersect(xy).nonEmpty, 1.0)
+          case _ => (false, 0.0)
+        }
+        val d = (arg1.dbpediaLookup,arg2.dbpediaLookup) match {
+          case (Some(x), Some(xy)) => {for(a <- x; b <- xy if a.uri.equals(b.uri))
+            yield { (true, a.score + b.score - (a.score * b.score)) }}
+            .foldLeft((false, 0.0))((t, r) => if(r._2 > t._2) r else t)
+          case _ => (false, 0.0)
+        }
+        (s._1 || c._1 || l._1 || y._1 || d._1, Vector(s._2,c._2,l._2,y._2,d._2).foldLeft(0.0)((g,n) => max(g,n)))
       }
 
       def chainRelations() = ???
@@ -126,11 +160,10 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
     }
 
-    val scorer = new NaiveScorer
+
     Await.result(predicateAnnotation, 1000 seconds).foreach{
       x => println("\n\n" + x._1)
         //x._2.foreach(x => println(x.arg1.arg + " " + x.rel._1 + " " + x.arg2.map(y => y.arg).toString))
-        x._2.foreach(x => println(scorer.getRelationScore(x)))
     }
 
 
@@ -186,11 +219,17 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 }
 
 abstract class RelationScorer {
-  def getRelationScore(r: AnnontatedRelation): Double
+  def calculateRelationScore(r: AnnontatedRelation): Double
 }
 
+/**
+ * Naive implementation of relation scoring based on size of retried information.
+ */
 class NaiveScorer extends RelationScorer {
-  override def getRelationScore(r: AnnontatedRelation): Double = {
+
+  //calculates score of given relation
+  //score is defined between 0 and 1
+  override def calculateRelationScore(r: AnnontatedRelation): Double = {
     def calculateArgScore(r: AnnotatedArgument) = {
       val spotlight = r.spotlight match {
         case Some(x) => x.score
@@ -219,4 +258,7 @@ class NaiveScorer extends RelationScorer {
 }
 
 //the double value of the map represents the membership score of relation
-case class Tree(edges: Map[AnnontatedRelation, Double], children: Option[Seq[Tree]] = None)
+//TODO Vector??
+case class Tree(edges: Map[AnnontatedRelation, Weight], children: Option[Map[AnnontatedRelation,Seq[Tree]]] = None)
+
+case class Weight(weight: Double, factor: Double)
