@@ -3,6 +3,7 @@ package core
 import dbpedia.YagoGeoTypes
 import elasticsearch.ElasticsearchClient
 import nlp._
+import tools.Levenshtein
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -133,6 +134,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         }
       }
 
+      val levenshtein = new Levenshtein()
+
       //compares two arguments and returns boolean meaning there are some equal mentions
       // the double value indicates a similarity score
       def compareArguments(arg1: AnnotatedArgument, arg2: AnnotatedArgument): (Boolean, Double) = {
@@ -162,8 +165,12 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
             .foldLeft((false, 0.0))((t, r) => if (r._2 > t._2) r else t)
           case _ => (false, 0.0)
         }
-        //TODO blanknodes if equals
-        (s._1 || c._1 || l._1 || y._1 || d._1, Vector(s._2, c._2, l._2, y._2, d._2).foldLeft(0.0)((g, n) => max(g, n)))
+        val b = {
+          val score = levenshtein.score(arg1.arg, arg2.arg)
+          if(score > 0.5) (true,score * 0.5) else (false,0.0)
+        }
+        (s._1 || c._1 || l._1 || y._1 || d._1 || b._1,
+          Vector(s._2, c._2, l._2, y._2, d._2, b._2).foldLeft(0.0)((g, n) => max(g, n)))
       }
 
       val unknownGroupTrees = joinEqualNodes(annRelations.getOrElse(-1, Seq()).toSeq)
@@ -207,7 +214,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       }
 
       @tailrec
-      //traverse a seq of relations and chain it with some children
+      //traverse a seq of relations and chains it with some children
       def traverseTree(head: Seq[Tree], tail: Seq[Tree], trees: Seq[Tree] = Seq()): Seq[Tree] = {
         if (tail.nonEmpty) {
           val tree = chainRelations(tail.head, head ++ tail.tail)
@@ -245,8 +252,8 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       val slidingOverSentence = sentence.sliding(relationWords.size)
 
       //if contains patty tag, than replace word with pos tag else take a word
-      val posTaggedRelationList: Iterator[Array[String]] = for (subSentence <- slidingOverSentence
-                                                                if subSentence.map(t => t._1).sameElements(relationWords))
+      val posTaggedRelationList: Iterator[Array[String]] =
+        for (subSentence <- slidingOverSentence if subSentence.map(t => t._1).sameElements(relationWords))
         yield {
           subSentence.map(t => mapToPattyTags.getOrElse(t._2, t._1))
         }
@@ -313,8 +320,6 @@ class Tree(val edges: Map[AnnontatedRelation, Weight],val children: Option[Map[A
 
   private def extractWeights(t: Tree) = t.edges.map(x => x._2).toSeq
   private def calculateWeights(s: Seq[Weight]): Double = s.foldLeft(0.0)((g,w) => g + w.weight * w.factor) / s.size.toDouble
-
-  //TODO number of blank nodes
 
   //score of that tree calculated from score of single relations and support factors
   val score: Double = {

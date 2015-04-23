@@ -18,4 +18,6 @@ class Levenshtein {
     dist(s2.length)(s1.length)
   }
 
+  def score(s1: String, s2: String) = 1.0 - (distance(s1,s2).toDouble / max(s1.length,s2.length).toDouble)
+
 }
