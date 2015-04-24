@@ -216,7 +216,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       def traverseTree(head: Seq[Tree], tail: Seq[Tree], trees: Seq[Tree] = Seq()): Seq[Tree] = {
         if (tail.nonEmpty) {
           val tree = chainRelations(tail.head, head ++ tail.tail)
-          traverseTree(head :+ tail.head, tail.tail, trees :+ tree)
+          traverseTree(head :+ tail.head, tail.tail,  trees :+ tree))
         }
         else trees
       }
