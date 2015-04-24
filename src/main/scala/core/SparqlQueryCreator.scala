@@ -13,7 +13,7 @@ import scala.math._
 
 
 /**
- * Takes a text and creates corresponding sparql query w.r.t focus of text.
+ * Takes a text and creates corresponding sparql query w.r.t focus of the text.
  * Assumption the focus is a certain location.
  */
 class SparqlQueryCreator extends TextAnalyzerPipeline {
@@ -134,8 +134,6 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         }
       }
 
-      val levenshtein = new Levenshtein()
-
       //compares two arguments and returns boolean meaning there are some equal mentions
       // the double value indicates a similarity score
       def compareArguments(arg1: AnnotatedArgument, arg2: AnnotatedArgument): (Boolean, Double) = {
@@ -166,7 +164,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
           case _ => (false, 0.0)
         }
         val b = {
-          val score = levenshtein.score(arg1.arg, arg2.arg)
+          val score = Levenshtein.score(arg1.arg, arg2.arg)
           if(score > 0.5) (true,score * 0.5) else (false,0.0)
         }
         (s._1 || c._1 || l._1 || y._1 || d._1 || b._1,
@@ -227,7 +225,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
 
 
     Await.result(trees, 1000.seconds).foreach {
-      x => println(x.score)
+      x => x.edges.map(e => println(e._1.arg1.arg +";" + e._1.rel._1 +";" + e._1.arg2.head.arg)); println("******************")
     }
 
 
@@ -328,7 +326,6 @@ class Tree(val edges: Map[AnnontatedRelation, Weight],val children: Option[Map[A
       case _ => calculateWeights(extractWeights(this))
     }
   }
-
 
 }
 

@@ -31,7 +31,7 @@ class DBPediaLookup {
 
   //parses the xml response
   private def parseResponse(response: String, text: String): List[LookupResult] = {
-    val l = new Levenshtein
+    val l = Levenshtein
     try {
       val root = XML.loadString(response)
       val results = (root \ "Result").iterator
