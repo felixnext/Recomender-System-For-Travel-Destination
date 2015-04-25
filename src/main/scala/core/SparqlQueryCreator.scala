@@ -1,6 +1,6 @@
 package core
 
-import dbpedia.YagoGeoTypes
+import dbpedia.{SparqlQuery, YagoGeoTypes}
 import elasticsearch.ElasticsearchClient
 import nlp._
 import tools.Levenshtein
@@ -216,23 +216,22 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       def traverseTree(head: Seq[Tree], tail: Seq[Tree], trees: Seq[Tree] = Seq()): Seq[Tree] = {
         if (tail.nonEmpty) {
           val tree = chainRelations(tail.head, head ++ tail.tail)
-          traverseTree(head :+ tail.head, tail.tail,  trees :+ tree))
+          traverseTree(head :+ tail.head, tail.tail,  trees :+ tree)
         }
         else trees
       }
       traverseTree(Nil, trees)
     }
 
+    val queries = trees.map(trees => trees.map(tree => new SparqlQuery(tree)))
 
-    Await.result(trees, 1000.seconds).foreach {
-      x => x.edges.map(e => println(e._1.arg1.arg +";" + e._1.rel._1 +";" + e._1.arg2.head.arg)); println("******************")
+    Await.result(queries, 1000.seconds).foreach {
+      x => x.queries.foreach{query =>
+        println(query._1)
+        println(query._2)
+        println("\n\n\n")
+      }
     }
-
-
-    //TODO create query
-
-    //TODO Yago rdf: type
-
 
   }
 

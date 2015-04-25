@@ -65,7 +65,7 @@ class SpotlightClient {
         val surfaceForm = resource.getAsJsonObject.get("@surfaceForm").getAsString
         val offset = resource.getAsJsonObject.get("@offset").getAsInt
         val simScore = resource.getAsJsonObject.get("@similarityScore").getAsDouble
-        extractInformation(docIterator, results :+ new SpotlightResult(uri,support,types,surfaceForm,offset,simScore))
+        extractInformation(docIterator, results :+ new SpotlightResult("<" + uri + ">",support,types,surfaceForm,offset,simScore))
       }
     }
 

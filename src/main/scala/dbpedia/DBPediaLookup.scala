@@ -43,7 +43,7 @@ class DBPediaLookup {
           val categories = (x \ "Categories" \ "Category").toList.map(node => ((node \ "Label").text,(node \ "URI").text))
           val refcount = (x \ "Refcount").text.toInt
           val score = 1.0 - (l.distance(text,label).toDouble / max(text.length,label.length).toDouble)
-         new LookupResult(label, uri, description, classes, categories, refcount, score)
+         new LookupResult(label, "<" + uri + ">", description, classes, categories, refcount, score)
       }
       parsedResults.toList
     }

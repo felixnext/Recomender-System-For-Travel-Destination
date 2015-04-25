@@ -183,7 +183,7 @@ class ElasticsearchClient {
           val score = result.get("_score").getAsDouble
           val dbpedia = result.get("_source").getAsJsonObject.get("dbpedia_relation").getAsString
           val relation = result.get("_source").getAsJsonObject.get("text_relation").getAsString
-          val newList  = relations :+ new PattyRelation(pattyToUri(dbpedia),relation,score)
+          val newList  = relations :+ new PattyRelation("<" + pattyToUri(dbpedia) + ">",relation,score)
           extractData(docIterator, newList)
         }
       }
@@ -217,7 +217,7 @@ class ElasticsearchClient {
           val score = result.get("_score").getAsDouble
           val dbpedia = result.get("_source").getAsJsonObject.get("dbpedia_uri").getAsString
           val relation = result.get("_source").getAsJsonObject.get("text_relation").getAsString
-          val newList  = properties :+ new DBPediaProps(dbpedia,relation,score)
+          val newList  = properties :+ new DBPediaProps("<" + dbpedia + ">",relation,score)
           extractData(docIterator, newList)
         }
       }
@@ -269,7 +269,7 @@ class ElasticsearchClient {
           val score = result.get("_score").getAsDouble
           val dbpedia = result.get("_source").getAsJsonObject.get("uri").getAsString
           val relation = result.get("_source").getAsJsonObject.get("text").getAsString
-          val newList  = classes :+ new DBPediaClass(dbpedia,relation,score)
+          val newList  = classes :+ new DBPediaClass("<" + dbpedia + ">",relation,score)
           extractData(docIterator, newList)
         }
       }
