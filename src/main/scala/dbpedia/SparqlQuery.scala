@@ -31,7 +31,7 @@ class SparqlQuery(val tree: Tree) {
           //extract object of rdf triples
           //triples
           val spotlight: ScoredTriples = for (a <- root.arg2 if a.spotlight.isDefined) yield {
-             (a.spotlight.get.uri, a.spotlight.get.score)
+            (a.spotlight.get.uri, a.spotlight.get.score)
           }
 
           //if the object of a triple is an entity then no children are required
@@ -69,7 +69,7 @@ class SparqlQuery(val tree: Tree) {
   val stream: Stream[List[String]] = alphabet #:: stream.flatMap(n => n.map(c => generate(c)))
   val blankNodeNames = stream.flatten.iterator
 
-  private def blankName = () =>  "?" + blankNodeNames.next
+  private def blankName = () => "?" + blankNodeNames.next
 
   private def bestPattyRelations(a: AnnontatedRelation) = a.pattyResult.getOrElse(List()).sortWith((p1, p2) => p1.score > p2.score).slice(0, 2)
 
@@ -164,7 +164,8 @@ class SparqlQuery(val tree: Tree) {
 
         //tripes with yago classes as object
         val yagoTriples = (for (y <- yago) yield {
-          val triple1 = for(yagoType <- y._1) yield new RDFTriple(subject, rdfType, yagoType, 1.0)
+          val triple1 = for (yagoType <- y._1) yield new RDFTriple(subject, rdfType, yagoType, 1.0)
+
           //push up the relations from yago entity as subject one level up
           val triples = pushUpRelations(y._2, subject)
           triple1 ++ triples
@@ -174,6 +175,7 @@ class SparqlQuery(val tree: Tree) {
         val lemonTriples = (for (l <- lemonClasses) yield {
           val classTriplesPatty = l._1.map(o => pattyRelations.map(r =>
             new RDFTriple(subject, r.dbpediaRelation, o._1, o._2))).flatten
+
           val classTriplesProperties = l._1.map(o => dbpediaRelations.map(r =>
             new RDFTriple(subject, r.dbpediaUri, o._1, o._2))).flatten
 
@@ -245,6 +247,7 @@ class SparqlQuery(val tree: Tree) {
       triplesPerSubject
     }).flatten.toSeq
 
+
     val foundQueries = queryPerRoot.map { r =>
       val triples = r._1
       val rootName = rootUris.head
@@ -258,7 +261,7 @@ class SparqlQuery(val tree: Tree) {
          """.stripMargin
       (query, r._2)
     }
-    foundQueries
+    foundQueries.filter(q => q._2 > 0.001)
   }
 
 }

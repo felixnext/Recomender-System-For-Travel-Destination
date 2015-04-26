@@ -12,22 +12,27 @@ import scala.concurrent.{Await, Future}
 import scala.math._
 
 
+
 /**
  * Takes a text and creates corresponding sparql query w.r.t focus of the text.
  * Assumption the focus is a certain location.
  */
-class SparqlQueryCreator extends TextAnalyzerPipeline {
+class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
 
   val elastic = new ElasticsearchClient
 
-  def createSparqlQuery(text: String): Unit = {
+  type Sentences =  Array[Array[(String, String)]]
+
+  //Creates all possible spaql query based on given text.
+  // All queries will be ranked w.r.t quality score.
+  def createSparqlQuery(annotatedText: Future[AnnotatedText]): Future[Set[(String, Double)]] = {
 
     //clavin, stanford and openie
-    val annotatedText = analyzeText(text)
+
     for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
 
     //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
-    val tokenizedSentencesPos: Future[Sentences] = annotatedText.map { x => formatPosSentences(x)}
+    val tokenizedSentencesPos: Future[Sentences] = annotatedText.map { x => analyzingPipe.formatPosSentences(x)}
 
     //replaces stanford pos tags with patty tags
     val posRelations = for {
@@ -49,7 +54,7 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
       ann <- annotatedText
       offS <- offsetConverter
     } yield {
-        createEntityCandidates(p, ann.spotlight, ann.clavin, ann.stanford.coreference, s, offS)
+        analyzingPipe.createEntityCandidates(p, ann.spotlight, ann.clavin, ann.stanford.coreference, s, offS)
       }
     for (e <- entityCandidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
 
@@ -220,19 +225,15 @@ class SparqlQueryCreator extends TextAnalyzerPipeline {
         }
         else trees
       }
+
       traverseTree(Nil, trees)
     }
 
-    val queries = trees.map(trees => trees.map(tree => new SparqlQuery(tree)))
+    //transforms trees into sparql queries
+    val queries = trees.map(trees => trees.flatMap(tree => new SparqlQuery(tree).queries))
+    val filtered = queries.map(q => q.toSet)
 
-    Await.result(queries, 1000.seconds).foreach {
-      x => x.queries.foreach{query =>
-        println(query._1)
-        println(query._2)
-        println("\n\n\n")
-      }
-    }
-
+    filtered
   }
 
 

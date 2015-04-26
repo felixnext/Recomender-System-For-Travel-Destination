@@ -3,13 +3,17 @@
  */
 
 import clavin.ClavinClient
-import dbpedia.{YagoGeoTypes, SpotlightClient, DBPediaLookup}
+import dbpedia.{DBPediaClient, YagoGeoTypes, SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 
 import elasticsearch.ElasticsearchClient
-import nlp.{RelationExtractor, StanfordAnnotator}
+import nlp.{TextAnalyzerPipeline, RelationExtractor, StanfordAnnotator}
 import core.SparqlQueryCreator
 import tools.Levenshtein
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+
 
 object Main  extends App{
 
@@ -29,8 +33,19 @@ object Main  extends App{
   */
 
 
-  val query = new SparqlQueryCreator
-  query.createSparqlQuery(s)
+  val analyzingPipe = new TextAnalyzerPipeline
+  val query = new SparqlQueryCreator(analyzingPipe)
+  val annotatedText = analyzingPipe.analyzeText(s)
+  val queries = query.createSparqlQuery(annotatedText)
+  val dbpediaCleint = new DBPediaClient
+  val result = queries.map(qs =>
+    qs.map(q => Future{(dbpediaCleint.executeLocationQuery(q._1), q._2)})
+  )
+
+  Await.result(result, 1000.seconds).foreach{y =>
+    println("HERE")
+    Await.result(y, 1000.seconds)._1.foreach(l => println(l))
+  }
 
   /*
   val clavin = new ClavinClient()

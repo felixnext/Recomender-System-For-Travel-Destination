@@ -18,7 +18,7 @@ import scala.math._
 /**
  * Analyzes the text with basic annotators. The analyze is done in parallel.
  */
-trait TextAnalyzerPipeline {
+class TextAnalyzerPipeline {
 
   //initialize required resources
   val relationExtractor = new RelationExtractor
@@ -238,7 +238,6 @@ class OffsetConverter(sentences: Array[Array[(String, String)]]) {
     }
   }
 }
-
 
 //relations are annotated per sentence.
 case class AnnotatedText(relations: Array[Seq[Relation]], clavin: List[Location], stanford: StanfordAnnotation,

@@ -86,7 +86,7 @@ class DBPediaClient {
 
           val prop = triple(1).trim.replace("http://dbpedia.org/property/", "")
           if (weatherC.contains(prop)) addToResultMap(prop, cleanedDBPediaNumber)
-          if (weatherF.contains(prop)) addToResultMap(prop.replace("F","C"), fahrenheitToCelsius)
+          if (weatherF.contains(prop)) addToResultMap(prop.replace("F", "C"), fahrenheitToCelsius)
 
           if (triple(1).contains("http://www.w3.org/2002/07/owl#sameAs")) {
             val Place = "(http://)(\\w\\w)(.dbpedia.org/resource/)(\\w+)".r
@@ -109,7 +109,7 @@ class DBPediaClient {
     } catch {
       case e: org.apache.jena.atlas.web.HttpException =>
         Thread.sleep(1000)
-        if(test != 0) resultMap = parseDBpediaPageOfLocation(uri, test - 1).getOrElse(Map())
+        if (test != 0) resultMap = parseDBpediaPageOfLocation(uri, test - 1).getOrElse(Map())
       case e: Exception => println(e)
     }
 
@@ -130,7 +130,7 @@ class DBPediaClient {
          |WHERE {
          |?place rdf:type dbpedia-owl:Place .
          |?place rdfs:label "$name"@en .
-         |}
+                                    |}
       """.stripMargin
     try {
       val query: Query = QueryFactory.create(queryString)
@@ -150,14 +150,14 @@ class DBPediaClient {
     } catch {
       case e: org.apache.jena.atlas.web.HttpException =>
         Thread.sleep(1000)
-        if(test != 0) uris = findDBpediaLocation(name, test -1)
+        if (test != 0) uris = findDBpediaLocation(name, test - 1)
       case e: Exception => println(e)
     }
     uris
   }
 
   //tests if the given entity is a person
-  def isPerson(name: String, test: Int): Boolean = {
+  def isPerson(name: String, test: Int = 3): Boolean = {
     val queryString =
       s"""
          |PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -168,7 +168,7 @@ class DBPediaClient {
          |WHERE {
          |?place rdf:type dbpedia-owl:Person .
          |?place rdfs:label "$name"@en
-         |}
+                                    |}
       """.stripMargin
     try {
 
@@ -186,11 +186,103 @@ class DBPediaClient {
     } catch {
       case e: org.apache.jena.atlas.web.HttpException =>
         Thread.sleep(1000)
-        if(test != 0) isPerson(name, test -1)
+        if (test != 0) isPerson(name, test - 1)
         else false
       case e: Exception => false
     }
   }
 
+  //executes the given query und parses response
+  //ASSUMPTION: the query has only one blank node in select clause
+  def executeLocationQuery(queryString: String, test: Int = 3): List[Location] = {
+    try {
+
+      val query: Query = QueryFactory.create(queryString)
+      val qexec: QueryExecution = QueryExecutionFactory.sparqlService(Config.dbpediaUrl, query)
+
+      try {
+        val results: ResultSet = qexec.execSelect()
+        var links = List[String]()
+        while (results.hasNext) {
+          val next = results.next()
+          val variablName = next.varNames().next()
+          val uri = next.get(variablName).toString
+          links = uri :: links
+        }
+        links.map(uri => requestRessource(uri)).filter(l => l.isDefined).map(l => l.get)
+      }
+      finally {
+        qexec.close()
+      }
+
+    } catch {
+      case e: org.apache.jena.atlas.web.HttpException =>
+        println("Exception during sparql query execution: " + e)
+        Thread.sleep(1000)
+        if (test != 0) executeLocationQuery(queryString, test - 1)
+        else List()
+      case e: Exception => List()
+    }
+  }
+
+
+  //Downloads data from dbpedia page and creates new location object with extractd data
+  private def requestRessource(uri: String, test: Int = 3): Option[Location] = {
+    var lat: Option[String] = None
+    var long: Option[String] = None
+    var country: Option[String] = None
+    var label: Option[String] = None
+    try {
+      val model: Model = ModelFactory.createDefaultModel()
+      try {
+        model.read(uri)
+        val resource: Resource = model.getResource(uri)
+        val iter = resource.listProperties()
+
+        while (iter.hasNext) {
+
+          val triple = iter.next().toString.split(",")
+
+          def removeLastBracket(x: String): String = x.substring(0, x.length - 1)
+          def removeDBpediaURI(x: String): String = x.replace("http://dbpedia.org/resource/", "")
+          def cleanedDBpediaString: String = removeLastBracket(removeDBpediaURI(triple(2))).trim
+
+          if (triple(2).contains("POINT")) {
+            val tmp = triple(2).split("http")(0)
+            lat = Some(tmp.substring(8, tmp.length - 4).split(" ")(1))
+            long = Some(tmp.substring(8, tmp.length - 4).split(" ")(0))
+          }
+
+          if (triple(1).contains("country")) {
+            country = Some(cleanedDBpediaString)
+          }
+
+
+          if(triple(1).contains("label") && triple(2).contains("en")){
+            label = Some(triple(2).substring(2,triple(2).length - 5))
+          }
+
+        }
+
+      } finally {
+        model.close()
+      }
+
+      label match {
+        case Some(l) => Some(new Location(l,lat,long,country))
+        case _ => None
+      }
+    }
+    catch {
+      case e: org.apache.jena.atlas.web.HttpException =>
+        Thread.sleep(1000)
+        if (test != 0) requestRessource(uri)
+        else None
+      case e: Exception => println("Error during location page request: " + e); None
+    }
+  }
+
 
 }
+
+case class Location(name: String, lat: Option[String], long: Option[String], country: Option[String])
