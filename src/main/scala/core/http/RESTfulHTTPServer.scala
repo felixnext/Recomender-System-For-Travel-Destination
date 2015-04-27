@@ -26,38 +26,25 @@ class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  w
   //TODO search route
   def receive = runRoute(aSimpleRoute)
 
-  val workerActors = context.actorOf(Props[LocationFinderActor].withRouter(RoundRobinPool(2)), name = "WorkerActors")
+  val workerActors = context.actorOf(Props[LocationFinderActor].withRouter(RoundRobinPool(1)), name = "WorkerActors")
+
+  implicit val timeout = Timeout(1000.seconds)
 
   // handles the api path, we could also define these in separate files
   // this path respons to get queries, and make a selection on the
   // media-type.
-  /*
-  val aSimpleRoute = {
-    post {
-      path("search") {
-        entity(as[UserQuery]) {
-          query => respondWithMediaType(`application/json`) {
-            findLocations {
-              query
-            }
-          }
-        }
-      }
-
-    }
-  }
-  */
-
-  implicit val timeout = Timeout(10.seconds)
-
   val aSimpleRoute = {
     post {
       path("search") {
         entity(as[UserQuery]) {
           query => respondWithMediaType(`application/json`) {
             onComplete((workerActors ? query).mapTo[Locations]) {
-              case Success(value) => complete(value)
-              case Failure(t) => failWith(t)
+              case Success(value) =>
+                log.debug("Processed message received. Ready to response.")
+                complete(value)
+              case Failure(t) =>
+                log.debug("Failure.")
+                failWith(t)
             }
           }
         }
@@ -65,8 +52,6 @@ class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  w
 
     }
   }
-
-
 
   def findLocations(query: UserQuery): Route = {
     ctx => perRequest(ctx, Props(new LocationFinderActor), query)

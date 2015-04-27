@@ -13,17 +13,14 @@ import tools.Levenshtein
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scalaj.http.{HttpException, Http, HttpResponse}
 
 
 object Main  extends App{
 
   val s =
     s"""
-       |New York City (standardsprachlich (AE) [nuːˈjɔɹk ˈsɪɾi]; BE: [ˈnjuːˈjɔːk ˈsɪti]), kurz: New York (veraltet: Neuyork[1]), Abk.: NYC, ist eine Weltstadt an der Ostküste der Vereinigten Staaten. Sie liegt im Bundesstaat New York und ist mit mehr als acht Millionen Einwohnern die bevölkerungsreichste Stadt der Vereinigten Staaten.[2] Die Stadtverwaltung trägt den Namen City of New York.
-       |
-       |Die Metropolregion New York mit 18,9 Millionen Einwohnern[3] ist einer der bedeutendsten Wirtschaftsräume und Handelsplätze der Welt, Sitz vieler internationaler Konzerne und Organisationen wie der Vereinten Nationen sowie wichtiger Seehafen an der amerikanischen Ostküste. Die Stadt genießt mit ihrer großen Anzahl an Sehenswürdigkeiten, den 500 Galerien, etwa 200 Museen, mehr als 150 Theatern und mehr als 18.000 Restaurants Weltruf auch in den Bereichen Kunst und Kultur und verzeichnet jedes Jahr etwa 50 Millionen Besucher.[4] Laut Forbes Magazine ist New York City die Stadt mit den höchsten Lebenshaltungskosten in den Vereinigten Staaten sowie eine der teuersten Städte weltweit.[5]
-       |
-       |Nachdem 1524 Giovanni da Verrazano und 1609 Henry Hudson die Gegend des heutigen New Yorks erforscht hatten, siedelten ab 1610 niederländische Kaufleute an der Südspitze der Insel Manna-Hatta und bald darauf an der Westspitze von Long Island, dem heutigen Brooklyn. Erst 1626 kaufte Peter Minuit den Einheimischen, wahrscheinlich Lenni-Lenape-Indianern, die Insel „Manna-hatta“ für Waren im Wert von 60 Gulden ab. Die damit begründete Siedlung erhielt danach den Namen Nieuw Amsterdam und war zunächst Hauptstadt der Kolonie Nieuw Nederland, bis sie 1664 von den Briten erobert wurde und die Stadt den seither gültigen Namen bekam.[6] Ihr Aufstieg zur Weltstadt begann 1825 mit der Fertigstellung des Eriekanals.
+       |Situated on one of the world's largest natural harbors,[20] New York City consists of five boroughs, each of which is a county of New York State.[21] The five boroughs – Brooklyn, Queens, Manhattan, the Bronx, and Staten Island – were consolidated into a single city in 1898.[22] With a census-estimated 2014 population of 8,491,079[1] distributed over a land area of just 305 square miles (790 km2),[23] New York is the most densely populated major city in the United States.[24] As many as 800 languages are spoken in New York,[25][26] making it the most linguistically diverse city in the world.[27] By 2014 census estimates, the New York City metropolitan region remains by a significant margin the most populous in the United States, as defined by both the Metropolitan Statistical Area (20.1 million residents)[5] and the Combined Statistical Area (23.6 million residents).[6] In 2013, the MSA produced a gross metropolitan product (GMP) of nearly US 1.39 trillion,[28] while in 2012, the CSA[29] generated a GMP of over US 1.55 trillion, both ranking first nationally by a wide margin and behind the GDP of only twelve nations and eleven nations, respectively.[30]
      """.stripMargin
 
   /*
@@ -31,12 +28,12 @@ object Main  extends App{
   stanford.annotateText(s)
   //stanford.annotateText(s + "bla")
   */
-
+/*
 
   val analyzingPipe = new TextAnalyzerPipeline
-  val query = new SparqlQueryCreator(analyzingPipe)
+  val queryCreator = new SparqlQueryCreator(analyzingPipe)
   val annotatedText = analyzingPipe.analyzeText(s)
-  val queries = query.createSparqlQuery(annotatedText)
+  val queries = queryCreator.createSparqlQuery(annotatedText)
   val dbpediaCleint = new DBPediaClient
   val result = queries.map(qs =>
     qs.map(q => Future{(dbpediaCleint.executeLocationQuery(q._1), q._2)})
@@ -46,7 +43,7 @@ object Main  extends App{
     println("HERE")
     Await.result(y, 1000.seconds)._1.foreach(l => println(l))
   }
-
+*/
   /*
   val clavin = new ClavinClient()
   val l = "Paris is a nice cite."
@@ -81,4 +78,11 @@ object Main  extends App{
   }
 */
 
+  /*
+  val adasda = "{\"query\": \"Washington, D.C., formally the District of Columbia and commonly referred to as Washington, the District, or simply D.C., is the capital of the United States. The signing of the Residence Act on July 16, 1790, approved the creation of a capital district located along the Potomac River on the countrys East Coast. The U.S. Constitution provided for a federal district under the exclusive jurisdiction of the Congress and the District is therefore not a part of any U.S. state.rnrnThe states of Maryland and Virginia each donated land to form the federal district, which included the pre-existing settlements of Georgetown and Alexandria. Named in honor of George Washington, the City of Washington was founded in 1791 to serve as the new national capital. In 1846, Congress returned the land originally ceded by Virginia; in 1871, it created a single municipal government for the remaining portion of the District.rnrnWashington, D.C., had an estimated population of 658,893 in 2014, the 23rd-most populous city in the United States. Commuters from the surrounding Maryland and Virginia suburbs raise the citys population to more than one million during the workweek. The Washington metropolitan area, of which the District is a part, has a population of 5.8 million, the seventh-largest metropolitan statistical area in the country.rnrnThe centers of all three branches of the federal government of the United States are in the District, including the Congress, President, and Supreme Court. Washington is home to many national monuments and museums, which are primarily situated on or around the National Mall. The city hosts 176 foreign embassies as well as the headquarters of many international organizations, trade unions, non-profit organizations, lobbying groups, and professional associations.rnrnA locally elected mayor and a 13u2011member council have governed the District since 1973. However, the Congress maintains supreme authority over the city and may overturn local laws. D.C. residents elect a non-voting, at-large congressional delegate to the U.S. House of Representatives, but the District has no representation in the U.S. Senate. The District receives three electoral votes in presidential elections as permitted by the Twenty-third Amendment to the United States Constitution, ratified in 1961.\"}"
+  val response: HttpResponse[String] = Http("http://localhost:8080/search")
+   .header("content-type", "application/json").timeout(connTimeoutMs = Integer.MAX_VALUE, readTimeoutMs = Integer.MAX_VALUE).postData(adasda).asString
+  println(response.body)
+ 
+  /*
 }

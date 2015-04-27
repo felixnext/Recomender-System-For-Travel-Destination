@@ -68,7 +68,7 @@ class ElasticsearchClient {
       val jsonHitsResults = jsonHits.get("hits").getAsJsonArray.iterator()
       iterateOverResults(jsonHitsResults ,List())
     } catch {
-      case e: Exception => println("Excpetion during result parsing "+ e); e.printStackTrace(); List()
+      case e: Exception => println("Excpetion during elsticsearch result parsing: "+ e); List()
     }
 
   }

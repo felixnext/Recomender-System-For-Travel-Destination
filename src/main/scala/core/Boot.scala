@@ -22,10 +22,8 @@ object Boot extends App{
   val service = system.actorOf(Props[RESTfulHTTPServer], "sj-rest-service")
 
   // Bind HTTP to the specified service.
-  implicit val timeout = Timeout(10.seconds)
+  implicit val timeout = Timeout(1000.seconds)
   IO(Http) ? Http.Bind(service, Config.serviceHost, Config.servicePort)
-
-
 
 }
 

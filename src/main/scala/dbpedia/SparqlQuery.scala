@@ -36,7 +36,7 @@ class SparqlQuery(val tree: Tree) {
 
           //if the object of a triple is an entity then no children are required
           //because of pruning of redundant information
-          val dbpediaLookup: ScoredTriples = for (a <- root.arg2 if a.dbpediaLookup.isDefined) yield {
+          val dbpediaLookup: ScoredTriples = for (a <- root.arg2 if a.dbpediaLookup.isDefined && a.dbpediaLookup.get.size > 0) yield {
             val l = a.dbpediaLookup.get
             l.foldLeft(l.head.uri, l.head.score)((g, n) => if (n.score > g._2) (n.uri, n.score) else g)
           }
