@@ -85,43 +85,7 @@ public class StanfordAnnotator {
         return new StanfordAnnotation(sentenceSentiment, sentencesPos, graph, tokenizedSentences);
     }
 
-
-    /**
-     * Takes a triple and analyze it, returns pos and sentiment of the Triple
-     * @param sentimentTree Triple is inside the analyzed sentence.
-     * @param pos Annotated sentences with pos tags.
-     * @param s Subject of a triple.
-     * @param p Predicate of a triple.
-     * @param o Object of a triple.
-     */
-    public void extractSentiment(Tree sentimentTree, String[] pos, String s, String p, String o) {
-
-        //TODO get pos and sentiment
-
-        Iterator<Tree> it = sentimentTree.iterator();
-        while(it.hasNext()){
-            Tree t = it.next();
-
-            System.out.println("New Child");
-            System.out.println(t.yieldWords());
-            System.out.print("nodestring: ");
-            System.out.println(t.nodeString());
-            if(((CoreLabel) t.label()).containsKey(RNNCoreAnnotations.PredictedClass.class)){
-                System.out.println("Predicted Class: "+RNNCoreAnnotations.getPredictedClass(t));
-                Label label = t.label();
-
-                HasOffset ofs = (HasOffset) label;
-                int start = ofs.beginPosition();
-                System.out.println("Offset: " + start);
-            }
-            System.out.println("\n\n\n");
-        }
-
-        int sentiment = RNNCoreAnnotations.getPredictedClass(sentimentTree);
-        System.out.println("SENTIMENT: " + sentiment);
-
-        //TODO extract sentiments
-    }
+    
 
     /**
      * Maps sentiment score to sentiment class
