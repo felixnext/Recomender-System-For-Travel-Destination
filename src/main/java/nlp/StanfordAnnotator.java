@@ -94,26 +94,31 @@ public class StanfordAnnotator {
      * @param p Predicate of a triple.
      * @param o Object of a triple.
      */
-    public void analyzeTriple(Tree sentimentTree, String[] pos, String s, String p, String o) {
+    public void extractSentiment(Tree sentimentTree, String[] pos, String s, String p, String o) {
 
         //TODO get pos and sentiment
 
         Iterator<Tree> it = sentimentTree.iterator();
         while(it.hasNext()){
             Tree t = it.next();
-            System.out.println(t.yield());
-            System.out.println("nodestring:");
+
+            System.out.println("New Child");
+            System.out.println(t.yieldWords());
+            System.out.print("nodestring: ");
             System.out.println(t.nodeString());
             if(((CoreLabel) t.label()).containsKey(RNNCoreAnnotations.PredictedClass.class)){
                 System.out.println("Predicted Class: "+RNNCoreAnnotations.getPredictedClass(t));
                 Label label = t.label();
+
                 HasOffset ofs = (HasOffset) label;
                 int start = ofs.beginPosition();
                 System.out.println("Offset: " + start);
             }
+            System.out.println("\n\n\n");
         }
 
         int sentiment = RNNCoreAnnotations.getPredictedClass(sentimentTree);
+        System.out.println("SENTIMENT: " + sentiment);
 
         //TODO extract sentiments
     }
@@ -126,15 +131,15 @@ public class StanfordAnnotator {
     private String toCss(int sentiment) {
         switch (sentiment) {
             case 0:
-                return "Very Negative";
+                return "very negative";
             case 1:
-                return "Negative";
+                return "negative";
             case 2:
-                return "Neutral";
+                return "neutral";
             case 3:
-                return "Positive";
+                return "positive";
             case 4:
-                return "Very Positive";
+                return "very positive";
             default:
                 return "";
         }

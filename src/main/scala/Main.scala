@@ -9,14 +9,15 @@ import edu.mit.jwi.item.POS
 
 import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
-import nlp.{TextAnalyzerPipeline, RelationExtractor, StanfordAnnotator}
-import core.SparqlQueryCreator
+import nlp.{TextAnalyzerPipeline, RelationExtractor => RE, StanfordAnnotator}
+import core.{Sentiment, SparqlQueryCreator, RelationExtraction => RWS}
 import tools.Levenshtein
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scalaj.http.{HttpException, Http, HttpResponse}
 import scala.collection.JavaConversions._
+
 
 
 object Main  extends App{
@@ -26,11 +27,13 @@ object Main  extends App{
        |Situated on one of the world's largest natural harbors,[20] New York City consists of five boroughs, each of which is a county of New York State.[21] The five boroughs – Brooklyn, Queens, Manhattan, the Bronx, and Staten Island – were consolidated into a single city in 1898.[22] With a census-estimated 2014 population of 8,491,079[1] distributed over a land area of just 305 square miles (790 km2),[23] New York is the most densely populated major city in the United States.[24] As many as 800 languages are spoken in New York,[25][26] making it the most linguistically diverse city in the world.[27] By 2014 census estimates, the New York City metropolitan region remains by a significant margin the most populous in the United States, as defined by both the Metropolitan Statistical Area (20.1 million residents)[5] and the Combined Statistical Area (23.6 million residents).[6] In 2013, the MSA produced a gross metropolitan product (GMP) of nearly US 1.39 trillion,[28] while in 2012, the CSA[29] generated a GMP of over US 1.55 trillion, both ranking first nationally by a wide margin and behind the GDP of only twelve nations and eleven nations, respectively.[30]
      """.stripMargin
 
-  /*
+/*
   val stanford = new StanfordAnnotator
-  stanford.annotateText(s)
+  val a = stanford.annotateText(s)
+  val e = new Sentiment(a.sentimentTree.head)
+  //stanford.extractSentiment(a.sentimentTree.head, null,null,null,null)
   //stanford.annotateText(s + "bla")
-  */
+*/
 /*
 
   val analyzingPipe = new TextAnalyzerPipeline
@@ -89,8 +92,10 @@ object Main  extends App{
 
   */
 
-  val w = new WordNet()
-  val l = w.getBestSynonyms(POS.NOUN, "dog")
-  l.foreach(s => println(s))
-  w.getRelatedNouns("asdfsadf")
+  val analyzingPipe = new TextAnalyzerPipeline
+  val relationExtractor = new RWS(analyzingPipe)
+  val annotatedText = analyzingPipe.analyzeText(s)
+  val relations = relationExtractor.extractRelations(annotatedText)
+
+  Await.result(relations, 1000.seconds)
 }

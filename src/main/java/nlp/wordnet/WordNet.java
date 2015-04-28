@@ -49,7 +49,7 @@ public class WordNet {
                 for (IWord w : synset.getWords()) {
                     String c = w.getLemma();
                     if (!c.equals(s) && !c.contains(" ") && synonyms.size() < 4) {
-                        synonyms.add(c);
+                        synonyms.add(c.replace("_", " "));
                     }
                 }
             }

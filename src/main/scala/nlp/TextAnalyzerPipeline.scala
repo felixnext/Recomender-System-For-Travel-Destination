@@ -27,8 +27,15 @@ class TextAnalyzerPipeline {
   val spotlight = new SpotlightClient
   val dbpediaLookup = new DBPediaLookup
 
-  //annotates text with four annotators:
-  //StanfordNLP, RelationExtraction (Opnie), Clavin gazetteer and Spotlight
+
+  def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
+
+  /**
+   * Annotates text with four annotators:
+   * StanfordNLP, RelationExtraction (Opnie), Clavin gazetteer and Spotlight.
+   * @param text Raw text.
+   * @return Annotation of given text.
+   */
   def analyzeText(text: String): Future[AnnotatedText] = {
     //process text
     //val relations = future{relationExtractor.extractRelations(text)}
@@ -56,19 +63,21 @@ class TextAnalyzerPipeline {
     } yield {
         val sentenceBoundaries = s.tokenizedSentences.foldLeft(0, List[(Int, Int)]())((t, s) =>
           (t._1 + s.length + 1, t._2 :+(t._1, t._1 + s.length)))._2
+
         val groups: Map[(Int, Int), Seq[Relation]] = sentenceBoundaries.map(x => x -> Seq[Relation]()).toMap
 
         val occupiedGroups = r.foldLeft(groups) {
           (tmpGroups, x) =>
             val minOffset = (Seq(x.arg1.argOffset._1, x.relOffset._1) ++ x.arg2.map(x => x.argOffset._1)).min
             val maxOffset = (Seq(x.arg1.argOffset._2, x.relOffset._2) ++ x.arg2.map(x => x.argOffset._2)).max
-            val newGroups = tmpGroups.keySet.find(x => x._1.<=(minOffset) && maxOffset <= x._2) match {
+            val newGroups = tmpGroups.keySet.find(x => x._1 <= minOffset && maxOffset <= x._2) match {
               case Some(key) => tmpGroups + (key -> (tmpGroups.getOrElse(key, Seq()) :+ x))
               case _ => tmpGroups
             }
             newGroups
         }
-        occupiedGroups.map { case (k, v) => v }.toArray
+        occupiedGroups.toSeq.sortBy(_._1._1).map(t => t._2).toArray
+        //occupiedGroups.map { case (k, v) => v }.toArray
       }
 
 
@@ -92,17 +101,15 @@ class TextAnalyzerPipeline {
   }
 
   type Sentences =  Array[Array[(String, String)]]
-
   //Takes list of relation, annotates subject, object with dbpedia uris and geoname location.
   //Creates tree with help of coreference. The relations with co-referent object are composed to single node in the tree.
   def createEntityCandidates(relations: Array[Seq[Relation]], spotlightResult: List[SpotlightResult],
                              clavinResult: List[Location], coreference: util.Map[Integer, CorefChain],
-                             sentences: Sentences, offsetConverter: OffsetConverter): RelationTree = {
+  sentences: Sentences, offsetConverter: OffsetConverter): RelationTree = {
+
     //get all key of coref clusters
     //value coresponds to cluster id
     val keys: java.util.Set[Integer] = coreference.keySet()
-
-    def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
     //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
     def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int, Int) =
