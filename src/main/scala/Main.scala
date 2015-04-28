@@ -5,8 +5,10 @@
 import clavin.ClavinClient
 import dbpedia.{DBPediaClient, YagoGeoTypes, SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
+import edu.mit.jwi.item.POS
 
 import elasticsearch.ElasticsearchClient
+import nlp.wordnet.WordNet
 import nlp.{TextAnalyzerPipeline, RelationExtractor, StanfordAnnotator}
 import core.SparqlQueryCreator
 import tools.Levenshtein
@@ -14,6 +16,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scalaj.http.{HttpException, Http, HttpResponse}
+import scala.collection.JavaConversions._
 
 
 object Main  extends App{
@@ -83,6 +86,11 @@ object Main  extends App{
   val response: HttpResponse[String] = Http("http://localhost:8080/search")
    .header("content-type", "application/json").timeout(connTimeoutMs = Integer.MAX_VALUE, readTimeoutMs = Integer.MAX_VALUE).postData(adasda).asString
   println(response.body)
- 
-  /*
+
+  */
+
+  val w = new WordNet()
+  val l = w.getBestSynonyms(POS.NOUN, "dog")
+  l.foreach(s => println(s))
+  w.getRelatedNouns("asdfsadf")
 }

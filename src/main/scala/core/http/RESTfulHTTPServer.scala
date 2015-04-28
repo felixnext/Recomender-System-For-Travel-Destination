@@ -18,13 +18,13 @@ import scala.util.{Failure, Success}
 
 
 /**
- * Created by yevgen on 09.04.15.
+ * Rest http service for finding travel destinations.
  */
 class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  with ActorLogging{
 
   def actorRefFactory = context
-  //TODO search route
-  def receive = runRoute(aSimpleRoute)
+
+  def receive = runRoute(searchRoute)
 
   val workerActors = context.actorOf(Props[LocationFinderActor].withRouter(RoundRobinPool(1)), name = "WorkerActors")
 
@@ -33,7 +33,7 @@ class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  w
   // handles the api path, we could also define these in separate files
   // this path respons to get queries, and make a selection on the
   // media-type.
-  val aSimpleRoute = {
+  val searchRoute = {
     post {
       path("search") {
         entity(as[UserQuery]) {

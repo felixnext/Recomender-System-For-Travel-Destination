@@ -27,8 +27,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
   // All queries will be ranked w.r.t quality score.
   def createSparqlQuery(annotatedText: Future[AnnotatedText]): Future[Set[(String, Double)]] = {
 
-    //clavin, stanford and openie
-
+    //if there was a failure during text annotation
     for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
 
     //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
