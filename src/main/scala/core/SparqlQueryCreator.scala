@@ -261,7 +261,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
       new Relation(relation.arg1, (relation.rel._1, relTagged), relation.relOffset, relation.arg2)
     }
 
-    //iterate over all sentence and relations
+    //iterate over all sentence and all relations
     val posRelations: Array[Seq[Relation]] = for (sr <- sentences.zip(relations)) yield {
       val sentence = sr._1
       val relation = sr._2

@@ -33,7 +33,7 @@ class SpotlightClient {
       //REST api request
       val response: HttpResponse[String] = Http(url + "/rest/annotate")
         .params(paramsArg).param("text", text)
-        .header("Accept", "application/json").timeout(connTimeoutMs = 2000, readTimeoutMs = 7000).asString
+        .header("Accept", "application/json").timeout(connTimeoutMs = 2000, readTimeoutMs = 700000).asString
       parseResponse(response.body)
     } catch {
       case e: java.net.SocketTimeoutException =>

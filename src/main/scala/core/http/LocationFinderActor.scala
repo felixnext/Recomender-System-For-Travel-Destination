@@ -1,7 +1,7 @@
 package core.http
 
 import akka.actor.{Actor, ActorLogging}
-import core.SparqlQueryCreator
+import core.{RelationExtraction, SparqlQueryCreator}
 import dbpedia.DBPediaClient
 import elasticsearch.ElasticsearchClient
 import nlp.TextAnalyzerPipeline
@@ -19,10 +19,17 @@ class LocationFinderActor extends Actor with ActorLogging {
   log.debug("LocationFinder created!")
 
   //initialize services
-  val elasticClient = new ElasticsearchClient()
+  val elasticClient = new ElasticsearchClient
+
   val analyzingPipe = new TextAnalyzerPipeline
+
+  //creating a sparql query and execute it
   val queryCreator = new SparqlQueryCreator(analyzingPipe)
-  val dbpediaCleint = new DBPediaClient
+  val dbpediaClient = new DBPediaClient
+
+  //extract relations and find similiar relation in db
+  val relationCreator = new RelationExtraction(analyzingPipe)
+
 
   def receive = {
     case UserQuery(query: String) if query.equals("") => log.debug("Query is empty"); throw new Exception("Query is empty.")
@@ -47,9 +54,13 @@ class LocationFinderActor extends Actor with ActorLogging {
 
 
       val dbpediaLocations = queries.map(qs =>
-        qs.map(q => (dbpediaCleint.executeLocationQuery(q._1), q._2))
+        qs.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
       )
+      
       dbpediaLocations.onComplete(r => log.debug("DBPedia locations were downloaded. SUCCESS: " + r.isSuccess))
+
+      val relations = relationCreator.extractRelations(annotatedText)
+      relations.onComplete(r => log.debug("Relations were extracted. SUCCESS: " + r.isSuccess))
 
       dbpediaLocations.onSuccess {
         case r =>

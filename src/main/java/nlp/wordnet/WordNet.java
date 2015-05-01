@@ -48,7 +48,7 @@ public class WordNet {
                 // iterate over words associated with the syns
                 for (IWord w : synset.getWords()) {
                     String c = w.getLemma();
-                    if (!c.equals(s) && !c.contains(" ") && synonyms.size() < 4) {
+                    if (!c.equalsIgnoreCase(s) && !c.contains(" ") && synonyms.size() < 4) {
                         synonyms.add(c.replace("_", " "));
                     }
                 }
@@ -67,8 +67,8 @@ public class WordNet {
     public List<String> getRelatedNouns(String s) {
         List<String> result = new ArrayList<String>();
         IIndexWord iw = null;
-        Synset sense = null;
         iw = dict.getIndexWord(s, POS.NOUN);
+
         if (iw != null) {
 
             IWordID wordID = iw.getWordIDs().get(0);
@@ -81,7 +81,6 @@ public class WordNet {
             relatedSynsets.addAll(relatedSynsets1);
             relatedSynsets.addAll(relatedSynsets2);
             //relatedSynsets.addAll(synset.getRelatedSynsets(Pointer.HYPONYM));
-
 
             List<IWord> words;
             for (ISynsetID sid : relatedSynsets) {

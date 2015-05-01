@@ -85,14 +85,14 @@ public class StanfordAnnotator {
         return new StanfordAnnotation(sentenceSentiment, sentencesPos, graph, tokenizedSentences);
     }
 
-    
+
 
     /**
      * Maps sentiment score to sentiment class
      * @param sentiment Sentiment score.
      * @return Sentiment class as a string.
      */
-    private String toCss(int sentiment) {
+    public static String toCss(int sentiment) {
         switch (sentiment) {
             case 0:
                 return "very negative";

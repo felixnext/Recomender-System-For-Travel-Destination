@@ -49,7 +49,9 @@ class TextAnalyzerPipeline {
 
     //spotlight analysis
     val spotlightAnnotation = future {
-      spotlight.discoverEntities(text)
+      //TODO resolve spotlight problem
+      //spotlight.discoverEntities(text)
+      List()
     }
 
     val rawRel = future {

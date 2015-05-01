@@ -92,10 +92,17 @@ object Main  extends App{
 
   */
 
+  /*
+  val wordNet = new WordNet
+  val syn = wordNet.getBestSynonyms(POS.NOUN, "children")
+  syn.foreach(s => println(s))
+*/
+
   val analyzingPipe = new TextAnalyzerPipeline
   val relationExtractor = new RWS(analyzingPipe)
   val annotatedText = analyzingPipe.analyzeText(s)
   val relations = relationExtractor.extractRelations(annotatedText)
 
   Await.result(relations, 1000.seconds)
+
 }
