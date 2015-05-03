@@ -3,6 +3,7 @@
  */
 
 import clavin.ClavinClient
+import com.google.gson.{JsonElement, Gson}
 import dbpedia.{DBPediaClient, YagoGeoTypes, SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 import edu.mit.jwi.item.POS
@@ -11,7 +12,7 @@ import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
 import nlp.{TextAnalyzerPipeline, RelationExtractor => RE, StanfordAnnotator}
 import core.{Sentiment, SparqlQueryCreator, RelationExtraction => RWS}
-import tools.Levenshtein
+import tools.{Relation, JsonDumpWriter, JsonDumpReader, Levenshtein}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -97,12 +98,18 @@ object Main  extends App{
   val syn = wordNet.getBestSynonyms(POS.NOUN, "children")
   syn.foreach(s => println(s))
 */
-
+  /*
   val analyzingPipe = new TextAnalyzerPipeline
   val relationExtractor = new RWS(analyzingPipe)
   val annotatedText = analyzingPipe.analyzeText(s)
   val relations = relationExtractor.extractRelations(annotatedText)
 
   Await.result(relations, 1000.seconds)
+  */
 
+  val reader = new JsonDumpReader("/Users/yevgen/Documents/data/master/dumps/elastic/travellerspoint0.json")
+  println(reader.next)
+  val writer = new JsonDumpWriter("/Users/yevgen/Documents/data/master/dumps/elastic/test.json")
+  val r = new Relation("Mallorca", "123",List("Sun"),"is", List("bright"), 1, 2.0)
+  writer.writeRelation(r)
 }

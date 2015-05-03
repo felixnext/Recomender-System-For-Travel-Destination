@@ -56,7 +56,7 @@ class LocationFinderActor extends Actor with ActorLogging {
       val dbpediaLocations = queries.map(qs =>
         qs.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
       )
-      
+
       dbpediaLocations.onComplete(r => log.debug("DBPedia locations were downloaded. SUCCESS: " + r.isSuccess))
 
       val relations = relationCreator.extractRelations(annotatedText)

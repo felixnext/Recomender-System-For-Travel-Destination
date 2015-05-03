@@ -6,6 +6,7 @@ import io
 import chardet
 import sys
 import os
+import requests
 
 #####################
 #Creates json file from xml for loading data into elasticsearch
@@ -97,10 +98,16 @@ for line in file:
             out_path = sys.argv[2].replace(".xml", "%s.json" % part)
             out = open(out_path, "w")
 
-        out.write("""{"create": { "_index": "%s", "_type": "traveldata", "_id" : "%s" }}\n""" % (index, doc_id))
-        out.write(json.dumps(dict).encode('utf-8') + "\n")
+        #test if the article is a location
+        headers = {'content-type': 'text/plain'}
+        r = requests.post("http://134.169.32.169:9093/api/v0/geotag", data=dict['title'], headers=headers)
+        result = r.json()
 
-        doc_id = doc_id + 1
+        if len(result['resolvedLocations']) > 0:
+            out.write("""{"create": { "_index": "%s", "_type": "traveldata", "_id" : "%s" }}\n""" % (index, doc_id))
+            out.write(json.dumps(dict).encode('utf-8') + "\n")
+
+            doc_id = doc_id + 1
 
         dict = {}
         paragraphs = []

@@ -35,118 +35,119 @@ class RelationExtraction(analyzingPipe: TextAnalyzerPipeline) {
       sent <- tokenizedSentencesPos
       annText <- annotatedText
     } yield {
-      val offsetConverter = new OffsetConverter(sent)
+        val offsetConverter = new OffsetConverter(sent)
 
-      //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
-      def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int, Int) =
-        offsetConverter.sentenceToCharLevelOffset(sentenceNr, tokenBegin, tokenEnd, token)
+        //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
+        def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int, Int) =
+          offsetConverter.sentenceToCharLevelOffset(sentenceNr, tokenBegin, tokenEnd, token)
 
-      //due to each element in array belong to a sentence
-      assert(annText.stanford.sentimentTree.length == annText.relations.length)
-      val treesWithRelations = annText.stanford.sentimentTree.zip(annText.relations)
-      val relations = for (sent <- treesWithRelations) yield {
-        val sentimentExtractor = new Sentiment(sent._1)
-        //sentimentExtractor.children.foreach(c => println(c.words))
+        //due to each element in array belong to a sentence
+        assert(annText.stanford.sentimentTree.length == annText.relations.length)
+        val treesWithRelations = annText.stanford.sentimentTree.zip(annText.relations)
+        val relations = for (sent <- treesWithRelations) yield {
+          val sentimentExtractor = new Sentiment(sent._1)
+          //sentimentExtractor.children.foreach(c => println(c.words))
 
-        val relations = sent._2.flatMap(r => sentimentExtractor.findSentiment(r))
-        //relations.foreach(s => println(s))
-        relations
-      }
-
-
-      val wordnet = new WordNet
-
-      //finds all possible synonyms to the given word sequence
-      //returns a list of synonyms conataining original sequence
-      def findSynonyms(words: String, sentenceNumber: Int): List[String] = {
-
-        val tokenized = words.split(" ")
-        val slidingOverSentence = sent(sentenceNumber).sliding(tokenized.size).toList
-
-        val synonyms = for (subSentence <- slidingOverSentence if subSentence.map(t => t._1).sameElements(tokenized)) yield {
-          val synonyms = subSentence.flatMap { w =>
-            w._2 match {
-              case "JJ" => wordnet.getBestSynonyms(POS.ADJECTIVE, w._1).toList
-              case "RB" => wordnet.getBestSynonyms(POS.ADVERB, w._1).toList
-              case "NN" | "NNP" => wordnet.getBestSynonyms(POS.NOUN, w._1).toList
-              case "VB" => wordnet.getBestSynonyms(POS.VERB, w._1).toList
-              case _ => List()
-            }
-          }
-          synonyms
+          val relations = sent._2.flatMap(r => sentimentExtractor.findSentiment(r))
+          //relations.foreach(s => println(s))
+          relations
         }
-        synonyms.flatten
-      }
 
-      val coreference = annText.stanford.coreference.toSeq
 
-      @tailrec
-      //annotates relation with sentiment information and creates candidate lists for
-      //object and subject within each relation. Adds synonyms, location and co-reference information.
-      def annotateRelation(relations: Array[Seq[RawRelation]], annRel: List[RawRelation] = List(),
-                           sentenceNumber: Int = 1): List[RawRelation] = {
-        if (relations.nonEmpty) {
-          val relationsPerSentence = relations.head
-          val annotation = for (rel <- relationsPerSentence) yield {
+        val wordnet = new WordNet
 
-            val objSynonyms = findSynonyms(rel.objectCandidates.head, sentenceNumber)
-            val subjSynonyms = findSynonyms(rel.subjectCandidates.head, sentenceNumber)
+        //finds all possible synonyms to the given word sequence
+        //returns a list of synonyms conataining original sequence
+        def findSynonyms(words: String, sentenceNumber: Int): List[String] = {
 
-            //find coref for object
-            val corefInObj = coreference.find { c =>
-              val mentions = c._2.getMentionsInTextualOrder
-              mentions.exists(cm => cm.sentNum == sentenceNumber &&
-                analyzingPipe.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
-                  rel.objectOffset))
+          val tokenized = words.split(" ")
+          val slidingOverSentence = sent(sentenceNumber).sliding(tokenized.size).toList
+
+          val synonyms = for (subSentence <- slidingOverSentence if subSentence.map(t => t._1).sameElements(tokenized)) yield {
+            val synonyms = subSentence.flatMap { w =>
+              w._2 match {
+                case "JJ" => wordnet.getBestSynonyms(POS.ADJECTIVE, w._1).toList
+                case "RB" => wordnet.getBestSynonyms(POS.ADVERB, w._1).toList
+                case "NN" | "NNP" => wordnet.getBestSynonyms(POS.NOUN, w._1).toList
+                case "VB" => wordnet.getBestSynonyms(POS.VERB, w._1).toList
+                case _ => List()
+              }
             }
-
-            //find coref for subject
-            val corefInSubj = coreference.find { c =>
-              val mentions = c._2.getMentionsInTextualOrder
-              mentions.exists(cm => cm.sentNum == sentenceNumber &&
-                analyzingPipe.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
-                  rel.subjectOffset))
-
-            }
-
-            val locationsInObject = annText.clavin.find(x =>
-              analyzingPipe.intersect((x.offset, x.offset + x.asciiName.length), rel.objectOffset))
-
-            val locationsInSubject = annText.clavin.find(x =>
-              analyzingPipe.intersect((x.offset, x.offset + x.asciiName.length), rel.subjectOffset))
-
-            //add finded names to candidate list
-            val newObjCand = (if (corefInObj.isDefined)
-              corefInObj.get._2.getMentionsInTextualOrder.map(x => x.mentionSpan)
-            else Set()).toSet
-
-            //annotate subject with co-reference candidates
-            val newSubjCand = (if (corefInSubj.isDefined)
-              corefInSubj.get._2.getMentionsInTextualOrder.map(x => x.mentionSpan)
-            else Set()).toSet
-
-            val locAnnObj = if (locationsInObject.isDefined) Set(locationsInObject.get.asciiName)
-            else Set()
-            val locAnnSubj = if (locationsInSubject.isDefined) Set(locationsInSubject.get.asciiName)
-            else Set()
-
-            //creates new candidate list with resolved synonyms, co-reference and locations
-            val newObj =  locAnnObj ++ objSynonyms ++ rel.objectCandidates ++ newObjCand
-            val newSubj = locAnnSubj ++ subjSynonyms ++ rel.subjectCandidates ++ newSubjCand
-
-            new RawRelation(newObj.toList, rel.objectOffset, rel.relation, rel.relationOffset, newSubj.toList,
-              rel.subjectOffset, rel.sentiment, rel.tfIdf)
+            synonyms
           }
+          synonyms.flatten
+        }
 
-          //recursive call with next sentence to be processed
-          annotateRelation(relations.tail, annRel ++ annotation, sentenceNumber + 1)
-        } else annRel
+        val coreference = annText.stanford.coreference.toSeq
+
+        @tailrec
+        //annotates relation with sentiment information and creates candidate lists for
+        //object and subject within each relation. Adds synonyms, location and co-reference information.
+        def annotateRelation(relations: Array[Seq[RawRelation]], annRel: List[RawRelation] = List(),
+                             sentenceNumber: Int = 1): List[RawRelation] = {
+          if (relations.nonEmpty) {
+            val relationsPerSentence = relations.head
+            val annotation = for (rel <- relationsPerSentence) yield {
+
+              val objSynonyms = findSynonyms(rel.objectCandidates.head, sentenceNumber - 1)
+              val subjSynonyms = findSynonyms(rel.subjectCandidates.head, sentenceNumber - 1)
+
+              //find coref for object
+              val corefInObj = coreference.find { c =>
+                val mentions = c._2.getMentionsInTextualOrder
+                mentions.exists(cm => cm.sentNum == sentenceNumber &&
+                  analyzingPipe.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
+                    rel.objectOffset))
+              }
+
+              //find coref for subject
+              val corefInSubj = coreference.find { c =>
+                val mentions = c._2.getMentionsInTextualOrder
+                mentions.exists(cm => cm.sentNum == sentenceNumber &&
+                  analyzingPipe.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
+                    rel.subjectOffset))
+
+              }
+
+              val locationsInObject = annText.clavin.find(x =>
+                analyzingPipe.intersect((x.offset, x.offset + x.asciiName.length), rel.objectOffset))
+
+              val locationsInSubject = annText.clavin.find(x =>
+                analyzingPipe.intersect((x.offset, x.offset + x.asciiName.length), rel.subjectOffset))
+
+              //add finded names to candidate list
+              val newObjCand = (if (corefInObj.isDefined)
+                corefInObj.get._2.getMentionsInTextualOrder.map(x => x.mentionSpan)
+              else Set()).toSet
+
+              //annotate subject with co-reference candidates
+              val newSubjCand = (if (corefInSubj.isDefined)
+                corefInSubj.get._2.getMentionsInTextualOrder.map(x => x.mentionSpan)
+              else Set()).toSet
+
+              val locAnnObj = if (locationsInObject.isDefined) Set(locationsInObject.get.asciiName)
+              else Set()
+              val locAnnSubj = if (locationsInSubject.isDefined) Set(locationsInSubject.get.asciiName)
+              else Set()
+
+              //creates new candidate list with resolved synonyms, co-reference and locations
+              val newObj = locAnnObj ++ objSynonyms ++ rel.objectCandidates ++ newObjCand
+              val newSubj = locAnnSubj ++ subjSynonyms ++ rel.subjectCandidates ++ newSubjCand
+
+              new RawRelation(newObj.toList, rel.objectOffset, rel.relation, rel.relationOffset, newSubj.toList,
+                rel.subjectOffset, rel.sentiment, rel.tfIdf)
+            }
+
+            //recursive call with next sentence to be processed
+            annotateRelation(relations.tail, annRel ++ annotation, sentenceNumber + 1)
+          } else annRel
+        }
+
+        assert(relations.size == sent.size)
+        val annRelations = annotateRelation(relations)
+        //annRelations.foreach(x => println(x))
+        annRelations
       }
-
-      val annRelations = annotateRelation(relations)
-      //annRelations.foreach(x => println(x))
-      annRelations
-    }
 
     rels
   }
