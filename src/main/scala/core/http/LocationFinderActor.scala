@@ -47,21 +47,14 @@ class LocationFinderActor extends Actor with ActorLogging {
 
       //DBPedia location request
       val annotatedText = analyzingPipe.analyzeText(query)
-      annotatedText.onComplete(r => log.debug("Text annotation finished. SUCCESS: " + r.isSuccess))
 
       val queries = queryCreator.createSparqlQuery(annotatedText)
-      queries.onComplete(r => log.debug("DBPedia queries were extracted. SUCCESS: " + r.isSuccess))
 
-
-      val dbpediaLocations = queries.map(qs =>
-        qs.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
-      )
-
-      dbpediaLocations.onComplete(r => log.debug("DBPedia locations were downloaded. SUCCESS: " + r.isSuccess))
+      val dbpediaLocations = queries.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
 
       val relations = relationCreator.extractRelations(annotatedText)
-      relations.onComplete(r => log.debug("Relations were extracted. SUCCESS: " + r.isSuccess))
 
+      /*
       dbpediaLocations.onSuccess {
         case r =>
           val m = r.toList.flatMap(s => s._1.map(l =>
@@ -70,7 +63,7 @@ class LocationFinderActor extends Actor with ActorLogging {
           reply ! Locations(m.toList)
           log.debug("Response was send.")
       }
-
+      */
     //TODO relation strore request
 
     //TODO merge results

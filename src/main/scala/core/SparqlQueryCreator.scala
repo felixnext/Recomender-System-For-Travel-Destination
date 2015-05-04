@@ -6,11 +6,7 @@ import nlp._
 import tools.Levenshtein
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.math._
-
 
 
 /**
@@ -21,44 +17,29 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
 
   val elastic = new ElasticsearchClient
 
-  type Sentences =  Array[Array[(String, String)]]
+  type Sentences = Array[Array[(String, String)]]
 
   //Creates all possible spaql query based on given text.
   // All queries will be ranked w.r.t quality score.
-  def createSparqlQuery(annotatedText: Future[AnnotatedText]): Future[Set[(String, Double)]] = {
 
-    //if there was a failure during text annotation
-    for (e <- annotatedText.failed) println("Text annotation failed. Cannot create sparql query" + e)
-
+  def createSparqlQuery(annotatedText: AnnotatedText): Set[(String, Double)] = {
     //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
-    val tokenizedSentencesPos: Future[Sentences] = annotatedText.map { x => analyzingPipe.formatPosSentences(x)}
+    val tokenizedSentencesPos: Sentences = analyzingPipe.formatPosSentences(annotatedText)
 
     //replaces stanford pos tags with patty tags
-    val posRelations = for {
-      ann <- annotatedText
-      s <- tokenizedSentencesPos
-    } yield {
-        posRelAnnotation(s, ann.relations)
-      }
-
-    for (e <- posRelations.failed) println("POS annotation failed. Cannot create sparql query" + e)
+    val posRelations = posRelAnnotation(tokenizedSentencesPos, annotatedText.relations)
 
     //converts stanfrod sentence offset into char offset
-    val offsetConverter = tokenizedSentencesPos.map(s => new OffsetConverter(s))
+    val offsetConverter = new OffsetConverter(tokenizedSentencesPos)
 
 
-    val entityCandidatesAnnotation = for {
-      p <- posRelations
-      s <- tokenizedSentencesPos
-      ann <- annotatedText
-      offS <- offsetConverter
-    } yield {
-        analyzingPipe.createEntityCandidates(p, ann.spotlight, ann.clavin, ann.stanford.coreference, s, offS)
-      }
-    for (e <- entityCandidatesAnnotation.failed) println("Candidate set creation failed. Cannot create sparql query" + e)
+    val entityCandidatesAnnotation = analyzingPipe.createEntityCandidates(posRelations, annotatedText.spotlight,
+      annotatedText.clavin, annotatedText.stanford.coreference, tokenizedSentencesPos, offsetConverter)
+
 
     //maps raw relations into patty dbpedia predicates
-    val predicateAnnotation = entityCandidatesAnnotation.map { c =>
+    val predicateAnnotation = {
+      val c = entityCandidatesAnnotation
       val rel = c.groupsMap.map(k => (k._1,
         k._2.map(r => new AnnontatedRelation(r.arg1, r.rel, r.relOffset, r.arg2,
           Some(elastic.findPattyRelation(r.rel._2)), Some(elastic.findDBPediaProperties(r.rel._1))))))
@@ -70,7 +51,8 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
 
 
     //chains relations thus creates trees
-    val trees: Future[Seq[Tree]] = predicateAnnotation.map { relations =>
+    val trees: Seq[Tree] = {
+      val relations = predicateAnnotation
       //annotate all entities with dbpedia classes and ygo geo types
       def annRelation(r: AnnontatedRelation) = {
         val arg1Lemon = elastic.findDBPediaClasses(r.arg1.arg)
@@ -169,7 +151,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
         }
         val b = {
           val score = Levenshtein.score(arg1.arg, arg2.arg)
-          if(score > 0.5) (true,score * 0.5) else (false,0.0)
+          if (score > 0.5) (true, score * 0.5) else (false, 0.0)
         }
         (s._1 || c._1 || l._1 || y._1 || d._1 || b._1,
           Vector(s._2, c._2, l._2, y._2, d._2, b._2).foldLeft(0.0)((g, n) => max(g, n)))
@@ -220,7 +202,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
       def traverseTree(head: Seq[Tree], tail: Seq[Tree], trees: Seq[Tree] = Seq()): Seq[Tree] = {
         if (tail.nonEmpty) {
           val tree = chainRelations(tail.head, head ++ tail.tail)
-          traverseTree(head :+ tail.head, tail.tail,  trees :+ tree)
+          traverseTree(head :+ tail.head, tail.tail, trees :+ tree)
         }
         else trees
       }
@@ -229,8 +211,8 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
     }
 
     //transforms trees into sparql queries
-    val queries = trees.map(trees => trees.flatMap(tree => new SparqlQuery(tree).queries))
-    val filtered = queries.map(q => q.toSet)
+    val queries = trees.flatMap(tree => new SparqlQuery(tree).queries)
+    val filtered = queries.toSet
 
     filtered
   }
@@ -251,9 +233,9 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
       //if contains patty tag, than replace word with pos tag else take a word
       val posTaggedRelationList: Iterator[Array[String]] =
         for (subSentence <- slidingOverSentence if subSentence.map(t => t._1).sameElements(relationWords))
-        yield {
-          subSentence.map(t => mapToPattyTags.getOrElse(t._2, t._1))
-        }
+          yield {
+            subSentence.map(t => mapToPattyTags.getOrElse(t._2, t._1))
+          }
 
       val relTagged: String = if (posTaggedRelationList.isEmpty) relation.rel._1
       else posTaggedRelationList.next().reduce((a, b) => a + " " + b)
@@ -270,6 +252,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
 
     posRelations
   }
+
 
 }
 
@@ -313,10 +296,11 @@ class NaiveScorer extends RelationScorer {
 }
 
 //the double value of the map represents the membership score of relation
-class Tree(val edges: Map[AnnontatedRelation, Weight],val children: Option[Map[AnnontatedRelation, Seq[Tree]]] = None) {
+class Tree(val edges: Map[AnnontatedRelation, Weight], val children: Option[Map[AnnontatedRelation, Seq[Tree]]] = None) {
 
   private def extractWeights(t: Tree) = t.edges.map(x => x._2).toSeq
-  private def calculateWeights(s: Seq[Weight]): Double = s.foldLeft(0.0)((g,w) => g + w.weight * w.factor) / s.size.toDouble
+
+  private def calculateWeights(s: Seq[Weight]): Double = s.foldLeft(0.0)((g, w) => g + w.weight * w.factor) / s.size.toDouble
 
   //score of that tree calculated from score of single relations and support factors
   val score: Double = {

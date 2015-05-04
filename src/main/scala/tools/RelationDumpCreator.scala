@@ -44,25 +44,26 @@ object RelationDumpCreator extends App {
     val relationExtractor = new RelationExtraction(analyzerPipe)
 
     val relations = for (locationArticle <- reader) yield {
+      val t0 = System.currentTimeMillis()
       val text = locationArticle.text.mkString(" ")
-      val analyzed = analyzerPipe.analyzeText(text)
-      val rel = relationExtractor.extractRelations(analyzed)
-      val extracteRawdRel = Await.result(rel, 1000.second)
-      val transformedRel = extracteRawdRel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
-        r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, extracteRawdRel)))
+
+      val result = Future{
+        val analyzed = analyzerPipe.analyzeText(text)
+        relationExtractor.extractRelations(analyzed)
+      }
+
+      val transformedRel = try {
+        val rel = Await.result(result, 300.seconds)
+        rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
+          r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
+      } catch {
+        case e: Exception => println("Error during relation extraction" + e); List()
+      }
+      val t1 = System.currentTimeMillis()
+      println("Relation done! Duration: " + (t1-t0)/1000 + " seconds")
       transformedRel
     }
-    /*
-    val relations = reader.toArray.par.map{ locationArticle =>
-      val text = locationArticle.text.mkString(" ")
-      val analyzed = analyzerPipe.analyzeText(text)
-      val rel = relationExtractor.extractRelations(analyzed)
-      val extracteRawdRel = Await.result(rel, 300.second)
-      val transformedRel = extracteRawdRel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
-        r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, extracteRawdRel)))
-      transformedRel
-    }
-    */
+
     relations.flatten.toList
   }
 
@@ -71,22 +72,16 @@ object RelationDumpCreator extends App {
       processFile(reader)
   }).flatten
 
-  tfIdf(relations)
+  //tfIdf(relations)
 
 
-  /*
-  result.onSuccess {
-    case x =>
-      val s = Future.sequence(x)
-      s.onSuccess {
-        case r =>
-          val relations = r.flatten
-          tfIdf(relations)
-      }
+  val path = args.head.split("/")
+  val outFile = path.slice(0, path.size - 1).mkString("/") + "/relations.json"
+  val writer = new JsonDumpWriter(outFile)
+
+  for(r <- relations) {
+    writer.writeRelation(r)
   }
-
-  Await.result(result, 1000.seconds)
-  */
 
   def tfIdf(relations: Array[Relation]) = {
 
@@ -104,9 +99,7 @@ object RelationDumpCreator extends App {
 
     def countRelations(r: Relation) = relations.count(rel => equalRelations(rel, r))
 
-    val path = args.head.split("/")
-    val outFile = path.slice(0, path.size - 1).mkString("/") + "/relations.json"
-    val writer = new JsonDumpWriter(outFile)
+
 
     val sizeOfCorpora = relations.size.toDouble
     for (relation <- relations) yield {

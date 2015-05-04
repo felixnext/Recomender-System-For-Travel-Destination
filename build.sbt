@@ -1,5 +1,5 @@
 
-mainClass in assembly := Some("core.Boot")
+mainClass in assembly := Some("tools.ParallelDumpCreator")
 
 
 name := """Destination-Recomender-System"""

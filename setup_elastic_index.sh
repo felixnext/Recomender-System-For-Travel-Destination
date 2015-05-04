@@ -775,11 +775,105 @@ curl -XPUT 'localhost:9200/dbpedia_classes' -d '
     }
 }'
 
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @travellerspoint0.json > travellerspoint_load0.log
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikipedia0.json > wikipedia_load0.log
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikipedia1.json > wikipedia_load1.log
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikipedia2.json > wikipedia_load2.log
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @wikitravel0.json > wikitravel_load0.log
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @dbpedia-relation-paraphrases.json > patty_load.log
-curl -XPOST 'localhost:9200/_bulk?pretty' --data-binary @DbpediaPred.json > dbpedia_props.log
-curl -XPOST '134.169.32.163:9200/_bulk?pretty' --data-binary @classes.json > dbpedia_classes.log
+curl -XPUT 'localhost:9200/structuredrelations' -d '
+{
+  "settings":{
+    "index":{
+      "analysis":{
+        "filter":{
+          "english_stop":{
+            "type":"stop",
+            "stopwords":"_english_"
+          },
+          "english_stemmer":{
+            "type":"stemmer",
+            "language":"english"
+          },
+          "english_possessive_stemmer":{
+            "type":"stemmer",
+            "language":"possessive_english"
+          }
+        },
+        "char_filter":{
+          "&_to_and":{
+            "type":"mapping",
+            "mappings":[
+              "& => and"
+            ]
+          }
+        },
+        "analyzer":{
+          "my_english":{
+            "tokenizer":"standard",
+            "char_filter":[
+              "html_strip",
+              "&_to_and"
+            ],
+            "filter":[
+              "english_possessive_stemmer",
+              "lowercase",
+              "asciifolding",
+              "english_stop",
+              "english_stemmer"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "mappings":{
+    "wikidump":{
+      "dynamic_templates":[
+        {
+          "en":{
+            "match":"*",
+            "match_mapping_type":"string",
+            "mapping":{
+              "type":"string",
+              "analyzer":"my_english"
+            }
+          }
+        }
+      ],
+      "properties":{
+        "locationName":{
+          "type":"string",
+          "analyzer":"simple"
+        },
+        "rel": {
+            "type": "string",
+            "analyzer": "my_english"
+        },
+        "objCand": {
+            "type": "string",
+            "analyzer": "my_english"
+        },
+        "subjCand": {
+            "type": "string",
+            "analyzer": "my_english"
+        },
+        "id":{
+          "type":"integer",
+          "index":"not_analyzed"
+        },
+        "sent":{
+          "type":"integer",
+          "index":"not_analyzed"
+        },
+        "tfIdf":{
+          "type":"double",
+          "index":"not_analyzed"
+        }
+      }
+    }
+  }
+}'
+
+curl -XPOST 'localhost:9200/_bulk?travellerspoint' --data-binary @travellerspoint0.json > travellerspoint_load0.log
+curl -XPOST 'localhost:9200/_bulk?wikipedia' --data-binary @wikipedia0.json > wikipedia_load0.log
+curl -XPOST 'localhost:9200/_bulk?wikipedia' --data-binary @wikipedia1.json > wikipedia_load1.log
+curl -XPOST 'localhost:9200/_bulk?wikitravel' --data-binary @wikitravel0.json > wikitravel_load0.log
+curl -XPOST 'localhost:9200/_bulk?patty' --data-binary @dbpedia-relation-paraphrases.json > patty_load.log
+curl -XPOST 'localhost:9200/_bulk?dbpedia_pred' --data-binary @DbpediaPred.json > dbpedia_props.log
+curl -XPOST 'localhost:9200/_bulk?dbpedia_classes' --data-binary @classes.json > classes.json.log
+curl -XPOST 'localhost:9200/_bulk?structuredrelations' --data-binary @relations.json > relations.log

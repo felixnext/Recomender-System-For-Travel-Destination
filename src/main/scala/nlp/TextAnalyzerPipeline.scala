@@ -13,6 +13,9 @@ import scala.collection.convert.wrapAsScala._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.math._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 
 /**
@@ -36,33 +39,29 @@ class TextAnalyzerPipeline {
    * @param text Raw text.
    * @return Annotation of given text.
    */
-  def analyzeText(text: String): Future[AnnotatedText] = {
+  def analyzeText(text: String): AnnotatedText = {
     //process text
     //val relations = future{relationExtractor.extractRelations(text)}
 
-    val clavinAnnotation = future {
-      clavin.extractLocations(text)
-    }
-    val stanfordAnnotation = future {
-      stanford.annotateText(text)
-    }
+    val clavinAnnotation = clavin.extractLocations(text)
+
+    val stanfordAnnotation = stanford.annotateText(text)
+
 
     //spotlight analysis
-    val spotlightAnnotation = future {
+    val spotlightAnnotation = {
       //TODO resolve spotlight problem
       //spotlight.discoverEntities(text)
       List()
     }
 
-    val rawRel = future {
-      relationExtractor.extractRelations(text)
-    }
+    val rawRel = relationExtractor.extractRelations(text)
+
 
     //split relations into subsets, each subset corresponds to one sentence
-    val relations: Future[Array[Seq[Relation]]] = for {
-      s <- stanfordAnnotation
-      r <- rawRel
-    } yield {
+    val relations: Array[Seq[Relation]] = {
+        val s = stanfordAnnotation
+        val r =  rawRel
         val sentenceBoundaries = s.tokenizedSentences.foldLeft(0, List[(Int, Int)]())((t, s) =>
           (t._1 + s.length + 1, t._2 :+(t._1, t._1 + s.length)))._2
 
@@ -82,24 +81,7 @@ class TextAnalyzerPipeline {
         //occupiedGroups.map { case (k, v) => v }.toArray
       }
 
-
-    //if some future fails print error message
-    for (e <- spotlightAnnotation.failed) println("Relation extraction failed. Cannot create sparql query" + e)
-    for (e <- relations.failed) println("Relation extraction failed. Cannot create sparql query" + e)
-    for (e <- clavinAnnotation.failed) println("Relation extraction failed. Cannot create sparql query" + e)
-    for (e <- stanfordAnnotation.failed) println("Relation extraction failed. Cannot create sparql query" + e)
-
-    val annText = for {
-      r <- relations
-      c <- clavinAnnotation
-      stfrd <- stanfordAnnotation
-      spot <- spotlightAnnotation
-    } yield {
-        new AnnotatedText(r, c, stfrd, spot)
-      }
-
-    //return future annotation
-    annText
+    new AnnotatedText(relations, clavinAnnotation, stanfordAnnotation, spotlightAnnotation)
   }
 
   type Sentences =  Array[Array[(String, String)]]
