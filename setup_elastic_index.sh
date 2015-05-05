@@ -10,13 +10,14 @@
 
 #ASSUMPTION: elastic claster was configured and all nodes were started
 
-#delete index
+#delete existing indexes
 curl -XDELETE 'http://localhost:9200/wikipedia/'
 curl -XDELETE 'http://localhost:9200/travellerspoint/'
 curl -XDELETE 'http://localhost:9200/wikitravel/'
 curl -XDELETE 'http://localhost:9200/patty/'
 curl -XDELETE 'http://localhost:9200/dbpedia_pred/'
 curl -XDELETE 'http://localhost:9200/dbpedia_classes/'
+curl -XDELETE 'http://localhost:9200/structuredrelations/'
 
 #create a index with specific settings: english analyzer
 curl -XPUT 'localhost:9200/wikipedia' -d '
@@ -66,7 +67,7 @@ curl -XPUT 'localhost:9200/wikipedia' -d '
     }
   },
   "mappings":{
-    "wikidump":{
+    "wikipedia":{
       "dynamic_templates":[
         {
           "en":{
@@ -300,7 +301,7 @@ curl -XPUT 'localhost:9200/travellerspoint' -d '
     }
   },
   "mappings":{
-    "wikidump":{
+    "travellerspoint":{
       "dynamic_templates":[
         {
           "en":{
@@ -534,7 +535,7 @@ curl -XPUT 'localhost:9200/wikitravel' -d '
     }
   },
   "mappings":{
-    "wikidump":{
+    "wikitravel":{
       "dynamic_templates":[
         {
           "en":{
@@ -822,7 +823,7 @@ curl -XPUT 'localhost:9200/structuredrelations' -d '
     }
   },
   "mappings":{
-    "wikidump":{
+    "structuredrelations":{
       "dynamic_templates":[
         {
           "en":{

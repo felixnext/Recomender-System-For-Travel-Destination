@@ -37,7 +37,7 @@ object ParallelDumpCreator extends App {
 class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   //number of actors
-  val nrOfWorkers = 2
+  val nrOfWorkers = 13
 
   val workerRouter = context.actorOf(
     Props[Worker].withRouter(RoundRobinPool(nrOfWorkers)).withDispatcher("akka.actor.my-dispatcher"),
@@ -45,7 +45,10 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
 
 
   val reader = new JsonDumpReader(paths.head)
-  val progress = new WorkProgress
+
+  val splitPath = ParallelDumpCreator.paths.head.split("/")
+  val pathToRecoveryFile = splitPath.slice(0, splitPath.length - 1).mkString("/") + "/process.log"
+  val progress = new WorkProgress(pathToRecoveryFile)
 
   def next: LocationArticle = {
     val r = reader.next()
@@ -80,7 +83,7 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
   var numberOfProcessedArticle = 0
 
   override def receive: Receive = {
-    //worke requests work
+    //worker is requesting work
     case GimmeWork =>
       log.debug("Work request received")
       if (hasNext) workerRouter ! next
@@ -160,10 +163,7 @@ class Worker extends Actor with ActorLogging {
  * Saves the progress status. If error occur durings processing,
  * then helps to recover after restart.
  */
-class WorkProgress {
-
-  val splitPath = ParallelDumpCreator.paths.head.split("/")
-  val path = splitPath.slice(0, splitPath.length - 1).mkString("/") + "/process.log"
+class WorkProgress(path: String) {
 
   var cacheEmpty = true
   val processedIds = {
