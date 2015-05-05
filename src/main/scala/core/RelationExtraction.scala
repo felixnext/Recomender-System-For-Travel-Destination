@@ -48,7 +48,7 @@ class RelationExtraction(analyzingPipe: TextAnalyzerPipeline) {
     }
 
 
-    val wordnet = new WordNet
+    val wordnet = WordNet.getInstance()
 
     //finds all possible synonyms to the given word sequence
     //returns a list of synonyms conataining original sequence

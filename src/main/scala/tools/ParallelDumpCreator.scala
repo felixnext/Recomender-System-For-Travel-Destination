@@ -104,9 +104,6 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
  */
 class Worker extends Actor with ActorLogging {
 
-  val analyzerPipe = new TextAnalyzerPipeline
-  val relationExtractor = new RelationExtraction(analyzerPipe)
-
   //contact master and request work
   val master = ParallelDumpCreator.master
   master ! GimmeWork
@@ -138,6 +135,9 @@ class Worker extends Actor with ActorLogging {
   def extractRelations(locationArticle: LocationArticle) = {
     val text = locationArticle.text.mkString(" ")
 
+    val analyzerPipe = new TextAnalyzerPipeline
+    val relationExtractor = new RelationExtraction(analyzerPipe)
+
     log.debug("Start relation extraction")
     val result = Future {
       val analyzed = analyzerPipe.analyzeText(text)
@@ -145,7 +145,7 @@ class Worker extends Actor with ActorLogging {
     }
 
     val transformedRel = try {
-      val rel = Await.result(result, 315.seconds)
+      val rel = Await.result(result, 400.seconds)
       log.debug("Relation extraction finished.")
       rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
         r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
@@ -160,7 +160,7 @@ class Worker extends Actor with ActorLogging {
 }
 
 /**
- * Saves the progress status. If error occur durings processing,
+ * Saves the progress status. If error occur during processing,
  * then helps to recover after restart.
  */
 class WorkProgress(path: String) {

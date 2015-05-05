@@ -4,6 +4,7 @@ import com.google.gson.{JsonElement, JsonObject, Gson}
 import tools.Config
 
 import scala.annotation.tailrec
+import scala.io.Source
 import scala.util.Try
 import scalaj.http.Http
 
@@ -292,7 +293,6 @@ class ElasticsearchClient {
   }
 
 }
-
 
 /**
  * Represents a location object returned from elasticsearch.

@@ -83,34 +83,6 @@ object RelationDumpCreator extends App {
     writer.writeRelation(r)
   }
 
-  def tfIdf(relations: Array[Relation]) = {
-
-    def equalRelations(r1: Relation, r2: Relation) = {
-      if (r1.rel.equals(r2.rel)) {
-        val shareObject = r1.objCand.intersect(r2.objCand).size > 0
-        if (shareObject) {
-          val shareSubject = r1.subjCand.intersect(r2.subjCand).size > 0
-          if (shareSubject) {
-            true
-          } else false
-        } else false
-      } else false
-    }
-
-    def countRelations(r: Relation) = relations.count(rel => equalRelations(rel, r))
-
-
-
-    val sizeOfCorpora = relations.size.toDouble
-    for (relation <- relations) yield {
-      val occurrenceInCorpus = countRelations(relation).toDouble
-      val tf = relation.tfIdf
-      //calculate Tf-Idf
-      val tfIdf = tf * log10(sizeOfCorpora / occurrenceInCorpus)
-      relation.tfIdf = tfIdf
-      writer.writeRelation(relation)
-    }
-  }
 }
 
 
@@ -123,10 +95,10 @@ class JsonDumpReader(filePath: String) extends Iterator[LocationArticle] {
   val decoder = Charset.forName("UTF-8").newDecoder()
   val lines = Source.fromFile(filePath)(decoder).getLines()
 
-  def hasNext: Boolean = lines.hasNext
+  def hasNext = lines.hasNext
 
   //true if more locations are available
-  private def nextLine: String = lines.next()
+  private def nextLine = lines.next()
 
   //returns next location
   def next() = {
@@ -168,10 +140,12 @@ class JsonDumpWriter(filePath: String) {
 
 
   implicit val RelationFormat = jsonFormat7(Relation)
+  var indexId = 0
 
   //writes relation to file
   def writeRelation(rel: Relation) = {
-    val index = "{\"create\": { \"_index\": \"structuredrelations\", \"_type\": \"relations\", \"_id\" : \"" + rel.id + "\" }}\n"
+    val index = "{\"create\": { \"_index\": \"structuredrelations\", \"_type\": \"relations\", \"_id\" : \"" + indexId + "\" }}\n"
+    indexId += 1
     br.write(index)
     br.write(rel.toJson + "\n")
     Future {

@@ -877,4 +877,4 @@ curl -XPOST 'localhost:9200/_bulk?wikitravel' --data-binary @wikitravel0.json > 
 curl -XPOST 'localhost:9200/_bulk?patty' --data-binary @dbpedia-relation-paraphrases.json > patty_load.log
 curl -XPOST 'localhost:9200/_bulk?dbpedia_pred' --data-binary @DbpediaPred.json > dbpedia_props.log
 curl -XPOST 'localhost:9200/_bulk?dbpedia_classes' --data-binary @classes.json > classes.json.log
-curl -XPOST 'localhost:9200/_bulk?structuredrelations' --data-binary @relations.json > relations.log
+curl -XPOST 'localhost:9200/_bulk?structuredrelations' --data-binary @relations_idf.json > relations.log

@@ -107,9 +107,12 @@ object Main  extends App{
   Await.result(relations, 1000.seconds)
   */
 
+  /*
   val reader = new JsonDumpReader("/Users/yevgen/Documents/data/master/dumps/elastic/travellerspoint0.json")
   println(reader.next)
   val writer = new JsonDumpWriter("/Users/yevgen/Documents/data/master/dumps/elastic/test.json")
   val r = new Relation("Mallorca", "123",List("Sun"),"is", List("bright"), 1, 2.0)
   writer.writeRelation(r)
+  */
+  println(System.getProperty("user.dir"))
 }

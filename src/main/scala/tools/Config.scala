@@ -33,4 +33,5 @@ object Config {
   lazy val spotlightSupport = Try(config.getInt("spotlight.support")).getOrElse(10)
 
   lazy val clavinUrl = Try(config.getString("clavin.url")).getOrElse("http://134.169.32.169:9093")
+
 }

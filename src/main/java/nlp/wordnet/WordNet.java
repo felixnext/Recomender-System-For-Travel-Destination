@@ -17,9 +17,17 @@ import java.util.List;
  */
 public class WordNet {
 
-    public IDictionary dict;
+    private IDictionary dict;
 
-    public WordNet() {
+    private static WordNet wordnet;
+
+
+    public static WordNet getInstance() {
+        if(wordnet == null) wordnet =  new WordNet();
+        return wordnet;
+    }
+
+    private WordNet() {
         try {
             File dictDirectory = WordNetUnpacker.getUnpackedWordNetDir();
             dict = new RAMDictionary(dictDirectory, ILoadPolicy.NO_LOAD);
