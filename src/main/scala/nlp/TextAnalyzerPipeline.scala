@@ -21,7 +21,7 @@ import scala.util.Try
 /**
  * Analyzes the text with basic annotators. The analyze is done in parallel.
  */
-class TextAnalyzerPipeline {
+object TextAnalyzerPipeline {
 
   //initialize required resources
   val relationExtractor = new RelationExtractor

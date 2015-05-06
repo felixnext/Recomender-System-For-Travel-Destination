@@ -21,14 +21,14 @@ class LocationFinderActor extends Actor with ActorLogging {
   //initialize services
   val elasticClient = new ElasticsearchClient
 
-  val analyzingPipe = new TextAnalyzerPipeline
+  //val analyzingPipe = new TextAnalyzerPipeline
 
   //creating a sparql query and execute it
-  val queryCreator = new SparqlQueryCreator(analyzingPipe)
+  val queryCreator = new SparqlQueryCreator
   val dbpediaClient = new DBPediaClient
 
   //extract relations and find similiar relation in db
-  val relationCreator = new RelationExtraction(analyzingPipe)
+  val relationCreator = new RelationExtraction
 
 
   def receive = {
@@ -46,7 +46,7 @@ class LocationFinderActor extends Actor with ActorLogging {
       elaticResult.onComplete(r => log.debug("Elasticsearch result received. SUCCESS: " + r.isSuccess))
 
       //DBPedia location request
-      val annotatedText = analyzingPipe.analyzeText(query)
+      val annotatedText = TextAnalyzerPipeline.analyzeText(query)
 
       val queries = queryCreator.createSparqlQuery(annotatedText)
 

@@ -1,6 +1,4 @@
 
-mainClass in assembly := Some("tools.ParallelDumpCreator")
-
 
 name := """Destination-Recomender-System"""
 
@@ -19,6 +17,8 @@ javaOptions += "-XX:+UseConcMarkSweepGC"
 fork in run := true
 
 fork in Test := true
+
+mainClass in assembly := Some("tools.ParallelDumpCreator")
 
 //dependencies
 

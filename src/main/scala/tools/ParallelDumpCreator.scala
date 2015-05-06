@@ -37,7 +37,7 @@ object ParallelDumpCreator extends App {
 class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   //number of actors
-  val nrOfWorkers = 13
+  val nrOfWorkers = 10
 
   val workerRouter = context.actorOf(
     Props[Worker].withRouter(RoundRobinPool(nrOfWorkers)).withDispatcher("akka.actor.my-dispatcher"),
@@ -133,29 +133,34 @@ class Worker extends Actor with ActorLogging {
   //DO WORK
   //extract relations from given article text
   def extractRelations(locationArticle: LocationArticle) = {
-    val text = locationArticle.text.mkString(" ")
 
-    val analyzerPipe = new TextAnalyzerPipeline
-    val relationExtractor = new RelationExtraction(analyzerPipe)
+    val texts = locationArticle.text
+
+    //val analyzerPipe = new TextAnalyzerPipeline
+    val relationExtractor = new RelationExtraction
 
     log.debug("Start relation extraction")
-    val result = Future {
-      val analyzed = analyzerPipe.analyzeText(text)
-      relationExtractor.extractRelations(analyzed)
+    val relations = for(text <- texts) yield {
+      val result = Future {
+        val analyzed = TextAnalyzerPipeline.analyzeText(text)
+        relationExtractor.extractRelations(analyzed)
+      }
+
+      val transformedRel = try {
+        val rel = Await.result(result, 300.seconds)
+        log.debug("Relation extraction finished.")
+        rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
+          r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
+      } catch {
+        case e: Exception => log.info("Error during relation extraction" + e); List()
+      }
+      transformedRel
     }
 
-    val transformedRel = try {
-      val rel = Await.result(result, 400.seconds)
-      log.debug("Relation extraction finished.")
-      rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
-        r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
-    } catch {
-      case e: Exception => log.info("Error during relation extraction" + e); List()
-    }
 
     //send the result to master
     log.debug("Send extracted relations to master")
-    master ! Result(transformedRel)
+    master ! Result(relations.flatten)
   }
 }
 

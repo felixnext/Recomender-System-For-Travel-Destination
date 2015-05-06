@@ -40,15 +40,14 @@ object RelationDumpCreator extends App {
 
 
   def processFile(reader: JsonDumpReader) = {
-    val analyzerPipe = new TextAnalyzerPipeline
-    val relationExtractor = new RelationExtraction(analyzerPipe)
+    val relationExtractor = new RelationExtraction
 
     val relations = for (locationArticle <- reader) yield {
       val t0 = System.currentTimeMillis()
       val text = locationArticle.text.mkString(" ")
 
       val result = Future{
-        val analyzed = analyzerPipe.analyzeText(text)
+        val analyzed = TextAnalyzerPipeline.analyzeText(text)
         relationExtractor.extractRelations(analyzed)
       }
 

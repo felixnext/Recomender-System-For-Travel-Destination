@@ -13,7 +13,7 @@ import scala.math._
  * Takes a text and creates corresponding sparql query w.r.t focus of the text.
  * Assumption the focus is a certain location.
  */
-class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
+class SparqlQueryCreator {
 
   val elastic = new ElasticsearchClient
 
@@ -24,7 +24,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
 
   def createSparqlQuery(annotatedText: AnnotatedText): Set[(String, Double)] = {
     //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
-    val tokenizedSentencesPos: Sentences = analyzingPipe.formatPosSentences(annotatedText)
+    val tokenizedSentencesPos: Sentences = TextAnalyzerPipeline.formatPosSentences(annotatedText)
 
     //replaces stanford pos tags with patty tags
     val posRelations = posRelAnnotation(tokenizedSentencesPos, annotatedText.relations)
@@ -33,7 +33,7 @@ class SparqlQueryCreator(analyzingPipe: TextAnalyzerPipeline) {
     val offsetConverter = new OffsetConverter(tokenizedSentencesPos)
 
 
-    val entityCandidatesAnnotation = analyzingPipe.createEntityCandidates(posRelations, annotatedText.spotlight,
+    val entityCandidatesAnnotation = TextAnalyzerPipeline.createEntityCandidates(posRelations, annotatedText.spotlight,
       annotatedText.clavin, annotatedText.stanford.coreference, tokenizedSentencesPos, offsetConverter)
 
 

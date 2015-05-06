@@ -14,7 +14,7 @@ import scala.collection.JavaConversions._
 /**
  * Provides functionality for relation extraction.
  */
-class RelationExtraction(analyzingPipe: TextAnalyzerPipeline) {
+class RelationExtraction {
 
   type Sentences = Array[Array[(String, String)]]
 
@@ -27,7 +27,7 @@ class RelationExtraction(analyzingPipe: TextAnalyzerPipeline) {
   def extractRelations(annText: AnnotatedText): List[RawRelation] = {
 
     //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
-    val sent: Sentences = analyzingPipe.formatPosSentences(annText)
+    val sent: Sentences = TextAnalyzerPipeline.formatPosSentences(annText)
 
     val offsetConverter = new OffsetConverter(sent)
 
@@ -90,7 +90,7 @@ class RelationExtraction(analyzingPipe: TextAnalyzerPipeline) {
           val corefInObj = coreference.find { c =>
             val mentions = c._2.getMentionsInTextualOrder
             mentions.exists(cm => cm.sentNum == sentenceNumber &&
-              analyzingPipe.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
+              TextAnalyzerPipeline.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
                 rel.objectOffset))
           }
 
@@ -98,16 +98,16 @@ class RelationExtraction(analyzingPipe: TextAnalyzerPipeline) {
           val corefInSubj = coreference.find { c =>
             val mentions = c._2.getMentionsInTextualOrder
             mentions.exists(cm => cm.sentNum == sentenceNumber &&
-              analyzingPipe.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
+              TextAnalyzerPipeline.intersect(calculateOffset(cm.sentNum, cm.startIndex, cm.endIndex, cm.mentionSpan),
                 rel.subjectOffset))
 
           }
 
           val locationsInObject = annText.clavin.find(x =>
-            analyzingPipe.intersect((x.offset, x.offset + x.asciiName.length), rel.objectOffset))
+            TextAnalyzerPipeline.intersect((x.offset, x.offset + x.asciiName.length), rel.objectOffset))
 
           val locationsInSubject = annText.clavin.find(x =>
-            analyzingPipe.intersect((x.offset, x.offset + x.asciiName.length), rel.subjectOffset))
+            TextAnalyzerPipeline.intersect((x.offset, x.offset + x.asciiName.length), rel.subjectOffset))
 
           //add finded names to candidate list
           val newObjCand = (if (corefInObj.isDefined)
@@ -159,7 +159,7 @@ class Sentiment(sentence: SentimentTree) {
 
     val t = for (t <- iter if t.label.asInstanceOf[CoreLabel].containsKey(classOf[RNNCoreAnnotations.PredictedClass])) yield {
       val predictedClass = RNNCoreAnnotations.getPredictedClass(t)
-      val words = t.yieldWords().toList.toSeq.map(w => w.word())
+      val words = t.yieldWords().toSeq.map(w => w.word())
       new Child(words, predictedClass)
     }
     t

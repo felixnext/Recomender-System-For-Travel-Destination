@@ -5,9 +5,9 @@ import edu.knowitall.openie.{OpenIE, SimpleArgument, SpatialArgument, TemporalAr
 /**
  * Extracts relation from raw text with help of openie util.
  */
-class RelationExtractor(triples: Boolean  = false) {
+class RelationExtractor() {
 
-  val openie = new OpenIE(triples = triples)
+  val openie = Openie.openie
 
   //extracts relations and returns a seq of relations
   def extractRelations(sentences: String): Seq[Relation] = {
@@ -34,6 +34,11 @@ class RelationExtractor(triples: Boolean  = false) {
 
     relations
   }
+}
+
+object Openie {
+
+  val openie = new OpenIE(triples = false)
 }
 
 case class OpenieResponse(result: Seq[Relation])
