@@ -36,7 +36,9 @@ libraryDependencies ++= Seq(
   "net.java.dev.textile-j" % "textile-j" % "2.2.864",
   "edu.washington.cs.knowitall.openie" % "openie_2.10" % "4.1.3",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1" artifacts (Artifact("stanford-corenlp", "models"), Artifact("stanford-corenlp")),
-  "edu.mit" % "jwi" % "2.2.3"
+  "edu.mit" % "jwi" % "2.2.3",
+  "edu.arizona.sista" % "processors" % "3.3",
+  "edu.arizona.sista" % "processors" % "3.3" classifier "models"
 )
 
 
@@ -55,6 +57,9 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   case "org/slf4j/impl/StaticMarkerBinder.class"=> MergeStrategy.first
   case "log4j.properties" =>  MergeStrategy.first
   case "logback.xml" => MergeStrategy.first
+  case PathList("nu", "xom", xs @ _*)  => MergeStrategy.first
+  case PathList("java_cup", "runtime", xs @ _*)  => MergeStrategy.first
+  case "org/w3c/dom/UserDataHandler.class"=> MergeStrategy.first
   case x => old(x)
 }
 }

@@ -2,6 +2,8 @@
  * Created by yevgen on 11.04.15.
  */
 
+import java.io.File
+
 import clavin.ClavinClient
 import com.google.gson.{JsonElement, Gson}
 import dbpedia.{DBPediaClient, YagoGeoTypes, SpotlightClient, DBPediaLookup}
@@ -10,9 +12,10 @@ import edu.mit.jwi.item.POS
 
 import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
-import nlp.{TextAnalyzerPipeline, RelationExtractor => RE, StanfordAnnotator}
+import nlp.{RelationExtractor => RE, Token, TextAnalyzerPipeline, StanfordAnnotator}
 import core.{RelationExtraction => RWS, RawRelation, Sentiment, SparqlQueryCreator}
 import tools.{Relation, JsonDumpWriter, JsonDumpReader, Levenshtein}
+import utils.SentimentUnpacker
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -72,12 +75,13 @@ object Main  extends App{
     c => println(c)
   }
 */
-
+/*
   val r = new RawRelation(List("town"),(1,1),"has",(1,1),List("place"),(1,1), None,None)
   val elastic = new ElasticsearchClient
   elastic.findSimilarRelations(r).foreach{
     x => println(x)
   }
+*/
 
 /*
   val openie = new RelationExtractor
@@ -115,8 +119,11 @@ object Main  extends App{
   val r = new Relation("Mallorca", "123",List("Sun"),"is", List("bright"), 1, 2.0)
   writer.writeRelation(r)
   */
-  println(System.getProperty("user.dir"))
+  //println(System.getProperty("user.dir"))
 
 
+  val f = SentimentUnpacker.getUnpackedWordNetDir("models/opinion/positive-words.txt")
+  println(System.getProperty("java.io.tmpdir"))
 
 }
+

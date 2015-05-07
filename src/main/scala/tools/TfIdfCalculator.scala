@@ -9,7 +9,7 @@ import scala.io.Source
 import scala.math._
 
 /**
- * Created by yevgen on 05.05.15.
+ * Script for calculating tf-idf score on existing json dump.
  */
 object TfIdfCalculator extends App {
 
