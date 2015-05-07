@@ -19,6 +19,8 @@ curl -XDELETE 'http://localhost:9200/dbpedia_pred/'
 curl -XDELETE 'http://localhost:9200/dbpedia_classes/'
 curl -XDELETE 'http://localhost:9200/structuredrelations/'
 
+#TODO improve mappings
+
 #create a index with specific settings: english analyzer
 curl -XPUT 'localhost:9200/wikipedia' -d '
 {
@@ -67,7 +69,7 @@ curl -XPUT 'localhost:9200/wikipedia' -d '
     }
   },
   "mappings":{
-    "wikipedia":{
+    "traveldata":{
       "dynamic_templates":[
         {
           "en":{
@@ -301,7 +303,7 @@ curl -XPUT 'localhost:9200/travellerspoint' -d '
     }
   },
   "mappings":{
-    "travellerspoint":{
+    "traveldata":{
       "dynamic_templates":[
         {
           "en":{
@@ -535,7 +537,7 @@ curl -XPUT 'localhost:9200/wikitravel' -d '
     }
   },
   "mappings":{
-    "wikitravel":{
+    "traveldata":{
       "dynamic_templates":[
         {
           "en":{
@@ -761,7 +763,7 @@ curl -XPUT 'localhost:9200/dbpedia_pred' -d '
 curl -XPUT 'localhost:9200/dbpedia_classes' -d '
 {
     "mappings":{
-      "props_mapping":{
+      "class_mapping":{
         "properties":{
           "uri":{
             "type":"string",
@@ -823,7 +825,7 @@ curl -XPUT 'localhost:9200/structuredrelations' -d '
     }
   },
   "mappings":{
-    "structuredrelations":{
+    "relations":{
       "dynamic_templates":[
         {
           "en":{
@@ -858,7 +860,7 @@ curl -XPUT 'localhost:9200/structuredrelations' -d '
           "index":"not_analyzed"
         },
         "sent":{
-          "type":"integer",
+          "type":"string",
           "index":"not_analyzed"
         },
         "tfIdf":{

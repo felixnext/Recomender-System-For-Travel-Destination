@@ -11,7 +11,7 @@ import edu.mit.jwi.item.POS
 import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
 import nlp.{TextAnalyzerPipeline, RelationExtractor => RE, StanfordAnnotator}
-import core.{Sentiment, SparqlQueryCreator, RelationExtraction => RWS}
+import core.{RelationExtraction => RWS, RawRelation, Sentiment, SparqlQueryCreator}
 import tools.{Relation, JsonDumpWriter, JsonDumpReader, Levenshtein}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -72,12 +72,13 @@ object Main  extends App{
     c => println(c)
   }
 */
-/*
+
+  val r = new RawRelation(List("town"),(1,1),"has",(1,1),List("place"),(1,1), None,None)
   val elastic = new ElasticsearchClient
-  elastic.findDBPediaClasses("Place").foreach{
+  elastic.findSimilarRelations(r).foreach{
     x => println(x)
   }
-*/
+
 /*
   val openie = new RelationExtractor
   openie.extractRelations(s).foreach{
@@ -115,4 +116,7 @@ object Main  extends App{
   writer.writeRelation(r)
   */
   println(System.getProperty("user.dir"))
+
+
+
 }

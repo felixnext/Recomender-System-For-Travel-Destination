@@ -149,10 +149,12 @@ class Worker extends Actor with ActorLogging {
       val transformedRel = try {
         val rel = Await.result(result, 300.seconds)
         log.debug("Relation extraction finished.")
-        rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
-          r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
+        val r  = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
+            r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
+        log.info("RELATIONS SUCCESSFULLY EXTRACTED")
+        r
       } catch {
-        case e: Exception => log.info("Error during relation extraction" + e); List()
+        case e: Exception => log.info("Error during relation extraction " + e.printStackTrace()); List()
       }
       transformedRel
     }

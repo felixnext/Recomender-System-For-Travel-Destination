@@ -1,12 +1,16 @@
 package elasticsearch
 
 import com.google.gson.{JsonElement, JsonObject, Gson}
-import tools.Config
+import core.RawRelation
+import tools.{Relation, Config}
 
 import scala.annotation.tailrec
 import scala.io.Source
 import scala.util.Try
 import scalaj.http.Http
+
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 /**
   * This class represents a elasticsearch client.
@@ -230,18 +234,18 @@ class ElasticsearchClient {
   }
 
   private def createMatchQuery(topK: Int, from: Int, q: String, field: String) = s"""
-                     |{
-                     |  "from":"$from",
-                     |  "size":"$topK",
-                     |  "query":{
-                     |      "match":{
-                     |      "$field":{
-                     |      "query":"$q",
-                     |      "minimum_should_match":"30%"
-                     |      }
-                     |     }
-                     |   }
-                     | }
+         |{
+         |  "from":"$from",
+         |  "size":"$topK",
+         |  "query":{
+         |      "match":{
+         |      "$field":{
+         |      "query":"$q",
+         |      "minimum_should_match":"30%"
+         |      }
+         |     }
+         |   }
+         | }
        """.stripMargin
 
 
@@ -270,7 +274,7 @@ class ElasticsearchClient {
           val score = result.get("_score").getAsDouble
           val dbpedia = result.get("_source").getAsJsonObject.get("uri").getAsString
           val relation = result.get("_source").getAsJsonObject.get("text").getAsString
-          val newList  = classes :+ new DBPediaClass("<" + dbpedia + ">",relation,score)
+          val newList  = new DBPediaClass("<" + dbpedia + ">",relation,score) :: classes
           extractData(docIterator, newList)
         }
       }
@@ -278,6 +282,131 @@ class ElasticsearchClient {
       extractData(jsonHitsResults)
     } catch {
       case e: Exception => println("Error occurred during patty response parsing: " + e); List()
+    }
+  }
+
+  //Find similar relations within documents stored in elasticsearch index
+  def findSimilarRelations(relation: RawRelation) = {
+    val obj = relation.objectCandidates.mkString(" ")
+    val rel = relation.relation
+    val subj = relation.subjectCandidates.mkString(" ")
+
+    val jsonQuery = if(relation.sentiment.isDefined) {
+      val sent = relation.sentiment.getOrElse("-1")
+      s"""
+         |{
+         |  "query":{
+         |    "bool":{
+         |      "should":[
+         |        {
+         |          "match":{
+         |            "rel":{
+         |              "query":"$rel",
+         |              "boost":3
+         |            }
+         |          }
+         |        },
+         |        {
+         |          "match":{
+         |            "subjCand":{
+         |              "query":"$subj",
+         |              "boost":3
+         |            }
+         |          }
+         |        },
+         |        {
+         |          "match":{
+         |            "objCand":{
+         |              "query":"$obj",
+         |              "boost":1
+         |            }
+         |          }
+         |        }
+         |      ],
+         |      "minimum_should_match" : 2
+         |    }
+         |  },
+         |  "rescore" : {
+         |        "window_size" : 100,
+         |        "query" : {
+         |           "rescore_query" : {
+         |           "match":{
+         |              "sent":{
+         |                 "query":"$sent"
+         |              }
+         |           }},
+         |           "query_weight" : 7.0,
+         |           "rescore_query_weight" : 1.0
+         |        }
+         |     }
+         |}
+       """.stripMargin
+    } else {
+      s"""
+         |{
+         |  "query":{
+         |    "bool":{
+         |      "should":[
+         |        {
+         |          "match":{
+         |            "rel":{
+         |              "query":"$rel",
+         |              "boost":3
+         |            }
+         |          }
+         |        },
+         |        {
+         |          "match":{
+         |            "subjCand":{
+         |              "query":"$subj",
+         |              "boost":3
+         |            }
+         |          }
+         |        },
+         |        {
+         |          "match":{
+         |            "objCand":{
+         |              "query":"$obj",
+         |              "boost":1
+         |            }
+         |          }
+         |        }
+         |      ],
+         |      "minimum_should_match" : 2
+         |    }
+         |  }
+         |}
+       """.stripMargin
+    }
+
+
+    parseExplicitRelations(request(jsonQuery, "structuredrelations"))
+  }
+
+  //parses response witch explicit relations
+  def parseExplicitRelations(response: String): List[(Double,Relation)] = {
+    try {
+      val jsonRoot = new Gson().fromJson(response, classOf[JsonObject])
+      val jsonHits = jsonRoot.get("hits").getAsJsonObject
+      val jsonHitsResults = jsonHits.get("hits").getAsJsonArray.iterator()
+
+      implicit val RelationFormat = jsonFormat7(Relation)
+
+      @tailrec
+      def extractRel(docIterator: java.util.Iterator[JsonElement], relations: List[(Double,Relation)] = List()): List[(Double,Relation)] = {
+        if( !docIterator.hasNext) relations
+        else {
+          val result = docIterator.next().getAsJsonObject
+          val score = result.get("_score").getAsDouble
+          val source = result.get("_source").getAsJsonObject.toString
+          val jsonAst = source.parseJson
+          val r = jsonAst.convertTo[Relation]
+          extractRel(docIterator, (score,r) :: relations)
+        }
+      }
+      extractRel(jsonHitsResults)
+    } catch {
+      case e: Exception => println("Error occurred during explicit relations response parsing: " + e.printStackTrace()); List()
     }
   }
 

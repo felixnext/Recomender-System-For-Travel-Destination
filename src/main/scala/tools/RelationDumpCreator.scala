@@ -12,11 +12,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
-import scala.math._
-import scala.util.Success
 
 /**
- * Created by yevgen on 01.05.15.
+ * Extracts relations and creates new json dump for elasticsearch loading.
  */
 object RelationDumpCreator extends App {
 
