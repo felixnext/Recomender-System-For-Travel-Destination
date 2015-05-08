@@ -12,7 +12,7 @@ import edu.mit.jwi.item.POS
 
 import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
-import nlp.{RelationExtractor => RE, Token, TextAnalyzerPipeline, StanfordAnnotator}
+import nlp.{RelationExtractor => RE, TextAnalyzerPipeline, StanfordAnnotator}
 import core.{RelationExtraction => RWS, RawRelation, Sentiment, SparqlQueryCreator}
 import tools.{Relation, JsonDumpWriter, JsonDumpReader, Levenshtein}
 import utils.SentimentUnpacker

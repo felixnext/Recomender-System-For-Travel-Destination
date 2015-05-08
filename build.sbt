@@ -36,9 +36,7 @@ libraryDependencies ++= Seq(
   "net.java.dev.textile-j" % "textile-j" % "2.2.864",
   "edu.washington.cs.knowitall.openie" % "openie_2.10" % "4.1.3",
   "edu.stanford.nlp" % "stanford-corenlp" % "3.5.1" artifacts (Artifact("stanford-corenlp", "models"), Artifact("stanford-corenlp")),
-  "edu.mit" % "jwi" % "2.2.3",
-  "edu.arizona.sista" % "processors" % "3.3",
-  "edu.arizona.sista" % "processors" % "3.3" classifier "models"
+  "edu.mit" % "jwi" % "2.2.3"
 )
 
 
