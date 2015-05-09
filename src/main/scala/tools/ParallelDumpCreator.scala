@@ -135,7 +135,7 @@ class Worker extends Actor with ActorLogging {
   def extractRelations(locationArticle: LocationArticle) = {
 
     //ensures that text chunks are not to large, due to stanford nlp processing
-    val MAX_TEXT_LENGTH = 25000
+    val MAX_TEXT_LENGTH = 5000
     val texts = locationArticle.text.map{
       text => if(text.length > MAX_TEXT_LENGTH) {
         val chars = text.toCharArray
@@ -166,7 +166,7 @@ class Worker extends Actor with ActorLogging {
       }
 
       val transformedRel = try {
-        val rel = Await.result(result, 100.seconds)
+        val rel = Await.result(result, 30.seconds)
         log.debug("Relation extraction finished.")
         val r  = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
             r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
