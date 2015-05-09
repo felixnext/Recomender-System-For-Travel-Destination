@@ -166,7 +166,7 @@ class Worker extends Actor with ActorLogging {
       }
 
       val transformedRel = try {
-        val rel = Await.result(result, 300.seconds)
+        val rel = Await.result(result, 100.seconds)
         log.debug("Relation extraction finished.")
         val r  = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
             r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
