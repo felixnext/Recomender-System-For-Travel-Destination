@@ -1,6 +1,6 @@
 package nlp
 
-import edu.knowitall.openie.{OpenIE, SimpleArgument, SpatialArgument, TemporalArgument}
+import edu.knowitall.openie._
 
 /**
  * Extracts relation from raw text with help of openie util.
@@ -12,7 +12,12 @@ class RelationExtractor() {
   //extracts relations and returns a seq of relations
   def extractRelations(sentences: String): Seq[Relation] = {
 
-    val result = openie.extract(sentences)
+
+    var result = Seq[Instance]()
+
+    openie.synchronized{
+      result = openie.extract(sentences)
+    }
 
     def matchArgType(arg: Any): String = {
       arg match {
