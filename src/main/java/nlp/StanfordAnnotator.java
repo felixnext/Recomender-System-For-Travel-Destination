@@ -21,13 +21,20 @@ import java.util.List;
  */
 public class StanfordAnnotator {
 
-    StanfordCoreNLP pipeline;
+    private StanfordCoreNLP pipeline;
+    private static  StanfordAnnotator instance;
 
-    public StanfordAnnotator() {
+    private StanfordAnnotator() {
         // creates a StanfordCoreNLP object, with POS tagging, lemmatization, NER, parsing, and coreference resolution
         Properties props = new Properties();
         props.setProperty("annotators", "tokenize, ssplit, pos, lemma, parse, sentiment, ner,  dcoref");
+        props.put("ner.useSUTime", "false");
         pipeline = new StanfordCoreNLP(props);
+    }
+
+    public static StanfordAnnotator getInstance() {
+        if(instance == null) instance = new StanfordAnnotator();
+        return instance;
     }
 
     /**
