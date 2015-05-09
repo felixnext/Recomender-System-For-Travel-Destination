@@ -134,7 +134,26 @@ class Worker extends Actor with ActorLogging {
   //extract relations from given article text
   def extractRelations(locationArticle: LocationArticle) = {
 
-    val texts = locationArticle.text
+    //ensures that text chunks are not to large, due to stanford nlp processing
+    val MAX_TEXT_LENGTH = 25000
+    val texts = locationArticle.text.map{
+      text => if(text.length > MAX_TEXT_LENGTH) {
+        val chars = text.toCharArray
+        val l = scala.collection.mutable.ListBuffer[String]()
+        var counter = 0
+        var sb = new StringBuilder
+        while(counter < chars.length) {
+          sb.append(chars(counter))
+          if(counter % MAX_TEXT_LENGTH == 0 || counter + 1 == chars.length) {
+            l += sb.toString
+            sb = new StringBuilder
+          }
+          counter += 1
+        }
+        log.debug("Text was shorted")
+        l.toList
+      } else List(text)
+    }.flatten
 
     //val analyzerPipe = new TextAnalyzerPipeline
     val relationExtractor = new RelationExtraction
