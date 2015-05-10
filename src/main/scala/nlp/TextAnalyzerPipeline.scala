@@ -37,14 +37,13 @@ class TextAnalyzerPipeline {
    */
   def analyzeText(text: String): AnnotatedText = {
     //process text
-    //val relations = future{relationExtractor.extractRelations(text)}
-
-    val futureRel = Future{relationExtractor.extractRelations(text)}
+    val futureRel = Future{
+      relationExtractor.extractRelations(text)
+    }
 
     val rawRel = Try(Await.result(futureRel, 30.seconds)).getOrElse(Seq())
 
     val clavinAnnotation = clavin.extractLocations(text)
-
 
     val stanfordAnnotation = stanford.annotateText(text)
 

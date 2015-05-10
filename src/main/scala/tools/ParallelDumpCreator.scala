@@ -37,9 +37,9 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
   //number of actors
   val nrOfWorkers = 10
 
-  log.debug("\n\n#########################################################")
+  log.debug("#########################################################")
   log.debug("Number of actors: " + nrOfWorkers)
-  log.debug("#########################################################\n\n")
+  log.debug("#########################################################")
 
   val workerRouter = context.actorOf(
     Props[Worker].withRouter(RoundRobinPool(nrOfWorkers)),
@@ -166,7 +166,6 @@ class Worker extends Actor with ActorLogging {
     log.debug("Start relation extraction")
     while(texts.hasNext) {
       val text = texts.next()
-
       try {
         log.debug("Start text analyzing")
         val analyzed = analyzer.analyzeText(text)

@@ -15,12 +15,13 @@ class RelationExtractor {
 
     var result = Seq[Instance]()
 
-
+    /*
     openie.synchronized{
       result = openie.extract(sentences)
     }
+    */
 
-    //result = RelationExtractor.openie.extract(sentences)
+    result = openie.extract(sentences)
 
     def matchArgType(arg: Any): String = {
       arg match {
