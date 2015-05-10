@@ -35,7 +35,11 @@ object ParallelDumpCreator extends App {
 class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   //number of actors
-  val nrOfWorkers = 10
+  val nrOfWorkers = 15
+
+  log.debug("\n\n#########################################################")
+  log.debug("Number of actors: " + nrOfWorkers)
+  log.debug("#########################################################\n\n")
 
   val workerRouter = context.actorOf(
     Props[Worker].withRouter(RoundRobinPool(nrOfWorkers)).withDispatcher("akka.actor.my-dispatcher"),
