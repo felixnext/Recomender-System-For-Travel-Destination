@@ -10,7 +10,7 @@ class WorkProgressTest extends FlatSpec with Matchers{
 
   val path = System.getProperty("java.io.tmpdir") + "/progress.log"
   val file = new File(path)
-  if(file.exists()) file.delete()
+  file.delete()
 
   "progress" should "contain every added value" in {
     val progress1 = new WorkProgress(path)
