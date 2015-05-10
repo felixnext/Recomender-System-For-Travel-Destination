@@ -36,9 +36,6 @@ object RelationDumpCreator extends App {
   //counts the relation frequence within the document
   def countRawRelations(r: RawRelation, l: List[RawRelation]) = l.count(rel => equalRawRelations(rel, r))
 
-
-  val analyzerPipeline = new TextAnalyzerPipeline
-
   def processFile(reader: JsonDumpReader) = {
     val relationExtractor = new RelationExtraction
 
@@ -47,7 +44,7 @@ object RelationDumpCreator extends App {
       val text = locationArticle.text.mkString(" ")
 
       val result = Future{
-        val analyzed = analyzerPipeline.analyzeText(text)
+        val analyzed = TextAnalyzerPipeline.analyzeText(text)
         relationExtractor.extractRelations(analyzed)
       }
 

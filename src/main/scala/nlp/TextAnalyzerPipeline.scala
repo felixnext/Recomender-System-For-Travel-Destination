@@ -10,23 +10,18 @@ import elasticsearch.{DBPediaClass, DBPediaProps, PattyRelation}
 
 import scala.annotation.tailrec
 import scala.collection.convert.wrapAsScala._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent._
 import scala.math._
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.Try
 
 
 /**
  * Analyzes the text with basic annotators. The analyze is done in parallel.
  */
-class TextAnalyzerPipeline {
+object TextAnalyzerPipeline {
 
   //initialize required resources
   val relationExtractor = new RelationExtractor
   val clavin = new ClavinClient
-  val stanford = new StanfordAnnotator
+  val stanford = StanfordAnnotator.getInstance()
   val spotlight = new SpotlightClient
 
 
@@ -81,20 +76,18 @@ class TextAnalyzerPipeline {
     new AnnotatedText(relations, clavinAnnotation, stanfordAnnotation, spotlightAnnotation)
   }
 
-}
-
-object TextAnalyzerPipeline {
 
   val dbpediaLookup = new DBPediaLookup
 
   def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
-  type Sentences =  Array[Array[(String, String)]]
+  type Sentences = Array[Array[(String, String)]]
+
   //Takes list of relation, annotates subject, object with dbpedia uris and geoname location.
   //Creates tree with help of coreference. The relations with co-referent object are composed to single node in the tree.
   def createEntityCandidates(relations: Array[Seq[Relation]], spotlightResult: List[SpotlightResult],
                              clavinResult: List[Location], coreference: util.Map[Integer, CorefChain],
-  sentences: Sentences, offsetConverter: OffsetConverter): RelationTree = {
+                             sentences: Sentences, offsetConverter: OffsetConverter): RelationTree = {
 
     //get all key of coref clusters
     //value coresponds to cluster id
@@ -192,7 +185,7 @@ object TextAnalyzerPipeline {
     tree
   }
 
-  def formatPosSentences(x: AnnotatedText):Sentences = {
+  def formatPosSentences(x: AnnotatedText): Sentences = {
     x.stanford.sentencesPos.map { x =>
       x.split(" ").map { x =>
         val split = x.split("/")
@@ -218,7 +211,7 @@ class OffsetConverter(sentences: Array[Array[(String, String)]]) {
 
   //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
   def sentenceToCharLevelOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int, Int) = {
-    if (cache.contains((sentenceNr, tokenBegin)))  cache.getOrElse((sentenceNr, tokenBegin), (-1, -1))
+    if (cache.contains((sentenceNr, tokenBegin))) cache.getOrElse((sentenceNr, tokenBegin), (-1, -1))
     else {
       try {
         val sentenceOffset = charsPerSentence.dropRight(charsPerSentence.length + 1 - sentenceNr).sum
@@ -226,7 +219,7 @@ class OffsetConverter(sentences: Array[Array[(String, String)]]) {
           foldLeft(0)((a, b) => a + b + 1) + sentenceOffset
         val endOffsset = sentencesRaw(sentenceNr - 1).slice(tokenBegin - 1, tokenEnd - 1).map(a => a.length)
           .foldLeft(0)((a, b) => a + b + 1) + startOffset
-        cache += ((sentenceNr, tokenBegin) -> (startOffset, endOffsset))
+        cache += ((sentenceNr, tokenBegin) ->(startOffset, endOffsset))
         (startOffset, endOffsset)
       } catch {
         case e: Exception => (-1, -1)

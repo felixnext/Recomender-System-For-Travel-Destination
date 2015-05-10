@@ -37,7 +37,7 @@ object ParallelDumpCreator extends App {
 class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   //number of actors
-  val nrOfWorkers = 15
+  val nrOfWorkers = 10
 
   val workerRouter = context.actorOf(
     Props[Worker].withRouter(RoundRobinPool(nrOfWorkers)).withDispatcher("akka.actor.my-dispatcher"),
@@ -155,13 +155,13 @@ class Worker extends Actor with ActorLogging {
       } else List(text)
     }.flatten
 
-    val analyzerPipe = new TextAnalyzerPipeline
-    val relationExtractor = new RelationExtraction
+
+    var relationExtractor = new RelationExtraction
 
     log.debug("Start relation extraction")
     val relations = for(text <- texts) yield {
       val result = Future {
-        val analyzed = analyzerPipe.analyzeText(text)
+        val analyzed = TextAnalyzerPipeline.analyzeText(text)
         relationExtractor.extractRelations(analyzed)
       }
 
