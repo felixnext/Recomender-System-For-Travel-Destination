@@ -218,11 +218,8 @@ class WorkProgress(path: String) {
 
   var idFound = false
   def wasNotProcessed(id: String): Boolean = {
-    if(!cacheEmpty && !idFound) {
-      if(processedIds(processedIds.length - 1).equals(id)){
-        idFound = true
-      }
-      false
+    if(!cacheEmpty) {
+      !processedIds.contains(id)
     } else true
   }
 
