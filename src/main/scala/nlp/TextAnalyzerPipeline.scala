@@ -21,17 +21,14 @@ import scala.util.Try
 /**
  * Analyzes the text with basic annotators. The analyze is done in parallel.
  */
-object TextAnalyzerPipeline {
+class TextAnalyzerPipeline {
 
   //initialize required resources
   val relationExtractor = new RelationExtractor
   val clavin = new ClavinClient
-  val stanford = StanfordAnnotator.getInstance()
+  val stanford = new StanfordAnnotator
   val spotlight = new SpotlightClient
-  val dbpediaLookup = new DBPediaLookup
 
-
-  def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
   /**
    * Annotates text with four annotators:
@@ -60,29 +57,37 @@ object TextAnalyzerPipeline {
 
     //split relations into subsets, each subset corresponds to one sentence
     val relations: Array[Seq[Relation]] = {
-        val s = stanfordAnnotation
-        val r =  rawRel
-        val sentenceBoundaries = s.tokenizedSentences.foldLeft(0, List[(Int, Int)]())((t, s) =>
-          (t._1 + s.length + 1, t._2 :+(t._1, t._1 + s.length)))._2
+      val s = stanfordAnnotation
+      val r = rawRel
+      val sentenceBoundaries = s.tokenizedSentences.foldLeft(0, List[(Int, Int)]())((t, s) =>
+        (t._1 + s.length + 1, t._2 :+(t._1, t._1 + s.length)))._2
 
-        val groups: Map[(Int, Int), Seq[Relation]] = sentenceBoundaries.map(x => x -> Seq[Relation]()).toMap
+      val groups: Map[(Int, Int), Seq[Relation]] = sentenceBoundaries.map(x => x -> Seq[Relation]()).toMap
 
-        val occupiedGroups = r.foldLeft(groups) {
-          (tmpGroups, x) =>
-            val minOffset = (Seq(x.arg1.argOffset._1, x.relOffset._1) ++ x.arg2.map(x => x.argOffset._1)).min
-            val maxOffset = (Seq(x.arg1.argOffset._2, x.relOffset._2) ++ x.arg2.map(x => x.argOffset._2)).max
-            val newGroups = tmpGroups.keySet.find(x => x._1 <= minOffset && maxOffset <= x._2) match {
-              case Some(key) => tmpGroups + (key -> (tmpGroups.getOrElse(key, Seq()) :+ x))
-              case _ => tmpGroups
-            }
-            newGroups
-        }
-        occupiedGroups.toSeq.sortBy(_._1._1).map(t => t._2).toArray
-        //occupiedGroups.map { case (k, v) => v }.toArray
+      val occupiedGroups = r.foldLeft(groups) {
+        (tmpGroups, x) =>
+          val minOffset = (Seq(x.arg1.argOffset._1, x.relOffset._1) ++ x.arg2.map(x => x.argOffset._1)).min
+          val maxOffset = (Seq(x.arg1.argOffset._2, x.relOffset._2) ++ x.arg2.map(x => x.argOffset._2)).max
+          val newGroups = tmpGroups.keySet.find(x => x._1 <= minOffset && maxOffset <= x._2) match {
+            case Some(key) => tmpGroups + (key -> (tmpGroups.getOrElse(key, Seq()) :+ x))
+            case _ => tmpGroups
+          }
+          newGroups
       }
+      occupiedGroups.toSeq.sortBy(_._1._1).map(t => t._2).toArray
+      //occupiedGroups.map { case (k, v) => v }.toArray
+    }
 
     new AnnotatedText(relations, clavinAnnotation, stanfordAnnotation, spotlightAnnotation)
   }
+
+}
+
+object TextAnalyzerPipeline {
+
+  val dbpediaLookup = new DBPediaLookup
+
+  def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
   type Sentences =  Array[Array[(String, String)]]
   //Takes list of relation, annotates subject, object with dbpedia uris and geoname location.

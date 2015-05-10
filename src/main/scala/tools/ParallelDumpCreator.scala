@@ -114,6 +114,8 @@ class Worker extends Actor with ActorLogging {
       extractRelations(l)
   }
 
+  val analyzerPipeline = new TextAnalyzerPipeline
+
   //true if two relations are equal
   def equalRawRelations(r1: RawRelation, r2: RawRelation): Boolean = {
     if (r1.relation.equals(r2.relation)) {
@@ -161,7 +163,7 @@ class Worker extends Actor with ActorLogging {
     log.debug("Start relation extraction")
     val relations = for(text <- texts) yield {
       val result = Future {
-        val analyzed = TextAnalyzerPipeline.analyzeText(text)
+        val analyzed = analyzerPipeline.analyzeText(text)
         relationExtractor.extractRelations(analyzed)
       }
 
