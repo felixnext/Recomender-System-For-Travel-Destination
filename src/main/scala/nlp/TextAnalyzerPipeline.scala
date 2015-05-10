@@ -10,7 +10,11 @@ import elasticsearch.{DBPediaClass, DBPediaProps, PattyRelation}
 
 import scala.annotation.tailrec
 import scala.collection.convert.wrapAsScala._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.math._
+import scala.util.Try
 
 
 /**
@@ -35,7 +39,12 @@ class TextAnalyzerPipeline {
     //process text
     //val relations = future{relationExtractor.extractRelations(text)}
 
+    val futureRel = Future{relationExtractor.extractRelations(text)}
+
+    val rawRel = Try(Await.result(futureRel, 30.seconds)).getOrElse(Seq())
+
     val clavinAnnotation = clavin.extractLocations(text)
+
 
     val stanfordAnnotation = stanford.annotateText(text)
 
@@ -46,8 +55,6 @@ class TextAnalyzerPipeline {
       //spotlight.discoverEntities(text)
       List()
     }
-
-    val rawRel = relationExtractor.extractRelations(text)
 
 
     //split relations into subsets, each subset corresponds to one sentence

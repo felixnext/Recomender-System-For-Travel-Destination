@@ -7,7 +7,7 @@ import edu.knowitall.openie._
  */
 class RelationExtractor {
 
-  val openie = RelationExtractor.openie
+  val openie = new OpenIE(triples = false)
 
   //extracts relations and returns a seq of relations
   def extractRelations(sentences: String): Seq[Relation] = {
