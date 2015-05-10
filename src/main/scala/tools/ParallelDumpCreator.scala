@@ -160,23 +160,18 @@ class Worker extends Actor with ActorLogging {
     log.debug("Start relation extraction")
     while(texts.hasNext) {
       val text = texts.next()
-      val result = Future {
+      try {
         val analyzed = TextAnalyzerPipeline.analyzeText(text)
-        relationExtractor.extractRelations(analyzed)
-      }
+        val rel = relationExtractor.extractRelations(analyzed)
 
-      val transformedRel = try {
-        val rel = Await.result(result, 30.seconds)
         log.debug("Relation extraction finished.")
         val r = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
           r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
         log.info("RELATIONS SUCCESSFULLY EXTRACTED")
-        r
         master ! Result(r)
       } catch {
-        case e: Exception => log.info("Error during relation extraction " + e.printStackTrace()); List()
+        case e: Exception => log.info("Error during relation extraction " + e.printStackTrace())
       }
-      transformedRel
     }
 
     //send the result to master
@@ -209,9 +204,11 @@ class WorkProgress(path: String) {
   val br = new BufferedWriter(os)
 
   def addFinishedID(id: String) = {
-    processedIds += id
-    br.write(id + "\n")
-    br.flush()
+    if(!processedIds.contains(id)) {
+      processedIds += id
+      br.write(id + "\n")
+      br.flush()
+    }
   }
 
   var idFound = false
