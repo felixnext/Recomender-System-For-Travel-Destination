@@ -85,12 +85,13 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
     case GimmeWork =>
       log.debug("Work request received")
       if (hasNext) workerRouter ! next
+      else done()
     //receive workers result
     case Result(rel) =>
       numberOfProcessedArticle += 1
       log.info("Relations extracted. Number of processed articles: " + numberOfProcessedArticle)
-      if (hasNext) sender ! next
-      else done()
+      //if (hasNext) sender ! next
+      //else done()
       write(rel)
   }
 
@@ -151,13 +152,14 @@ class Worker extends Actor with ActorLogging {
         log.debug("Text was shorted")
         l.toList
       } else List(text)
-    }.flatten
+    }.flatten.toIterator
 
 
     val relationExtractor = new RelationExtraction
 
     log.debug("Start relation extraction")
-    val relations = for (text <- texts) yield {
+    while(texts.hasNext) {
+      val text = texts.next()
       val result = Future {
         val analyzed = TextAnalyzerPipeline.analyzeText(text)
         relationExtractor.extractRelations(analyzed)
@@ -170,16 +172,16 @@ class Worker extends Actor with ActorLogging {
           r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
         log.info("RELATIONS SUCCESSFULLY EXTRACTED")
         r
+        master ! Result(r)
       } catch {
         case e: Exception => log.info("Error during relation extraction " + e.printStackTrace()); List()
       }
       transformedRel
     }
 
-
     //send the result to master
     log.debug("Send extracted relations to master")
-    master ! Result(relations.flatten)
+    master ! GimmeWork
   }
 }
 
