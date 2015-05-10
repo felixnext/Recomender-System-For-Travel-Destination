@@ -53,7 +53,6 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
   def next: LocationArticle = {
     val r = reader.next()
     if (progress.wasNotProcessed(r.id)) {
-      progress.addFinishedID(r.id)
       r
     }
     else {
@@ -70,6 +69,7 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   def write(l: List[Relation]) = l.foreach { r =>
     writer.writeRelation(r)
+    progress.addFinishedID(l.head.id)
   }
 
   var numberOfFinishedWorker = 0
