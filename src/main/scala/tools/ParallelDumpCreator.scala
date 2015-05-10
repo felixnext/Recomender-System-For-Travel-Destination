@@ -140,7 +140,7 @@ class Worker extends Actor with ActorLogging {
   def extractRelations(locationArticle: LocationArticle) = {
 
     //ensures that text chunks are not to large, due to stanford nlp processing
-    val MAX_TEXT_LENGTH = 1000
+    val MAX_TEXT_LENGTH = 500
     val texts = locationArticle.text.map {
       text => if (text.length > MAX_TEXT_LENGTH) {
         val chars = text.toCharArray
