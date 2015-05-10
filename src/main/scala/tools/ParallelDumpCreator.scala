@@ -167,7 +167,9 @@ class Worker extends Actor with ActorLogging {
     while(texts.hasNext) {
       val text = texts.next()
       try {
+        log.debug("Start text analyzing")
         val analyzed = analyzer.analyzeText(text)
+        log.debug("Relation extraction")
         val rel = relationExtractor.extractRelations(analyzed)
 
         log.debug("Relation extraction finished.")
