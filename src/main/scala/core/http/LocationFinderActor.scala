@@ -30,6 +30,8 @@ class LocationFinderActor extends Actor with ActorLogging {
   //extract relations and find similiar relation in db
   val relationCreator = new RelationExtraction
 
+  val analyzer = new TextAnalyzerPipeline
+
   def receive = {
     case UserQuery(query: String) if query.equals("") => log.debug("Query is empty"); throw new Exception("Query is empty.")
     case UserQuery(query: String) =>
@@ -45,7 +47,7 @@ class LocationFinderActor extends Actor with ActorLogging {
       elaticResult.onComplete(r => log.debug("Elasticsearch result received. SUCCESS: " + r.isSuccess))
 
       //DBPedia location request
-      val annotatedText = TextAnalyzerPipeline.analyzeText(query)
+      val annotatedText = analyzer.analyzeText(query)
 
       val queries = queryCreator.createSparqlQuery(annotatedText)
 

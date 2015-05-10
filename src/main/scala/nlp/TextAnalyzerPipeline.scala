@@ -16,7 +16,7 @@ import scala.math._
 /**
  * Analyzes the text with basic annotators. The analyze is done in parallel.
  */
-object TextAnalyzerPipeline {
+class TextAnalyzerPipeline {
 
   //initialize required resources
   val relationExtractor = new RelationExtractor
@@ -75,7 +75,9 @@ object TextAnalyzerPipeline {
 
     new AnnotatedText(relations, clavinAnnotation, stanfordAnnotation, spotlightAnnotation)
   }
+}
 
+object TextAnalyzerPipeline {
 
   val dbpediaLookup = new DBPediaLookup
 

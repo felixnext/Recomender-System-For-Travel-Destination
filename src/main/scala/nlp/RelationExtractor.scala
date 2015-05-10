@@ -5,7 +5,7 @@ import edu.knowitall.openie._
 /**
  * Extracts relation from raw text with help of openie util.
  */
-class RelationExtractor() {
+class RelationExtractor {
 
   val openie = new OpenIE(triples = false)
 
@@ -15,11 +15,13 @@ class RelationExtractor() {
 
     var result = Seq[Instance]()
 
-
+    /*
     openie.synchronized{
       result = openie.extract(sentences)
     }
-    //result = openie.extract(sentences)
+    */
+
+    result = openie.extract(sentences)
 
     def matchArgType(arg: Any): String = {
       arg match {

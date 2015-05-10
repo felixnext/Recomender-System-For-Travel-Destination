@@ -129,6 +129,8 @@ class Worker extends Actor with ActorLogging {
   //counts the relation frequence within the document
   def countRawRelations(r: RawRelation, l: List[RawRelation]) = l.count(rel => equalRawRelations(rel, r))
 
+  val analyzer = new TextAnalyzerPipeline
+
   //DO WORK
   //extract relations from given article text
   def extractRelations(locationArticle: LocationArticle) = {
@@ -161,7 +163,7 @@ class Worker extends Actor with ActorLogging {
     while(texts.hasNext) {
       val text = texts.next()
       try {
-        val analyzed = TextAnalyzerPipeline.analyzeText(text)
+        val analyzed = analyzer.analyzeText(text)
         val rel = relationExtractor.extractRelations(analyzed)
 
         log.debug("Relation extraction finished.")
