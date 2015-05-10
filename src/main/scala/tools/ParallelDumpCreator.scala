@@ -1,15 +1,13 @@
 package tools
 
-import java.io.{BufferedWriter, OutputStreamWriter, FileOutputStream, File}
+import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 import java.nio.charset.Charset
+import java.nio.file.{Files, Paths}
 
 import akka.actor._
 import akka.routing.RoundRobinPool
-
 import core.{RawRelation, RelationExtraction}
 import nlp.TextAnalyzerPipeline
-
-import java.nio.file.{Paths, Files}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -56,7 +54,7 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
       r
     }
     else {
-      if(!hasNext) ParallelDumpCreator.system.shutdown()
+      if (!hasNext) ParallelDumpCreator.system.shutdown()
       next
     }
   }
@@ -136,15 +134,15 @@ class Worker extends Actor with ActorLogging {
 
     //ensures that text chunks are not to large, due to stanford nlp processing
     val MAX_TEXT_LENGTH = 5000
-    val texts = locationArticle.text.map{
-      text => if(text.length > MAX_TEXT_LENGTH) {
+    val texts = locationArticle.text.map {
+      text => if (text.length > MAX_TEXT_LENGTH) {
         val chars = text.toCharArray
         val l = scala.collection.mutable.ListBuffer[String]()
         var counter = 0
         var sb = new StringBuilder
-        while(counter < chars.length) {
+        while (counter < chars.length) {
           sb.append(chars(counter))
-          if(counter % MAX_TEXT_LENGTH == 0 || counter + 1 == chars.length) {
+          if (counter % MAX_TEXT_LENGTH == 0 || counter + 1 == chars.length) {
             l += sb.toString
             sb = new StringBuilder
           }
@@ -156,10 +154,10 @@ class Worker extends Actor with ActorLogging {
     }.flatten
 
 
-    var relationExtractor = new RelationExtraction
+    val relationExtractor = new RelationExtraction
 
     log.debug("Start relation extraction")
-    val relations = for(text <- texts) yield {
+    val relations = for (text <- texts) yield {
       val result = Future {
         val analyzed = TextAnalyzerPipeline.analyzeText(text)
         relationExtractor.extractRelations(analyzed)
@@ -168,8 +166,8 @@ class Worker extends Actor with ActorLogging {
       val transformedRel = try {
         val rel = Await.result(result, 30.seconds)
         log.debug("Relation extraction finished.")
-        val r  = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
-            r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
+        val r = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,
+          r.relation, r.subjectCandidates, r.sentiment.getOrElse(-1), countRawRelations(r, rel)))
         log.info("RELATIONS SUCCESSFULLY EXTRACTED")
         r
       } catch {
@@ -194,7 +192,7 @@ class WorkProgress(path: String) {
   var cacheEmpty = true
   val processedIds = {
     val l = new scala.collection.mutable.ListBuffer[String]()
-    if(Files.exists(Paths.get(path))) {
+    if (Files.exists(Paths.get(path))) {
       val decoder = Charset.forName("UTF-8").newDecoder()
       val lines = Source.fromFile(path)(decoder).getLines().toArray
       l ++= lines
@@ -209,16 +207,15 @@ class WorkProgress(path: String) {
   val br = new BufferedWriter(os)
 
   def addFinishedID(id: String) = {
-    if(!processedIds.contains(id)){
-      processedIds += id
-      br.write(id + "\n")
-      br.flush()
-    }
+    processedIds += id
+    br.write(id + "\n")
+    br.flush()
   }
 
   var idFound = false
+
   def wasNotProcessed(id: String): Boolean = {
-    if(!cacheEmpty) {
+    if (!cacheEmpty) {
       !processedIds.contains(id)
     } else true
   }

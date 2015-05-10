@@ -144,9 +144,7 @@ class JsonDumpWriter(filePath: String) {
     indexId += 1
     br.write(index)
     br.write(rel.toJson + "\n")
-    Future {
-      br.flush()
-    }
+    br.flush()
   }
 
 }
