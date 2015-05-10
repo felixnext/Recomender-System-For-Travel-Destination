@@ -22,9 +22,9 @@ import java.util.List;
 public class StanfordAnnotator {
 
     private StanfordCoreNLP pipeline;
-    //private static  StanfordAnnotator instance;
+    private static  StanfordAnnotator instance;
 
-    public StanfordAnnotator() {
+    private StanfordAnnotator() {
         // creates a StanfordCoreNLP object, with POS tagging, lemmatization, NER, parsing, and coreference resolution
         Properties props = new Properties();
         props.setProperty("annotators", "tokenize, ssplit, pos, lemma, parse, sentiment, ner,  dcoref");
@@ -32,13 +32,11 @@ public class StanfordAnnotator {
         pipeline = new StanfordCoreNLP(props);
     }
 
-
-    /*
     public static StanfordAnnotator getInstance() {
         if (instance == null) instance = new StanfordAnnotator();
         return instance;
     }
-    */
+
 
     /**
      * Takes a text and analyze the text. Detects conference between nouns and pronouns in whole text.

@@ -7,7 +7,7 @@ import edu.knowitall.openie._
  */
 class RelationExtractor {
 
-  val openie = new OpenIE(triples = false)
+  val openie = RelationExtractor.openie
 
   //extracts relations and returns a seq of relations
   def extractRelations(sentences: String): Seq[Relation] = {
@@ -15,12 +15,12 @@ class RelationExtractor {
 
     var result = Seq[Instance]()
 
-    /*
+
     openie.synchronized{
       result = openie.extract(sentences)
     }
-    */
-    result = openie.extract(sentences)
+
+    //result = RelationExtractor.openie.extract(sentences)
 
     def matchArgType(arg: Any): String = {
       arg match {
@@ -44,12 +44,11 @@ class RelationExtractor {
   }
 }
 
-/*
-object Openie {
 
+object RelationExtractor {
   val openie = new OpenIE(triples = false)
 }
-*/
+
 
 case class OpenieResponse(result: Seq[Relation])
 
