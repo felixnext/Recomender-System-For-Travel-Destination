@@ -25,7 +25,7 @@ class TextAnalyzerPipeline {
   //initialize required resources
   val relationExtractor = new RelationExtractor
   val clavin = new ClavinClient
-  val stanford = StanfordAnnotator.getInstance()
+  val stanford = new StanfordAnnotator
   val spotlight = new SpotlightClient
 
 
