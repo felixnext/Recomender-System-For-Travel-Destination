@@ -38,6 +38,7 @@ object TfIdfCalculator extends App {
     relations += r
   }
 
+
   //calculate tf idf score
   //Assumption: tfidf value of each relation object is the term frequency of the relation
   def tfIdf(relations: Seq[Relation]) = {
@@ -57,7 +58,8 @@ object TfIdfCalculator extends App {
     def countRelations(r: Relation) = relations.count(rel => equalRelations(rel, r))
 
     val sizeOfCorpora = relations.size.toDouble
-    for (relation <- relations) yield {
+    var counter = 0
+    for (relation <- relations) {
       val occurrenceInCorpus = countRelations(relation).toDouble
 
       //term frequency
@@ -67,6 +69,8 @@ object TfIdfCalculator extends App {
       val tfIdf = tf * log10(sizeOfCorpora / occurrenceInCorpus)
       relation.tfIdf = tfIdf
       writer.writeRelation(relation)
+      counter += 1
+      println(counter +"/" + relations.size)
     }
   }
 
