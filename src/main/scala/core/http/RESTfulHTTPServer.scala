@@ -11,6 +11,7 @@ import MediaTypes._
 import akka.pattern.ask
 
 import akka.util.Timeout
+import tools.Config
 import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -26,7 +27,8 @@ class RESTfulHTTPServer extends Actor with HttpService with PerRequestCreator  w
 
   def receive = runRoute(searchRoute)
 
-  val workerActors = context.actorOf(Props[LocationFinderActor].withRouter(RoundRobinPool(1)), name = "WorkerActors")
+  val nr = Config.numberOfActors
+  val workerActors = context.actorOf(Props[LocationFinderActor].withRouter(RoundRobinPool(nr)), name = "WorkerActors")
 
   implicit val timeout = Timeout(1000.seconds)
 

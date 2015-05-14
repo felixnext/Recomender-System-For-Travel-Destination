@@ -13,9 +13,8 @@ import edu.mit.jwi.item.POS
 import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
 import nlp.{RelationExtractor => RE, TextAnalyzerPipeline, StanfordAnnotator}
-import core.{RelationExtraction => RWS, RawRelation, Sentiment, SparqlQueryCreator}
+import core.{RelationExtraction => RWS, RelationLocationFinder, RawRelation, Sentiment, SparqlQueryCreator}
 import tools.{Relation, JsonDumpWriter, JsonDumpReader, Levenshtein}
-import utils.SentimentUnpacker
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -54,12 +53,12 @@ object Main  extends App{
     Await.result(y, 1000.seconds)._1.foreach(l => println(l))
   }
 */
-  /*
+/*
   val clavin = new ClavinClient()
   val l = "Paris is a nice cite."
-  println(clavin.extractLocations(s))
-
-
+  println(clavin.extractLocations("Wolfsburg"))
+*/
+/*
   val openie = new RelationExtractor
   println(openie.extractRelations(s))
 
@@ -103,14 +102,14 @@ object Main  extends App{
   val syn = wordNet.getBestSynonyms(POS.NOUN, "children")
   syn.foreach(s => println(s))
 */
-  /*
+
   val analyzingPipe = new TextAnalyzerPipeline
-  val relationExtractor = new RWS(analyzingPipe)
+  val relationExtractor = new RWS
   val annotatedText = analyzingPipe.analyzeText(s)
   val relations = relationExtractor.extractRelations(annotatedText)
 
-  Await.result(relations, 1000.seconds)
-  */
+  println(relations)
+
 
   /*
   val reader = new JsonDumpReader("/Users/yevgen/Documents/data/master/dumps/elastic/travellerspoint0.json")
@@ -120,10 +119,9 @@ object Main  extends App{
   writer.writeRelation(r)
   */
   //println(System.getProperty("user.dir"))
-
-
-  val f = SentimentUnpacker.getUnpackedWordNetDir("models/opinion/positive-words.txt")
-  println(System.getProperty("java.io.tmpdir"))
+  val finder = RelationLocationFinder
+  val r = finder.findLocations(relations)
+  println(r.mkString("\n"))
 
 }
 

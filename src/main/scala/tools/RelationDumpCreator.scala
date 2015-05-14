@@ -36,7 +36,7 @@ object RelationDumpCreator extends App {
   //counts the relation frequence within the document
   def countRawRelations(r: RawRelation, l: List[RawRelation]) = l.count(rel => equalRawRelations(rel, r))
 
-  val analyzer = new TextAnalyzerPipeline
+  lazy val analyzer = new TextAnalyzerPipeline
 
   def processFile(reader: JsonDumpReader) = {
     val relationExtractor = new RelationExtraction
@@ -65,7 +65,7 @@ object RelationDumpCreator extends App {
     relations.flatten.toList
   }
 
-  val relations = (for (path <- args) yield {
+  lazy val relations = (for (path <- args) yield {
       val reader = new JsonDumpReader(path)
       processFile(reader)
   }).flatten
@@ -73,9 +73,9 @@ object RelationDumpCreator extends App {
   //tfIdf(relations)
 
 
-  val path = args.head.split("/")
-  val outFile = path.slice(0, path.size - 1).mkString("/") + "/relations.json"
-  val writer = new JsonDumpWriter(outFile)
+  lazy val path = args.head.split("/")
+  lazy val outFile = path.slice(0, path.size - 1).mkString("/") + "/relations.json"
+  lazy val writer = new JsonDumpWriter(outFile)
 
   for(r <- relations) {
     writer.writeRelation(r)
@@ -111,15 +111,19 @@ class JsonDumpReader(filePath: String) extends Iterator[LocationArticle] {
     val title = jsonData.get("title").getAsString
     val text = jsonData.getAsJsonArray("paragraph_texts").iterator.map(t => t.getAsString).toList
 
-    def disambiguatedIndex = indexName match {
-      case "travellerspoint" => 1 + id
-      case "wikipedia" => 2 + id
-      case "wikitravel" => 3 + id
-      case _ => id
-    }
-    new LocationArticle(disambiguatedIndex, title, text)
+
+    new LocationArticle(IndexDisambiguation.disambiguatedIndex(indexName)(id), title, text)
   }
 
+}
+
+object IndexDisambiguation {
+  val disambiguatedIndex: String => String => String = indexName => id => indexName match {
+    case "travellerspoint" => 1 + id
+    case "wikipedia" => 2 + id
+    case "wikitravel" => 3 + id
+    case _ => id
+  }
 }
 
 import spray.json.DefaultJsonProtocol._
@@ -148,6 +152,18 @@ class JsonDumpWriter(filePath: String) {
     br.write(rel.toJson + "\n")
     br.flush()
   }
+
+  //threadsafe write implementation
+  //writes relation to file
+  def writeRelationWithID(rel: Relation, indexId: Int) = {
+    val index = "{\"create\": { \"_index\": \"structuredrelations\", \"_type\": \"relations\", \"_id\" : \"" + indexId + "\" }}\n"
+    br.synchronized{
+      br.write(index)
+      br.write(rel.toJson + "\n")
+    }
+  }
+
+  def flush() = br.flush()
 
 }
 

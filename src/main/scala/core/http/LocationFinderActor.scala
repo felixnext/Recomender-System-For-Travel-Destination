@@ -1,7 +1,7 @@
 package core.http
 
 import akka.actor.{Actor, ActorLogging}
-import core.{RelationExtraction, SparqlQueryCreator}
+import core.{RelationLocationFinder, RelationExtraction, SparqlQueryCreator}
 import dbpedia.DBPediaClient
 import elasticsearch.ElasticsearchClient
 import nlp.TextAnalyzerPipeline
@@ -54,6 +54,7 @@ class LocationFinderActor extends Actor with ActorLogging {
       val dbpediaLocations = queries.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
 
       val relations = relationCreator.extractRelations(annotatedText)
+      val locations = RelationLocationFinder.findLocations(relations)
 
       /*
       dbpediaLocations.onSuccess {

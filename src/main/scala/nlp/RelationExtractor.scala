@@ -46,11 +46,6 @@ class RelationExtractor {
 }
 
 
-object RelationExtractor {
-  val openie = new OpenIE(triples = false)
-}
-
-
 case class OpenieResponse(result: Seq[Relation])
 
 //in relation tuple (String, String) the first argument is a original relation string and the second one a pos tagged relation

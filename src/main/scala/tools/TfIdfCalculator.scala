@@ -1,11 +1,5 @@
 package tools
 
-import java.nio.charset.Charset
-
-import spray.json._
-import spray.json.DefaultJsonProtocol._
-
-import scala.io.Source
 import scala.math._
 
 /**
@@ -13,31 +7,12 @@ import scala.math._
  */
 object TfIdfCalculator extends App {
 
-  val filePath = args.head
+  lazy val filePath = args.head
 
-  val decoder = Charset.forName("UTF-8").newDecoder()
-  val lines = Source.fromFile(filePath)(decoder).getLines()
-
-  val writer = new JsonDumpWriter(filePath.replace(".json", "_idf.json"))
-
-  def hasNext = lines.hasNext
-
-  private def nextLine = lines.next()
-
-  val relations = new scala.collection.mutable.ListBuffer[Relation]()
-
-  //read a file with relation data
-  while(hasNext) {
-    val index = if (hasNext) nextLine else "{}"
-    val data = if (hasNext) nextLine else "{}"
-
-    implicit val RelationFormat = jsonFormat7(Relation)
-
-    val jsonAst = data.parseJson
-    val r = jsonAst.convertTo[Relation]
-    relations += r
-  }
-
+  lazy val writer = new JsonDumpWriter(filePath.replace(".json", "_idf.json"))
+  
+  lazy val relations = RelationsDeserializer.deserialize(filePath)
+  
 
   //calculate tf idf score
   //Assumption: tfidf value of each relation object is the term frequency of the relation
@@ -60,10 +35,11 @@ object TfIdfCalculator extends App {
     val sizeOfCorpora = relations.size.toDouble
     var counter = 0
     for (relation <- relations) {
-      val occurrenceInCorpus = countRelations(relation).toDouble
-
       //term frequency
       val tf = relation.tfIdf
+
+      //approximation for speed up
+      val occurrenceInCorpus = if(tf == 1) 1 else countRelations(relation).toDouble
 
       //calculate Tf-Idf
       val tfIdf = tf * log10(sizeOfCorpora / occurrenceInCorpus)
@@ -76,4 +52,39 @@ object TfIdfCalculator extends App {
 
   tfIdf(relations)
 
+}
+
+import java.nio.charset.Charset
+
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
+import scala.io.Source
+
+//Provide a function for deserialization of relations
+object RelationsDeserializer {
+
+  val deserialize: String => Seq[Relation] = filePath => {
+    val decoder = Charset.forName("UTF-8").newDecoder()
+    val lines = Source.fromFile(filePath)(decoder).getLines()
+
+    def hasNext = lines.hasNext
+
+    def nextLine() = lines.next()
+
+    val relations = new scala.collection.mutable.ListBuffer[Relation]()
+
+    //read a file with relation data
+    while(hasNext) {
+      val index = if (hasNext) nextLine() else "{}"
+      val data = if (hasNext) nextLine() else "{}"
+
+      implicit val RelationFormat = jsonFormat7(Relation)
+
+      val jsonAst = data.parseJson
+      val r = jsonAst.convertTo[Relation]
+      relations += r
+    }
+    relations
+  }
 }

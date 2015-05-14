@@ -3,7 +3,6 @@ package core
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import core.http.RESTfulHTTPServer
-import elasticsearch.ElasticsearchClient
 import spray.can.Http
 import akka.pattern.ask
 import tools.Config
@@ -14,8 +13,7 @@ import scala.concurrent.duration._
 /**
  * Starts the http server.
  */
-object Boot extends App{
-
+object Boot extends App {
 
   // create our actor system with the name smartjava
   implicit val system = ActorSystem("recommender-system")

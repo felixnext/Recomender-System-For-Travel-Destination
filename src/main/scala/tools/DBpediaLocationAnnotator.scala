@@ -9,11 +9,9 @@ import scalaj.http.{Http, HttpResponse}
  */
 object DBpediaLocationAnnotator extends App {
 
-  //TODO annotate what ?
   //spotlight annotation
-  val annotationSpotlight = (name: String) => {
-    new SpotlightClient().requestLocation(name, 10).head.uri
-  }
+  lazy val spotlight = new SpotlightClient()
+  val annotationSpotlight: String => String = name => spotlight.requestLocation(name, 10).head.uri
 
   //annotates location with dbpedia data
   def annotateLocation(locationName: String): Option[Map[String, Set[String]]] = {

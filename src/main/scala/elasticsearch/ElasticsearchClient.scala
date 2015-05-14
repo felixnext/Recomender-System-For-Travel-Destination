@@ -5,7 +5,6 @@ import core.RawRelation
 import tools.{Relation, Config}
 
 import scala.annotation.tailrec
-import scala.io.Source
 import scala.util.Try
 import scalaj.http.Http
 
@@ -19,10 +18,10 @@ import spray.json.DefaultJsonProtocol._
 class ElasticsearchClient {
 
   // elasticsearch endpoint
-  val elasticUrl = Config.elasticsearchUrl
+  lazy val elasticUrl = Config.elasticsearchUrl
 
   //indices that should be queried
-  val indices: List[String] = Config.elasticsearchIndices
+  lazy val indices: List[String] = Config.elasticsearchIndices
 
   //parses the elasticsearch response in json format and wraps the data into location object
   //responseBody is a string in json format
@@ -63,7 +62,7 @@ class ElasticsearchClient {
         val document: java.util.Iterator[java.util.Map.Entry[String, JsonElement]] = result.get("_source").getAsJsonObject.entrySet().iterator
         val location = new ElasticLocationDoc(id = Some(id), index = Some(index), score = Some(score))
 
-        iterateOverResults(docIterator, locations ++ List(fetchData(document, location)))
+        iterateOverResults(docIterator, locations ::: List(fetchData(document, location)))
       }
     }
 
@@ -73,7 +72,7 @@ class ElasticsearchClient {
       val jsonHitsResults = jsonHits.get("hits").getAsJsonArray.iterator()
       iterateOverResults(jsonHitsResults ,List())
     } catch {
-      case e: Exception => println("Excpetion during elsticsearch result parsing: "+ e); List()
+      case e: Exception => println("Exception during elsticsearch result parsing: "+ e); List()
     }
 
   }
@@ -222,7 +221,7 @@ class ElasticsearchClient {
           val score = result.get("_score").getAsDouble
           val dbpedia = result.get("_source").getAsJsonObject.get("dbpedia_uri").getAsString
           val relation = result.get("_source").getAsJsonObject.get("text_relation").getAsString
-          val newList  = properties :+ new DBPediaProps("<" + dbpedia + ">",relation,score)
+          val newList  = new DBPediaProps("<" + dbpedia + ">",relation,score) :: properties
           extractData(docIterator, newList)
         }
       }

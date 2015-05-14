@@ -23,6 +23,7 @@ mainClass in assembly := Some("tools.TfIdfCalculator")
 //dependencies
 
 libraryDependencies ++= Seq(
+  "org.apache.spark" %% "spark-core" % "1.3.1",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.9",
@@ -44,20 +45,14 @@ libraryDependencies ++= Seq(
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 {
-  case "org/apache/commons/logging/Log.class" => MergeStrategy.first
-  case "org/apache/commons/logging/LogConfigurationException.class" => MergeStrategy.first
-  case "org/apache/commons/logging/LogFactory.class" => MergeStrategy.first
-  case "org/apache/commons/logging/impl/NoOpLog.class" => MergeStrategy.first
-  case "org/apache/commons/logging/impl/SimpleLog$1.class" => MergeStrategy.first
-  case "org/apache/commons/logging/impl/SimpleLog.class" => MergeStrategy.first
-  case "org/slf4j/impl/StaticLoggerBinder.class" => MergeStrategy.first
-  case "org/slf4j/impl/StaticMDCBinder.class" => MergeStrategy.first
-  case "org/slf4j/impl/StaticMarkerBinder.class"=> MergeStrategy.first
   case "log4j.properties" =>  MergeStrategy.first
   case "logback.xml" => MergeStrategy.first
   case PathList("nu", "xom", xs @ _*)  => MergeStrategy.first
   case PathList("java_cup", "runtime", xs @ _*)  => MergeStrategy.first
-  case "org/w3c/dom/UserDataHandler.class"=> MergeStrategy.first
+  case PathList("akka", xs @ _*)  => MergeStrategy.first
+  case PathList("com", xs @ _*)  => MergeStrategy.first
+  case PathList("org", xs @ _*)  => MergeStrategy.first
+  case PathList("javax", xs @ _*)  => MergeStrategy.first
   case x => old(x)
 }
 }

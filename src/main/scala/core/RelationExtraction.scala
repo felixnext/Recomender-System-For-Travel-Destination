@@ -1,10 +1,12 @@
 package core
 
 import core.Sentiment.Child
+
 import edu.mit.jwi.item.POS
 import edu.stanford.nlp.ling.CoreLabel
 import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations
 import edu.stanford.nlp.trees.{Tree => SentimentTree}
+
 import nlp.wordnet.WordNet
 import nlp.{AnnotatedText, OffsetConverter, Relation, TextAnalyzerPipeline}
 
@@ -27,17 +29,17 @@ class RelationExtraction {
   def extractRelations(annText: AnnotatedText): List[RawRelation] = {
 
     //split each word in sentence on "/". This converts words form word/pos into tuple (word,pos)
-    val sent: Sentences = TextAnalyzerPipeline.formatPosSentences(annText)
+    lazy val sent: Sentences = TextAnalyzerPipeline.formatPosSentences(annText)
 
-    val offsetConverter = new OffsetConverter(sent)
+    lazy val offsetConverter = new OffsetConverter(sent)
 
-    //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
+    //converts stanford sentence and token indices into char offset, counted from beginning of the text
     def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int, Int) =
       offsetConverter.sentenceToCharLevelOffset(sentenceNr, tokenBegin, tokenEnd, token)
 
     //due to each element in array belong to a sentence
     assert(annText.stanford.sentimentTree.length == annText.relations.length)
-    val treesWithRelations = annText.stanford.sentimentTree.zip(annText.relations)
+    lazy val treesWithRelations = annText.stanford.sentimentTree.zip(annText.relations)
     val relations = for (sent <- treesWithRelations) yield {
       val sentimentExtractor = new Sentiment(sent._1)
       //sentimentExtractor.children.foreach(c => println(c.words))
@@ -48,7 +50,7 @@ class RelationExtraction {
     }
 
 
-    val wordnet = WordNet.getInstance()
+    lazy val wordnet = WordNet.getInstance()
 
     //finds all possible synonyms to the given word sequence
     //returns a list of synonyms conataining original sequence
@@ -119,6 +121,7 @@ class RelationExtraction {
             corefInSubj.get._2.getMentionsInTextualOrder.map(x => x.mentionSpan)
           else Set()).toSet
 
+          //annotate subj and obj with ascii location names if available
           val locAnnObj = if (locationsInObject.isDefined) Set(locationsInObject.get.asciiName)
           else Set()
           val locAnnSubj = if (locationsInSubject.isDefined) Set(locationsInSubject.get.asciiName)
@@ -137,7 +140,7 @@ class RelationExtraction {
       } else annRel
     }
 
-    assert(relations.size == sent.size)
+    assert(relations.length == sent.size)
     val annRelations = annotateRelation(relations)
     //annRelations.foreach(x => println(x))
     annRelations

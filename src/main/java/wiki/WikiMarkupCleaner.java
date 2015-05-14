@@ -11,7 +11,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 /**
- * Cleans the wiki markup.
+ * Cleans wiki markup.
  */
 public class WikiMarkupCleaner {
 
