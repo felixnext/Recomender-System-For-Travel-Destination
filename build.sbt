@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "1.3.1",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test",
   "com.typesafe" % "config" % "1.2.1",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.9",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "org.scalaj" %% "scalaj-http" % "1.1.4",
   "io.spray" %% "spray-can" % "1.3.3",
   "io.spray" %%  "spray-routing" % "1.3.3",
