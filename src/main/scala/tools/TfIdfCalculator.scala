@@ -18,19 +18,7 @@ object TfIdfCalculator extends App {
   //Assumption: tfidf value of each relation object is the term frequency of the relation
   def tfIdf(relations: Seq[Relation]) = {
 
-    def equalRelations(r1: Relation, r2: Relation) = {
-      if (r1.rel.equals(r2.rel)) {
-        val shareObject = r1.objCand.intersect(r2.objCand).size > 0
-        if (shareObject) {
-          val shareSubject = r1.subjCand.intersect(r2.subjCand).size > 0
-          if (shareSubject) {
-            true
-          } else false
-        } else false
-      } else false
-    }
-
-    def countRelations(r: Relation) = relations.count(rel => equalRelations(rel, r))
+    val countOccurrences = RelationsUtils.countOccurrences(relations)
 
     val sizeOfCorpora = relations.size.toDouble
     var counter = 0
@@ -39,7 +27,7 @@ object TfIdfCalculator extends App {
       val tf = relation.tfIdf
 
       //approximation for speed up
-      val occurrenceInCorpus = if(tf == 1) 1 else countRelations(relation).toDouble
+      val occurrenceInCorpus = if(tf == 1) 1 else countOccurrences(relation).toDouble
 
       //calculate Tf-Idf
       val tfIdf = tf * log10(sizeOfCorpora / occurrenceInCorpus)
@@ -51,6 +39,27 @@ object TfIdfCalculator extends App {
   }
 
   tfIdf(relations)
+
+}
+
+object RelationsUtils {
+
+  //compares two relation
+  def equalRelations(r1: Relation, r2: Relation) = {
+    if (r1.rel.equals(r2.rel)) {
+      val shareObject = r1.objCand.intersect(r2.objCand).size > 0
+      if (shareObject) {
+        val shareSubject = r1.subjCand.intersect(r2.subjCand).size > 0
+        if (shareSubject) {
+          true
+        } else false
+      } else false
+    } else false
+  }
+
+  //counts the corpus frequency of a given relation
+  val countOccurrences: Seq[Relation] => Relation  => Int =
+    relations => r => relations.count(rel => equalRelations(rel, r))
 
 }
 

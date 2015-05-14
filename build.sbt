@@ -18,7 +18,7 @@ fork in run := true
 
 fork in Test := true
 
-mainClass in assembly := Some("tools.TfIdfCalculator")
+mainClass in assembly := Some("tools.ParallelTfIdfCalculator")
 
 //dependencies
 
