@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 import scala.math._
 
 /**
- * Calculates tf-idf score of relation in parallel.
+ * Calculates tf-idf score of relations in parallel.
  * Built on top of apache spark.
  */
 object ParallelTfIdfCalculator extends App {
