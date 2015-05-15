@@ -53,6 +53,7 @@ class LocationFinderActor extends Actor with ActorLogging {
 
       val dbpediaLocations = queries.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
 
+
       val relations = relationCreator.extractRelations(annotatedText)
       val locations = RelationLocationFinder.findLocations(relations)
 

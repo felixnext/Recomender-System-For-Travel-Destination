@@ -1,6 +1,7 @@
-package tools
+package tools.script
 
 import dbpedia.{DBPediaClient, SpotlightClient}
+import tools.xml.{DumpXMLReader, TravelerPoint, Travelerswiki, Wikipedia}
 
 import scalaj.http.{Http, HttpResponse}
 

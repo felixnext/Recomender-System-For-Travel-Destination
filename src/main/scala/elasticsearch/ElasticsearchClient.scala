@@ -2,7 +2,8 @@ package elasticsearch
 
 import com.google.gson.{JsonElement, JsonObject, Gson}
 import core.RawRelation
-import tools.{Relation, Config}
+import tools.Config
+import tools.script.Relation
 
 import scala.annotation.tailrec
 import scala.util.Try

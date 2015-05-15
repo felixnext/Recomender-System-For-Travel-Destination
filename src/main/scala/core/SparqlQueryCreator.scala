@@ -3,7 +3,7 @@ package core
 import dbpedia.{SparqlQuery, YagoGeoTypes}
 import elasticsearch.ElasticsearchClient
 import nlp._
-import tools.Levenshtein
+import tools.Math._
 
 import scala.annotation.tailrec
 import scala.math._
@@ -150,7 +150,7 @@ class SparqlQueryCreator {
           case _ => (false, 0.0)
         }
         val b = {
-          val score = Levenshtein.score(arg1.arg, arg2.arg)
+          val score = levensteinScore(arg1.arg, arg2.arg)
           if (score > 0.5) (true, score * 0.5) else (false, 0.0)
         }
         (s._1 || c._1 || l._1 || y._1 || d._1 || b._1,

@@ -1,9 +1,9 @@
-package tools
+package tools.script
 
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import tools._
 
 import scala.math._
 

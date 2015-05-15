@@ -1,4 +1,4 @@
-package tools
+package tools.script
 
 import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 import java.nio.charset.Charset

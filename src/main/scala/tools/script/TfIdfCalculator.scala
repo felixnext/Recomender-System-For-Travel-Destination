@@ -1,4 +1,4 @@
-package tools
+package tools.script
 
 import scala.math._
 
@@ -65,8 +65,8 @@ object RelationsUtils {
 
 import java.nio.charset.Charset
 
-import spray.json._
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.io.Source
 

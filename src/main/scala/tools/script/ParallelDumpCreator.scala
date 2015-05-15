@@ -1,4 +1,4 @@
-package tools
+package tools.script
 
 import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 import java.nio.charset.Charset
@@ -9,9 +9,6 @@ import akka.routing.RoundRobinPool
 import core.{RawRelation, RelationExtraction}
 import nlp.TextAnalyzerPipeline
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 /**

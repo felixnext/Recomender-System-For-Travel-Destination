@@ -1,4 +1,4 @@
-package tools
+package tools.xml
 
 import java.io.{BufferedWriter, File, FileOutputStream, OutputStreamWriter}
 

@@ -14,7 +14,6 @@ import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
 import nlp.{RelationExtractor => RE, TextAnalyzerPipeline, StanfordAnnotator}
 import core.{RelationExtraction => RWS, RelationLocationFinder, RawRelation, Sentiment, SparqlQueryCreator}
-import tools.{Relation, JsonDumpWriter, JsonDumpReader, Levenshtein}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -102,6 +101,7 @@ object Main  extends App{
   val syn = wordNet.getBestSynonyms(POS.NOUN, "children")
   syn.foreach(s => println(s))
 */
+  /*
 
   val analyzingPipe = new TextAnalyzerPipeline
   val relationExtractor = new RWS
@@ -109,7 +109,7 @@ object Main  extends App{
   val relations = relationExtractor.extractRelations(annotatedText)
 
   println(relations)
-
+*/
 
   /*
   val reader = new JsonDumpReader("/Users/yevgen/Documents/data/master/dumps/elastic/travellerspoint0.json")
@@ -119,9 +119,22 @@ object Main  extends App{
   writer.writeRelation(r)
   */
   //println(System.getProperty("user.dir"))
+
+  /*
   val finder = RelationLocationFinder
   val r = finder.findLocations(relations)
   println(r.mkString("\n"))
+*/
+/*
+  val e = new ElasticsearchClient
+  println(e.matchQuery("I want to visit an island in turkey.").flatten.mkString(" \n "))
+
+  */
+
+  import tools.Math._
+
+  val v = Seq(0.99,0.99,0.99)
+  println(decaySum(v))
 
 }
 

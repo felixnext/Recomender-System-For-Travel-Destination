@@ -1,7 +1,7 @@
 import java.io.File
 
 import org.scalatest.{Matchers, FlatSpec}
-import tools.WorkProgress
+import tools.script.WorkProgress
 
 /**
  * Tests the relations extraction progress.
