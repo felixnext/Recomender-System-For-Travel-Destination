@@ -72,7 +72,8 @@ while len(locations) > 1:
     location = locations.pop()
 
     #proof location
-    if "User" in location or "Image" in location or "Talk" in location or "Wikitravel" in location or "Category" in location:
+    if "User" in location or "Image" in location or "Talk" in location or
+     "Wikitravel" in location or "Category" in location:
         continue
 
     out.write("  <page request_title=\"" + location + "\">\n")

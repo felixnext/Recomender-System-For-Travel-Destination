@@ -47,7 +47,7 @@ object Math {
     .foldLeft(0.0,0)((acc,v) => (acc._1 + v/pow(2,acc._2), acc._2 +1))._1
 
 
-  //given inner and outer radius the function provides decay distance for the give distence between two point in km
+  //given inner and outer radius the function provides decay distance for the give distance between two point in km
   val distanceDecayFunction: Double => Double => Double => Double = inner => outer => distance => {
     if(distance - inner < eps) 1.0
     else if(outer - distance < eps) 0.0
@@ -56,5 +56,11 @@ object Math {
       val v = log(lambda) * (distance - inner)
       pow(E,v)
     }
+  }
+
+  //normalize score so that the sum is equal 1.0 thus each score is smaller then 1.0
+  val normalizedScore: Iterable[Double] => Double => Double = scores => score => {
+    val aggregated = scores.sum
+    score/aggregated
   }
 }

@@ -18,8 +18,6 @@ class LocationFinderActor extends Actor with ActorLogging {
 
   log.debug("LocationFinder created!")
 
-  //initialize services
-  val elasticClient = new ElasticsearchClient
 
   //val analyzingPipe = new TextAnalyzerPipeline
 
@@ -42,7 +40,7 @@ class LocationFinderActor extends Actor with ActorLogging {
 
       //Elasticsearch location request
       val elaticResult = Future {
-        elasticClient.matchQuery(query).flatten
+        ElasticsearchClient.matchQuery(query).flatten
       }
       elaticResult.onComplete(r => log.debug("Elasticsearch result received. SUCCESS: " + r.isSuccess))
 

@@ -16,7 +16,7 @@ import spray.json.DefaultJsonProtocol._
   * This class represents a elasticsearch client.
  * It makes possible to query elasticsearch REST Api und to parse results.
  */
-class ElasticsearchClient {
+object ElasticsearchClient {
 
   // elasticsearch endpoint
   lazy val elasticUrl = Config.elasticsearchUrl
@@ -97,6 +97,25 @@ class ElasticsearchClient {
          |}
        """.stripMargin
 
+    indices.map(index => parseLocationResult(request(jsonQuery, index)))
+  }
+
+  //finds documents in a collection with the same title
+  def matchTitle(title: String): List[List[ElasticLocationDoc]] = {
+    val jsonQuery =
+      s"""
+         |{
+         |  "query":{
+         |    "filtered":{
+         |      "filter":{
+         |        "term":{
+         |          "title":"$title"
+         |        }
+         |      }
+         |    }
+         |  }
+         |}
+       """.stripMargin
     indices.map(index => parseLocationResult(request(jsonQuery, index)))
   }
 

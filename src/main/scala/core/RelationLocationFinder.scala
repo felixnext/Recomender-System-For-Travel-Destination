@@ -1,6 +1,7 @@
 package core
 
 import elasticsearch.ElasticsearchClient
+import tools.Math._
 
 /**
  * Finds all relations within elasticsearch index that are similar two set of relations.
@@ -10,10 +11,9 @@ object RelationLocationFinder {
 
   //Finds all relations within elasticsearch index that are similar two set of relations.
   //All retrieved documents are aggregated on location attribute and new score is computed.
-  def findLocations(relations: List[RawRelation]): Iterable[(String, Int, Double)] = {
+  def findLocations(relations: List[RawRelation]): Iterable[(String, Double)] = {
 
-    val elastic = new ElasticsearchClient
-    val foundRelations = relations.flatMap(r => elastic.findSimilarRelations(r))
+    val foundRelations = relations.flatMap(r => ElasticsearchClient.findSimilarRelations(r))
 
     //group on the same document id
     //thus aggregates all relation which belong to the same document together
@@ -28,15 +28,8 @@ object RelationLocationFinder {
     }
 
     //normalize score
-    val normalizer = Normalizer.normalizedScore(aggregated.map(x => x._3))
-    aggregated.map(location => (location._1, location._2.toInt, normalizer(location._3)))
+    val normalizer = normalizedScore(aggregated.map(x => x._3))
+    aggregated.map(location => (location._1, normalizer(location._3)))
   }
 
-}
-
-object Normalizer {
-  val normalizedScore: Iterable[Double] => Double => Double = scores => score => {
-    val aggregated = scores.sum
-    score/aggregated
-  }
 }

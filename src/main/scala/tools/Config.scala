@@ -35,5 +35,7 @@ object Config {
   lazy val numberOfSparkCores = Try(config.getInt("spark.number-of-nodes")).getOrElse(1)
 
   lazy val decaySensitivity = Try(config.getDouble("decay.distance-sensitivity")).getOrElse(0.5)
+  lazy val innerR = Try(config.getDouble("decay.inner-radius")).getOrElse(5.0)
+  lazy val outerR = Try(config.getDouble("decay.outer-radius")).getOrElse(25.0)
 
 }

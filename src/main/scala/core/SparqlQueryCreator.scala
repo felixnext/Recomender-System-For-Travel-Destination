@@ -15,8 +15,6 @@ import scala.math._
  */
 class SparqlQueryCreator {
 
-  val elastic = new ElasticsearchClient
-
   type Sentences = Array[Array[(String, String)]]
 
   //Creates all possible spaql query based on given text.
@@ -42,7 +40,7 @@ class SparqlQueryCreator {
       val c = entityCandidatesAnnotation
       val rel = c.groupsMap.map(k => (k._1,
         k._2.map(r => new AnnontatedRelation(r.arg1, r.rel, r.relOffset, r.arg2,
-          Some(elastic.findPattyRelation(r.rel._2)), Some(elastic.findDBPediaProperties(r.rel._1))))))
+          Some(ElasticsearchClient.findPattyRelation(r.rel._2)), Some(ElasticsearchClient.findDBPediaProperties(r.rel._1))))))
       val smallerSets = rel.filter(x => x._2.size < 2).flatMap(x => x._2)
       val biggerSets = rel.filterNot(x => x._2.size < 2)
       val newUnkownGroup = biggerSets.getOrElse(-1, Seq()) ++ smallerSets
@@ -55,12 +53,12 @@ class SparqlQueryCreator {
       val relations = predicateAnnotation
       //annotate all entities with dbpedia classes and ygo geo types
       def annRelation(r: AnnontatedRelation) = {
-        val arg1Lemon = elastic.findDBPediaClasses(r.arg1.arg)
+        val arg1Lemon = ElasticsearchClient.findDBPediaClasses(r.arg1.arg)
         val arg1Yago = YagoGeoTypes.getYagoEntities(r.arg1.arg)
         val arg1 = new AnnotatedArgument(r.arg1.spotlight, r.arg1.clavin, r.arg1.dbpediaLookup, r.arg1.arg, r.arg1.argType,
           r.arg1.argOffset, Some(arg1Yago), Some(arg1Lemon))
         val args2 = for (argS <- r.arg2) yield {
-          val arg2Lemon = elastic.findDBPediaClasses(argS.arg)
+          val arg2Lemon = ElasticsearchClient.findDBPediaClasses(argS.arg)
           val arg2Yago = YagoGeoTypes.getYagoEntities(argS.arg)
           new AnnotatedArgument(argS.spotlight, argS.clavin, argS.dbpediaLookup, argS.arg, argS.argType,
             argS.argOffset, Some(arg2Yago), Some(arg2Lemon))
