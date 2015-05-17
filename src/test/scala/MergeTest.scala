@@ -16,9 +16,10 @@ class MergeTest extends FlatSpec with Matchers {
   val l7 = new Location("Paris", None, None, 0.14)
   val l8 = new Location("Times Square", Some(40.755833), Some(-73.986389), 0.17)
   val l9 = new Location("Madrid", None, None, 0.17)
+  val l10 = new Location("Unknown", None, None, 0.0)
 
 
-  val locations = Seq(l1,l2,l3,l4,l5,l6,l7,l8,l9)
+  val locations = Seq(l1,l2,l3,l4,l5,l6,l7,l8,l9, l10)
 
   val radius = Config.innerR
 
@@ -26,10 +27,10 @@ class MergeTest extends FlatSpec with Matchers {
 
     val clusters = Merge.merge(locations)
 
-    clusters.size should be (5)
+    clusters.size should be (6)
 
     clusters.foreach{c =>
-      println("Cluster:")
+      println("Cluster name: " + c.name + "\nScore: " + c.decayScore)
       println(c.ls.mkString("\n"))
       println("\n\n\n")
     }

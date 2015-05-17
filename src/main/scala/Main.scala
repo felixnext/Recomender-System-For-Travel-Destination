@@ -52,11 +52,10 @@ object Main  extends App{
     Await.result(y, 1000.seconds)._1.foreach(l => println(l))
   }
 */
-/*
-  val clavin = new ClavinClient()
+
+
   val l = "Paris is a nice cite."
-  println(clavin.extractLocations("Wolfsburg"))
-*/
+  println(ClavinClient.extractLocations("Germany"))
 /*
   val openie = new RelationExtractor
   println(openie.extractRelations(s))

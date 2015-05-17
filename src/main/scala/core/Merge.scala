@@ -1,9 +1,13 @@
 package core
 
+import clavin.ClavinClient
 import dbpedia.{Location => L}
 import elasticsearch.{ElasticLocationDoc, ElasticsearchClient}
 import tools.Config
 import tools.Math._
+import clavin.{Location => CL}
+
+import scala.annotation.tailrec
 
 /**
  * Locations in the result set, which are within a certain radius should be combined together.
@@ -88,6 +92,7 @@ object Merge {
 
     val MERGE_THRESHOLD = 0.1
 
+    @tailrec
     def reunion(clusters: Seq[Cluster]): Seq[Cluster] = {
 
       val matrix: Matrix = computeDistanceMatrix(clusters)
@@ -139,9 +144,6 @@ object Merge {
     }
     reunion(clusters)
   }
-  
-  //TODO Recompute new score
-  //TODO Choose right name
 
 }
 
@@ -175,5 +177,18 @@ class Cluster(l: Location) {
     if (sum > 0 || distances.length > 0) Some(sum / distances.length.toDouble)
     else None
   }
+
+  //the new name of this cluster
+  //the general name in that cluster will be taken
+  //e.g. in cluster with elements "New York City" and "Statue of Liberty" the name will be "New York City"
+  lazy val name = {
+    val geoNames: Array[List[CL]] = ls.map(l => ClavinClient.extractLocations(l.name)).filter(l => l.size > 0)
+    if(geoNames.length > 0) geoNames.foldLeft(geoNames.head.head.population,geoNames.head.head.name)((acc,l) =>
+      if(acc._1 < l.head.population) (l.head.population,l.head.name) else acc)._2
+    else ls.maxBy(l => l.score).name
+  }
+
+  //decay score is computed based on decay sum and corresponds to new score of  grouped locations
+  lazy val decayScore = decaySum(ls.map(l => l.score))
 
 }
