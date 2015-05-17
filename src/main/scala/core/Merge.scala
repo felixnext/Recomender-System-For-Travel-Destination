@@ -6,10 +6,12 @@ import tools.Config
 import tools.Math._
 
 /**
- * Created by yevgen on 15.05.15.
+ * Locations in the result set, which are within a certain radius should be combined together.
+ * This object provides functionality for merging locations of sparql, elasticsearch and relation KB results.
  */
 object Merge {
 
+  type Matrix =  Array[Array[(Int,Int,Option[Double])]]
   type SparqlLocation = Iterable[(Iterable[L], Double)]
 
   def mergeElasticLocations(locations: List[ElasticLocationDoc]) = {
@@ -36,13 +38,24 @@ object Merge {
   }
 
 
+  //replace missing coordinates if possible
+  val coordinatesReplace: Seq[Location] => Seq[Location] = locations => {
+    val missingCoord = locations.filter(l => !l.lat.isDefined)
+    val knownCoord = locations.filter(l => l.lat.isDefined)
+    val replaced = missingCoord.map{l1 =>
+      knownCoord.find(l2 => l2.name.equals(l1.name)) match {
+        case Some(l) => new Location(l1.name, l.lat, l.lon, l1.score)
+        case None => l1
+      }
+    }
+    knownCoord ++ replaced
+  }
+
   def merge(location: Seq[Location]) = {
 
-    val clusters = location.map(l => new Cluster(l))
+    val clusters = coordinatesReplace(location).map(l => new Cluster(l))
 
     val dd = distanceDecayFunction(Config.innerR)(Config.outerR)
-
-    type Matrix =  Array[Array[(Int,Int,Option[Double])]]()
 
     //computes matrix where each cell is a distance between two clusters
     def computeDistanceMatrix(clusters: Seq[Cluster]): Matrix = {
@@ -123,12 +136,12 @@ object Merge {
         //finished
         clusters
       }
-
     }
-
     reunion(clusters)
   }
-
+  
+  //TODO Recompute new score
+  //TODO Choose right name
 
 }
 
@@ -157,9 +170,9 @@ class Cluster(l: Location) {
   //calculates a distance between two clusters based on centroid distance
   def centroidDistance(c: Cluster): Option[Double] = {
     val distances = for (l1 <- ls; l2 <- c.ls; d = Location.distance(l1)(l2) if d >= 0.0) yield d
-    assert(distances.length > 0)
+    //assert(distances.length > 0)
     val sum = distances.sum
-    if (sum > 0) Some(sum / distances.length.toDouble)
+    if (sum > 0 || distances.length > 0) Some(sum / distances.length.toDouble)
     else None
   }
 

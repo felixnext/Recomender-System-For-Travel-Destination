@@ -24,7 +24,6 @@ class TextAnalyzerPipeline {
 
   //initialize required resources
   val relationExtractor = new RelationExtractor
-  val clavin = new ClavinClient
   val stanford = new StanfordAnnotator
   val spotlight = new SpotlightClient
 
@@ -43,7 +42,7 @@ class TextAnalyzerPipeline {
 
     val rawRel = Try(Await.result(futureRel, 30.seconds)).getOrElse(Seq())
 
-    val clavinAnnotation = clavin.extractLocations(text)
+    val clavinAnnotation = ClavinClient.extractLocations(text)
 
     val stanfordAnnotation = stanford.annotateText(text)
 

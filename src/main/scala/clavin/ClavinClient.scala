@@ -10,7 +10,7 @@ import scalaj.http.{Http, HttpResponse}
 /**
  * Clavin client make gazetteer request. The text will be annotated with geoNames entities.
  */
-class ClavinClient {
+object ClavinClient {
 
   val clavin = Config.clavinUrl
 
