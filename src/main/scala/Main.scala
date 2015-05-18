@@ -55,7 +55,7 @@ object Main  extends App{
 
 
   val l = "Paris is a nice cite."
-  println(ClavinClient.extractLocations("Germany"))
+  println(ClavinClient.extractLocations("Berlin"))
 /*
   val openie = new RelationExtractor
   println(openie.extractRelations(s))

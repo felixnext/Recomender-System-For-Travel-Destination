@@ -10,7 +10,7 @@ import scala.math._
 /**
  * DBPedia lookup client. Makes lookup requests and parses responses.
  */
-class DBPediaLookup {
+object DBPediaLookup {
 
   val url = Config.dbpediaLookup
 

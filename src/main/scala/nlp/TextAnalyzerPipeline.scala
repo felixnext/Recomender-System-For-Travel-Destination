@@ -84,8 +84,6 @@ class TextAnalyzerPipeline {
 
 object TextAnalyzerPipeline {
 
-  val dbpediaLookup = new DBPediaLookup
-
   def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
 
   type Sentences = Array[Array[(String, String)]]
@@ -143,7 +141,7 @@ object TextAnalyzerPipeline {
 
             //if neither spotlight now clavin annotation known
             //then try dbpedia lookup
-            val lookupRes = if (!(locationArg1.isDefined || spotlightArg1.isDefined)) Some(dbpediaLookup.findDBPediaURI(rel.arg1.arg))
+            val lookupRes = if (!(locationArg1.isDefined || spotlightArg1.isDefined)) Some(DBPediaLookup.findDBPediaURI(rel.arg1.arg))
             else None
 
             val arg1 = new AnnotatedArgument(spotlight = spotlightArg1, clavin = locationArg1, arg = rel.arg1.arg,
@@ -157,7 +155,7 @@ object TextAnalyzerPipeline {
 
               //if neither spotlight now clavin annotation known
               //then try dbpedia lookup
-              val lookupRes = if (!(spotlightArg2.isDefined || locationArg2.isDefined)) Some(dbpediaLookup.findDBPediaURI(arg2.arg))
+              val lookupRes = if (!(spotlightArg2.isDefined || locationArg2.isDefined)) Some(DBPediaLookup.findDBPediaURI(arg2.arg))
               else None
 
               new AnnotatedArgument(spotlight = spotlightArg2, clavin = locationArg2,
