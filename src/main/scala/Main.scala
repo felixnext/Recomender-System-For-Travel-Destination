@@ -36,26 +36,26 @@ object Main  extends App{
   //stanford.extractSentiment(a.sentimentTree.head, null,null,null,null)
   //stanford.annotateText(s + "bla")
 */
-/*
+
 
   val analyzingPipe = new TextAnalyzerPipeline
-  val queryCreator = new SparqlQueryCreator(analyzingPipe)
+  val queryCreator = new SparqlQueryCreator
   val annotatedText = analyzingPipe.analyzeText(s)
   val queries = queryCreator.createSparqlQuery(annotatedText)
+  println("Number of queries: " + queries.size)
   val dbpediaCleint = new DBPediaClient
   val result = queries.map(qs =>
-    qs.map(q => Future{(dbpediaCleint.executeLocationQuery(q._1), q._2)})
+    (dbpediaCleint.executeLocationQuery(qs._1), qs._2)
   )
 
-  Await.result(result, 1000.seconds).foreach{y =>
-    println("HERE")
-    Await.result(y, 1000.seconds)._1.foreach(l => println(l))
-  }
-*/
+ result.foreach(l => println(l))
 
 
+
+/*
   val l = "Paris is a nice cite."
   println(ClavinClient.extractLocations("Berlin"))
+  */
 /*
   val openie = new RelationExtractor
   println(openie.extractRelations(s))
@@ -124,16 +124,10 @@ object Main  extends App{
   val r = finder.findLocations(relations)
   println(r.mkString("\n"))
 */
-/*
-  val e = new ElasticsearchClient
-  println(e.matchQuery("I want to visit an island in turkey.").flatten.mkString(" \n "))
 
-  */
+  //println(ElasticsearchClient.phraseQuery("I seeking for a nice city in Germany.").flatten.map(x => x.title).mkString("\n"))
 
-  import tools.Math._
 
-  val v = Seq(0.99,0.99,0.99)
-  println(decaySum(v))
 
 }
 

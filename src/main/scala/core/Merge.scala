@@ -1,7 +1,7 @@
 package core
 
 import clavin.{ClavinClient, Location => CL}
-import dbpedia.{Location => L, DBPediaLookup}
+import dbpedia.{DBPediaLookup, Location => L}
 import elasticsearch.{ElasticLocationDoc, ElasticsearchClient}
 import tools.Config
 import tools.Math._
@@ -88,7 +88,7 @@ object Merge {
           //apply decay function on distance
           if (d.isDefined) Some(dd(d.get)) else d
         }
-        a = a :+ (i, j, d)
+        a = a :+(i, j, d)
       }
       matrix = matrix :+ a
       i += 1
@@ -169,13 +169,19 @@ object Merge {
     val matrix = computeDistanceMatrix(coordinatesReplaced).flatten
 
     //inverse function two determine source of given cluster based on index
-    val source: Int => SourceEnum = index => if (index < s.size) Sparql else if (index < e.size) Elastic else RelaltionKB
+    val source: Int => SourceEnum = index => if (index < s.size) Sparql else if (index < e.size + s.size) Elastic else RelaltionKB
 
     //add scores to CombinedCluster w.r.t. source
     val addScoreToCluster: CombinedCluster => SourceEnum => Cluster => Unit = cc => t => c => t match {
-      case Sparql => if (!cc.sparqlScore.isDefined) cc.sparqlScore = Some(c.decayScore)
-      case Elastic => if (!cc.elasticScore.isDefined) cc.elasticScore = Some(c.decayScore)
-      case RelaltionKB => if (!cc.rkbScore.isDefined) cc.rkbScore = Some(c.decayScore)
+      case Sparql =>
+        if (!cc.sparqlScore.isDefined) cc.sparqlScore = Some(c.decayScore)
+        else cc.sparqlScore = Some(decaySum(Seq(c.decayScore,cc.sparqlScore.get)))
+      case Elastic =>
+        if (!cc.elasticScore.isDefined) cc.elasticScore = Some(c.decayScore)
+        else cc.elasticScore = Some(decaySum(Seq(c.decayScore,cc.elasticScore.get)))
+      case RelaltionKB =>
+        if (!cc.rkbScore.isDefined) cc.rkbScore = Some(c.decayScore)
+        else cc.rkbScore = Some(decaySum(Seq(c.decayScore,cc.rkbScore.get)))
     }
 
     //wrapper for merging two clusters
@@ -214,33 +220,55 @@ object Merge {
     }
 
     //keep elements without match
-    val unused = coordinatesReplaced.view.zipWithIndex.map(c => c._2).filter(i1 => !usedCluster.contains(i1))
-    val cc = for(i <- unused) yield {
+    val indexed = coordinatesReplaced.view.zipWithIndex
+    val unused = indexed.map(c => c._2).filter(i1 => !usedCluster.contains(i1))
+
+    val usedObj = new ListBuffer[Cluster]
+    val usedIndex = new ListBuffer[Int]
+    val cc = for (i <- unused if !usedIndex.contains(i)) yield {
       val cluster = coordinatesReplaced(i)
+
+      //try to find other clusters with equal name
+      val equalNamed = coordinatesReplaced.filter(c => cluster != c && cluster.name.equals(c.name))
+
       val c = new CombinedCluster(cluster.name, cluster.lat, cluster.lon)
+
+      for (eq <- equalNamed if !usedObj.contains(eq)) {
+        indexed.find { case (k, v) => k == eq } match {
+          case Some((k, v)) =>
+            addScoreToCluster(c)(source(v))(eq)
+            usedObj += eq
+            usedIndex += v
+          case None =>
+        }
+      }
+
       addScoreToCluster(c)(source(i))(cluster)
       c
     }
 
     val combined = combinedClusters ++ cc
-    
+
     //retrieve popularity score
-    combined.foreach{c =>
+    combined.foreach { c =>
       DBPediaLookup.findDBPediaURI(c.name).find(lookup => lookup.score - 1.0 < eps) match {
         case Some(l) => c.popularityScore = Some(l.refcount)
-        case None => _
+        case None =>
       }
     }
 
     //normalize popularity score
     val popularityNormalizer = normalizedScore(combined.filter(c => c.popularityScore.isDefined).map(c => c.popularityScore.get))
-    combined.foreach(c => if(c.popularityScore.isDefined) c.popularityScore = Some(popularityNormalizer(c.popularityScore.get)))
+    combined.foreach(c => if (c.popularityScore.isDefined) c.popularityScore = Some(popularityNormalizer(c.popularityScore.get)))
     combined.toSeq
   }
 
   sealed trait SourceEnum
+
   case object Sparql extends SourceEnum
+
   case object Elastic extends SourceEnum
+
   case object RelaltionKB extends SourceEnum
 
 }
