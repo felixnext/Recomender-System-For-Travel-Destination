@@ -175,13 +175,13 @@ object Merge {
     val addScoreToCluster: CombinedCluster => SourceEnum => Cluster => Unit = cc => t => c => t match {
       case Sparql =>
         if (!cc.sparqlScore.isDefined) cc.sparqlScore = Some(c.decayScore)
-        else cc.sparqlScore = Some(decaySum(Seq(c.decayScore,cc.sparqlScore.get)))
+        else cc.sparqlScore = Some(decaySum(Seq(c.decayScore, cc.sparqlScore.get)))
       case Elastic =>
         if (!cc.elasticScore.isDefined) cc.elasticScore = Some(c.decayScore)
-        else cc.elasticScore = Some(decaySum(Seq(c.decayScore,cc.elasticScore.get)))
+        else cc.elasticScore = Some(decaySum(Seq(c.decayScore, cc.elasticScore.get)))
       case RelaltionKB =>
         if (!cc.rkbScore.isDefined) cc.rkbScore = Some(c.decayScore)
-        else cc.rkbScore = Some(decaySum(Seq(c.decayScore,cc.rkbScore.get)))
+        else cc.rkbScore = Some(decaySum(Seq(c.decayScore, cc.rkbScore.get)))
     }
 
     //wrapper for merging two clusters
@@ -247,7 +247,7 @@ object Merge {
       c
     }
 
-    val combined = combinedClusters ++ cc
+    lazy val combined = combinedClusters ++ cc
 
     //retrieve popularity score
     combined.foreach { c =>

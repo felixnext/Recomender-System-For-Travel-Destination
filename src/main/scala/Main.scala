@@ -37,6 +37,7 @@ object Main  extends App{
   //stanford.annotateText(s + "bla")
 */
 
+  /*
 
   val analyzingPipe = new TextAnalyzerPipeline
   val queryCreator = new SparqlQueryCreator
@@ -49,7 +50,9 @@ object Main  extends App{
   )
 
  result.foreach(l => println(l))
+*/
 
+  println(ElasticsearchClient.matchTitle("Paris").flatten.mkString("\n"))
 
 
 /*
