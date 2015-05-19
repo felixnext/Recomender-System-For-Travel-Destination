@@ -34,7 +34,7 @@ object ParallelTfIdfCalculator extends App {
       val tf = relation.tfIdf
 
       //approximation for speed up
-      val occurrenceInCorpus = countOccurrences(relation).toDouble//if(tf == 1) 1 else countOccurrences(relation).toDouble
+      val occurrenceInCorpus =  if(tf == 1) 1 else countOccurrences(relation).toDouble
 
       //calculate Tf-Idf
       val tfIdf = tf * log10(sizeOfCorpora / occurrenceInCorpus)
