@@ -13,7 +13,7 @@ import edu.mit.jwi.item.POS
 import elasticsearch.ElasticsearchClient
 import nlp.wordnet.WordNet
 import nlp.{RelationExtractor => RE, TextAnalyzerPipeline, StanfordAnnotator}
-import core.{RelationExtraction => RWS, RelationLocationFinder, RawRelation, Sentiment, SparqlQueryCreator}
+import core.{RelationExtraction => RWS, _}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -26,7 +26,7 @@ object Main  extends App{
 
   val s =
     s"""
-       |Situated on one of the world's largest natural harbors,[20] New York City consists of five boroughs, each of which is a county of New York State.[21] The five boroughs – Brooklyn, Queens, Manhattan, the Bronx, and Staten Island – were consolidated into a single city in 1898.[22] With a census-estimated 2014 population of 8,491,079[1] distributed over a land area of just 305 square miles (790 km2),[23] New York is the most densely populated major city in the United States.[24] As many as 800 languages are spoken in New York,[25][26] making it the most linguistically diverse city in the world.[27] By 2014 census estimates, the New York City metropolitan region remains by a significant margin the most populous in the United States, as defined by both the Metropolitan Statistical Area (20.1 million residents)[5] and the Combined Statistical Area (23.6 million residents).[6] In 2013, the MSA produced a gross metropolitan product (GMP) of nearly US 1.39 trillion,[28] while in 2012, the CSA[29] generated a GMP of over US 1.55 trillion, both ranking first nationally by a wide margin and behind the GDP of only twelve nations and eleven nations, respectively.[30]
+       |The Caribbean is commonly known as one of the best places in the world to go diving, snorkelling and relaxing at one of its many beaches. It's also a popular stop-off for cruises. Of course, there's more to the Caribbean than just beaches, beaches and more beaches - head a little further inland and you'll discover interesting historical cities and mountainous areas with great trekking opportunities. Lots of people come here on package trips but for the independent traveller who likes to explore more, countries like Cuba and the Dominican Republic are big enough to spend weeks travelling around.
      """.stripMargin
 
 /*
@@ -37,7 +37,7 @@ object Main  extends App{
   //stanford.annotateText(s + "bla")
 */
 
-  /*
+/*
 
   val analyzingPipe = new TextAnalyzerPipeline
   val queryCreator = new SparqlQueryCreator
@@ -45,14 +45,22 @@ object Main  extends App{
   val queries = queryCreator.createSparqlQuery(annotatedText)
   println("Number of queries: " + queries.size)
   val dbpediaCleint = new DBPediaClient
-  val result = queries.map(qs =>
-    (dbpediaCleint.executeLocationQuery(qs._1), qs._2)
-  )
+  val result = queries.par.map { qs =>
+    val f = Future {
+      (dbpediaCleint.executeLocationQuery(qs._1), qs._2)
+    }
+    try{
 
- result.foreach(l => println(l))
+      Await.result(f, 20.seconds)
+    } catch {
+      case e: Exception => println("Exception during waiting for dbpedia response: " + e); List()
+    }
+  }
+
+  result.foreach(l => println(l))
 */
 
-  println(ElasticsearchClient.matchTitle("Paris").flatten.mkString("\n"))
+  //println(ElasticsearchClient.matchTitle("Paris").flatten.mkString("\n"))
 
 
 /*
@@ -128,9 +136,12 @@ object Main  extends App{
   println(r.mkString("\n"))
 */
 
-  //println(ElasticsearchClient.phraseQuery("I seeking for a nice city in Germany.").flatten.map(x => x.title).mkString("\n"))
+  println(ElasticsearchClient.matchQuery(s).flatten.map(x => x.title).mkString("\n"))
 
-
-
+/*
+  val handler = new QueryHandler
+  val r = handler.handleQuery(s)
+  println(r.mkString("\n"))
+*/
 }
 

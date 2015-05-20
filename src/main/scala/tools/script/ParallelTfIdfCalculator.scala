@@ -14,7 +14,9 @@ import scala.math._
 object ParallelTfIdfCalculator extends App {
 
   lazy val nr = Config.numberOfSparkCores
-  lazy val conf = new SparkConf().setAppName("Parallel-TF-IDF-Calculation").setMaster(s"local[$nr]")
+  lazy val conf = new SparkConf().setAppName("Parallel-TF-IDF-Calculation")
+    .setMaster(s"local[$nr]")
+    .set("spark.driver.maxResultSize", "0")
   lazy val sc = new SparkContext(conf)
 
   //read relations from file

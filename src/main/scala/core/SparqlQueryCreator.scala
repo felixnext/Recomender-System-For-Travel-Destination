@@ -13,7 +13,7 @@ import scala.math._
  * Takes a text and creates corresponding sparql query w.r.t focus of the text.
  * Assumption the focus is a certain location.
  */
-class SparqlQueryCreator {
+object SparqlQueryCreator {
 
   type Sentences = Array[Array[(String, String)]]
 

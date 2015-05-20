@@ -21,12 +21,6 @@ class LocationFinderActor extends Actor with ActorLogging {
 
   //val analyzingPipe = new TextAnalyzerPipeline
 
-  //creating a sparql query and execute it
-  val queryCreator = new SparqlQueryCreator
-  val dbpediaClient = new DBPediaClient
-
-  //extract relations and find similiar relation in db
-  val relationCreator = new RelationExtraction
 
   val analyzer = new TextAnalyzerPipeline
 
@@ -47,12 +41,12 @@ class LocationFinderActor extends Actor with ActorLogging {
       //DBPedia location request
       val annotatedText = analyzer.analyzeText(query)
 
-      val queries = queryCreator.createSparqlQuery(annotatedText)
+      val queries = SparqlQueryCreator.createSparqlQuery(annotatedText)
 
-      val dbpediaLocations = queries.map(q => (dbpediaClient.executeLocationQuery(q._1), q._2))
+      val dbpediaLocations = queries.map(q => (DBPediaClient.executeLocationQuery(q._1), q._2))
 
 
-      val relations = relationCreator.extractRelations(annotatedText)
+      val relations = RelationExtraction.extractRelations(annotatedText)
       val locations = RelationLocationFinder.findLocations(relations)
 
       /*

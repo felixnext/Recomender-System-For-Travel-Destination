@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
 /**
  * Provides functionality for relation extraction.
  */
-class RelationExtraction {
+object RelationExtraction {
 
   type Sentences = Array[Array[(String, String)]]
 

@@ -81,6 +81,7 @@ object ElasticsearchClient {
 
   //query all indices with given query string
   def matchQuery(query: String, topK: Int = 10, from: Int = 0): List[List[ElasticLocationDoc]] = {
+    val excapedQuery = org.apache.commons.lang.StringEscapeUtils.escapeJava(query)
     val jsonQuery =
       s"""
          |{
@@ -89,7 +90,7 @@ object ElasticsearchClient {
          |  "query":{
          |    "match":{
          |      "paragraph_texts":{
-         |        "query":"$query",
+         |        "query":"$excapedQuery",
          |        "minimum_should_match":"30%"
          |      }
          |    }
@@ -97,6 +98,7 @@ object ElasticsearchClient {
          |}
        """.stripMargin
 
+    println(jsonQuery)
     indices.map(index => parseLocationResult(request(jsonQuery, index)))
   }
 

@@ -17,7 +17,7 @@ object Config {
   lazy val serviceHost = Try(config.getString("service.host")).getOrElse("localhost:8080/")
   lazy val numberOfActors = Try(config.getInt("service.number-of-actors")).getOrElse(1)
 
-  lazy val elasticsearchUrl = Try(config.getString("elastic.url")).getOrElse("localhost:9200/")
+  lazy val elasticsearchUrl = Try(config.getString("elastic.url")).getOrElse("http://134.169.32.163:9200/")
 
   lazy val elasticsearchIndices = Try({
     config.getStringList("elastic.indices").toList

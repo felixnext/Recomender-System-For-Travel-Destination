@@ -16,7 +16,6 @@ object DBpediaLocationAnnotator extends App {
 
   //annotates location with dbpedia data
   def annotateLocation(locationName: String): Option[Map[String, Set[String]]] = {
-    val dbpedia = new DBPediaClient()
     def httpRequest(numberOfRequests: Int): HttpResponse[String] = {
       try {
         Http("http://dbpedia.org/page/" + locationName.replaceAll(" ", "_")).method("HEAD").asString
@@ -36,7 +35,7 @@ object DBpediaLocationAnnotator extends App {
     val url = httpRequest(10).location match {
       case Some(l) => l
       case _ =>
-        val urls = dbpedia.findDBpediaLocation(locationName, 10)
+        val urls = DBPediaClient.findDBpediaLocation(locationName, 10)
         if (urls.nonEmpty) urls.head
         else try {
           annotationSpotlight(locationName)
@@ -48,7 +47,7 @@ object DBpediaLocationAnnotator extends App {
           }
         }
     }
-    dbpedia.parseDBpediaPageOfLocation(url, 10)
+    DBPediaClient.parseDBpediaPageOfLocation(url, 10)
   }
 
   //##################
@@ -70,7 +69,6 @@ object DBpediaLocationAnnotator extends App {
       case _ => println("ERROR: Dump source doesn't match any of known sources"); null
     }
 
-    val dbpedia = new DBPediaClient()
 
     while (xml.hasMorePages) {
 
@@ -78,7 +76,7 @@ object DBpediaLocationAnnotator extends App {
       //assumption: title is not empt
       val title = page.getOrElse("title", Map("" -> Set(""))).getOrElse("title", Set("")).head
 
-      if (!dbpedia.isPerson(title, 10) && !title.equals("")) {
+      if (!DBPediaClient.isPerson(title, 10) && !title.equals("")) {
         //doesn't annotate persons
         annotateLocation(title) match {
           case Some(annotation) => page += ("dbpedia" -> annotation)

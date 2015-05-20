@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 object Merge {
 
   type Matrix = Array[Array[(Int, Int, Option[Double])]]
-  type SparqlLocation = Iterable[(Iterable[L], Double)]
+  type SparqlLocation = Iterable[(List[L], Double)]
 
   def mergeElasticLocations(locations: List[ElasticLocationDoc]) = {
     val normalizer = normalizedScore(locations.map(x => x.score.get))

@@ -158,8 +158,6 @@ class Worker extends Actor with ActorLogging {
     }.flatten.toIterator
 
 
-    val relationExtractor = new RelationExtraction
-
     log.debug("Start relation extraction")
     while(texts.hasNext) {
       val text = texts.next()
@@ -167,7 +165,7 @@ class Worker extends Actor with ActorLogging {
         log.debug("Start text analyzing")
         val analyzed = analyzer.analyzeText(text)
         log.debug("Relation extraction")
-        val rel = relationExtractor.extractRelations(analyzed)
+        val rel = RelationExtraction.extractRelations(analyzed)
 
         log.debug("Relation extraction finished.")
         val r = rel.map(r => new Relation(locationArticle.title, locationArticle.id, r.objectCandidates,

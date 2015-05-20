@@ -39,7 +39,6 @@ object RelationDumpCreator extends App {
   lazy val analyzer = new TextAnalyzerPipeline
 
   def processFile(reader: JsonDumpReader) = {
-    val relationExtractor = new RelationExtraction
 
     val relations = for (locationArticle <- reader) yield {
       val t0 = System.currentTimeMillis()
@@ -47,7 +46,7 @@ object RelationDumpCreator extends App {
 
       val result = Future{
         val analyzed = analyzer.analyzeText(text)
-        relationExtractor.extractRelations(analyzed)
+        RelationExtraction.extractRelations(analyzed)
       }
 
       val transformedRel = try {

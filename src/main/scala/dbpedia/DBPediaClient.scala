@@ -8,7 +8,7 @@ import tools.Config
 /**
  * This class represents dppedia client.
  */
-class DBPediaClient {
+object DBPediaClient {
 
   //downloads dbpedia page of given uri
   def parseDBpediaPageOfLocation(uri: String, test: Int): Option[Map[String, Set[String]]] = {
