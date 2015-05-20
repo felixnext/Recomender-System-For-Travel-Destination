@@ -17,6 +17,8 @@ class QueryHandler {
 
   def handleQuery(query: String) = {
 
+    val t0 = System.nanoTime()
+
     //Elasticsearch location request
     val elastic = Future {
       val locations = ElasticsearchClient.matchQuery(query).flatten
@@ -34,7 +36,7 @@ class QueryHandler {
           (DBPediaClient.executeLocationQuery(qs._1), qs._2)
         }
         try{
-          Await.result(f, 20.seconds)
+          Await.result(f, 10.seconds)
         } catch {
           case e: Exception => println("Exception during waiting for dbpedia query execution: " + e); (List(),0.0)
         }
@@ -49,13 +51,18 @@ class QueryHandler {
       Merge.mergeRelationLocations(locations)
     }
 
-    val elasticResult = Await.result(elastic, 30.seconds)
-    val sparqlResult =  Await.result(sparql, 30.seconds)
-    val rkbResult = Await.result(rkb, 30.seconds)
+    val elasticResult = Await.result(elastic, 15.seconds)
+    val sparqlResult =  Await.result(sparql, 15.seconds)
+    val rkbResult = Await.result(rkb, 15.seconds)
 
-    Merge.combine(sparqlResult,elasticResult,rkbResult)
+    val combined = Merge.combine(sparqlResult,elasticResult,rkbResult)
 
+    val t1 = System.nanoTime()
+
+    val elapsedTime =  (t1 - t0) / 1000000000.0
+    println("Elapsed time: " + elapsedTime + " s")
     //TODO rank
 
+    combined
   }
 }

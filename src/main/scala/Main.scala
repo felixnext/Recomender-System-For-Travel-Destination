@@ -136,12 +136,12 @@ object Main  extends App{
   println(r.mkString("\n"))
 */
 
-  println(ElasticsearchClient.matchQuery(s).flatten.map(x => x.title).mkString("\n"))
+  //println(ElasticsearchClient.phraseQuery(s, 100).flatten.map(x => x.title).mkString("\n"))
 
-/*
+
   val handler = new QueryHandler
   val r = handler.handleQuery(s)
   println(r.mkString("\n"))
-*/
+
 }
 

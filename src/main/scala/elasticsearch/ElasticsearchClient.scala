@@ -97,8 +97,6 @@ object ElasticsearchClient {
          |  }
          |}
        """.stripMargin
-
-    println(jsonQuery)
     indices.map(index => parseLocationResult(request(jsonQuery, index)))
   }
 
@@ -123,6 +121,7 @@ object ElasticsearchClient {
 
   //match query with phrase rescoring
   def phraseQuery(query: String, topK: Int = 10, from: Int = 0) = {
+    val excapedQuery = org.apache.commons.lang.StringEscapeUtils.escapeJava(query)
     val jsonQuery =
       s"""
          |{
@@ -131,7 +130,7 @@ object ElasticsearchClient {
          |  "query":{
          |    "match":{
          |      "paragraph_texts":{
-         |        "query":"$query",
+         |        "query":"$excapedQuery",
          |        "minimum_should_match":"30%"
          |      }
          |    }
@@ -142,7 +141,7 @@ object ElasticsearchClient {
          |      "rescore_query":{
          |        "match_phrase":{
          |          "paragraph_texts":{
-         |            "query":"$query",
+         |            "query":"$excapedQuery",
          |            "slop":50
          |          }
          |        }
@@ -308,9 +307,9 @@ object ElasticsearchClient {
 
   //Find similar relations within documents stored in elasticsearch index
   def findSimilarRelations(relation: RawRelation) = {
-    val obj = relation.objectCandidates.mkString(" ")
-    val rel = relation.relation
-    val subj = relation.subjectCandidates.mkString(" ")
+    val obj = org.apache.commons.lang.StringEscapeUtils.escapeJava(relation.objectCandidates.mkString(" "))
+    val rel = org.apache.commons.lang.StringEscapeUtils.escapeJava(relation.relation)
+    val subj = org.apache.commons.lang.StringEscapeUtils.escapeJava(relation.subjectCandidates.mkString(" "))
 
     val jsonQuery = if(relation.sentiment.isDefined) {
       val sent = relation.sentiment.getOrElse("-1")
