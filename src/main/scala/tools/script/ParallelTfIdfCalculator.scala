@@ -24,7 +24,7 @@ object ParallelTfIdfCalculator extends App {
   val broadcastRelations = sc.broadcast(relations)
 
   //make relations available for parallel processing (as input)
-  val distRelations = sc.parallelize(relations)
+  val distRelations = sc.parallelize(relations, 200)
 
   def tfIdf(rel: RDD[Relation], relBroadcast: Broadcast[Seq[Relation]],
             f: Seq[Relation] => Relation => Int ,sizeOfCorpora: Double): RDD[Relation] = {
