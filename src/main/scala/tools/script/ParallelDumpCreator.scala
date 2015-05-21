@@ -32,7 +32,7 @@ object ParallelDumpCreator extends App {
 class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   //number of actors
-  val nrOfWorkers = 10
+  val nrOfWorkers = 20
 
   log.debug("#########################################################")
   log.debug("Number of actors: " + nrOfWorkers)
