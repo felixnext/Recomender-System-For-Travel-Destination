@@ -19,9 +19,7 @@ object Config {
 
   lazy val elasticsearchUrl = Try(config.getString("elastic.url")).getOrElse("http://134.169.32.163:9200/")
 
-  lazy val elasticsearchIndices = Try({
-    config.getStringList("elastic.indices").toList
-  }).getOrElse(List(""))
+  lazy val elasticsearchIndices = Try(config.getStringList("elastic.indices").toList).getOrElse(List(""))
 
   lazy val dbpediaUrl = Try(config.getString("dbpedia.url")).getOrElse("http://dbpedia.org/sparql")
   lazy val dbpediaLookup = Try(config.getString("dbpedia.lookup")).getOrElse("http://lookup.dbpedia.org/api/search/KeywordSearch?")
@@ -33,6 +31,7 @@ object Config {
   lazy val clavinUrl = Try(config.getString("clavin.url")).getOrElse("http://134.169.32.169:9093")
 
   lazy val numberOfSparkCores = Try(config.getInt("spark.number-of-nodes")).getOrElse(1)
+  lazy val numberOfSparkTasks = Try(config.getInt("spark.number-of-tasks")).getOrElse(400)
 
   lazy val decaySensitivity = Try(config.getDouble("decay.distance-sensitivity")).getOrElse(0.5)
   lazy val innerR = Try(config.getDouble("decay.inner-radius")).getOrElse(5.0)
