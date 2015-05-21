@@ -85,7 +85,7 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
     //worker is requesting work
     case GimmeWork =>
       log.debug("Work request received")
-      if (hasNext) workerRouter ! next
+      if (hasNext) sender ! next
       else done()
     //receive workers result
     case Result(rel) =>
