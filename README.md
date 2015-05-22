@@ -1,10 +1,20 @@
 # Recommender System For Travel Destinations
 
+Motivation
+----------
+
+How to find your best travel destination? There is countless number of online travel agents, booking engines,
+review sites and with enormous search time and some cups of coffee you will find possible vocations.
+This service is helping to find travel destinations based on your preferences just by describing your perfect vocation in natural language.
+
+
 REST api
 --------
     
     $ curl -XPOST 'http://localhost:8080/search' -H "Content-Type: application/json" \
      -d  '{"query": "My destination description...."}'
+     
+The response contains a sorted list of locations with corresponding name, coordinates and score.
 
 Build
 -----
