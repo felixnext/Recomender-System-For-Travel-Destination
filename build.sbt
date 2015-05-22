@@ -45,17 +45,17 @@ libraryDependencies ++= Seq(
 //resolve assembly conflicts
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-{
-  case "log4j.properties" =>  MergeStrategy.first
-  case "logback.xml" => MergeStrategy.first
-  case PathList("nu", "xom", xs @ _*)  => MergeStrategy.first
-  case PathList("java_cup", "runtime", xs @ _*)  => MergeStrategy.first
-  case PathList("akka", xs @ _*)  => MergeStrategy.first
-  case PathList("com", xs @ _*)  => MergeStrategy.first
-  case PathList("org", xs @ _*)  => MergeStrategy.first
-  case PathList("javax", xs @ _*)  => MergeStrategy.first
-  case PathList("breeze", xs @ _*)  => MergeStrategy.first
-  case PathList("lib", xs @ _*)  => MergeStrategy.first
-  case x => old(x)
-}
+  {
+    case "log4j.properties" =>  MergeStrategy.first
+    case "logback.xml" => MergeStrategy.first
+    case PathList("nu", "xom", xs @ _*)  => MergeStrategy.first
+    case PathList("java_cup", "runtime", xs @ _*)  => MergeStrategy.first
+    case PathList("akka", xs @ _*)  => MergeStrategy.first
+    case PathList("com", xs @ _*)  => MergeStrategy.first
+    case PathList("org", xs @ _*)  => MergeStrategy.first
+    case PathList("javax", xs @ _*)  => MergeStrategy.first
+    case PathList("breeze", xs @ _*)  => MergeStrategy.first
+    case PathList("lib", xs @ _*)  => MergeStrategy.first
+    case x => old(x)
+  }
 }

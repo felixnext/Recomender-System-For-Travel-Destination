@@ -10,7 +10,7 @@ import dbpedia.{DBPediaClient, YagoGeoTypes, SpotlightClient, DBPediaLookup}
 import edu.knowitall.openie.{TemporalArgument, SpatialArgument, SimpleArgument, OpenIE}
 import edu.mit.jwi.item.POS
 
-import elasticsearch.ElasticsearchClient
+import elasticsearch.{DeepParsing, ElasticsearchClient}
 import nlp.wordnet.WordNet
 import nlp.{RelationExtractor => RE, TextAnalyzerPipeline, StanfordAnnotator}
 import core.{RelationExtraction => RWS, _}
@@ -138,10 +138,12 @@ object Main  extends App{
 
   //println(ElasticsearchClient.phraseQuery(s, 100).flatten.map(x => x.title).mkString("\n"))
 
-
+/*
   val handler = new QueryHandler
   val r = handler.handleQuery(s)
   println(r.mkString("\n"))
+*/
 
+  DeepParsing.parseQuery("Austria and UK are a nice countries. By the way Berlin is a capital of Germany. Spanish is spoken in Spain. In Brazil the most people speak German.")
 }
 
