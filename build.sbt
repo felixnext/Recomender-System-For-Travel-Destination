@@ -24,6 +24,7 @@ mainClass in assembly := Some("tools.script.ParallelDumpCreator")
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "1.3.1",
+  "org.apache.spark" % "spark-mllib_2.10" % "1.3.1",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test",
   "com.typesafe" % "config" % "1.2.1",
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
@@ -53,6 +54,8 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   case PathList("com", xs @ _*)  => MergeStrategy.first
   case PathList("org", xs @ _*)  => MergeStrategy.first
   case PathList("javax", xs @ _*)  => MergeStrategy.first
+  case PathList("breeze", xs @ _*)  => MergeStrategy.first
+  case PathList("lib", xs @ _*)  => MergeStrategy.first
   case x => old(x)
 }
 }
