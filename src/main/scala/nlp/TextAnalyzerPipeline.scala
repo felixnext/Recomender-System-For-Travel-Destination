@@ -36,24 +36,24 @@ class TextAnalyzerPipeline {
    */
   def analyzeText(text: String): AnnotatedText = {
     //process text
-    val futureRel = Future{
+    val futureRel = Future {
       relationExtractor.extractRelations(text)
     }
 
-    val rawRel = Try(Await.result(futureRel, 30.seconds)).getOrElse(Seq())
-
-    val clavinAnnotation = ClavinClient.extractLocations(text)
-
-    val stanfordAnnotation = stanford.annotateText(text)
-
-
-    //spotlight analysis
-    val spotlightAnnotation = {
-      //TODO resolve spotlight problem
-      //spotlight.discoverEntities(text)
-      List()
+    //geoparsing
+    val futureClavin = Future {
+      ClavinClient.extractLocations(text)
     }
 
+    //spotlight analysis
+    val futureSpotlight = Future {
+      spotlight.discoverEntities(text)
+    }
+
+    //nlp annotation
+    val stanfordAnnotation = stanford.annotateText(text)
+
+    val rawRel = Try(Await.result(futureRel, 30.seconds)).getOrElse(Seq())
 
     //split relations into subsets, each subset corresponds to one sentence
     val relations: Array[Seq[Relation]] = {
@@ -75,8 +75,11 @@ class TextAnalyzerPipeline {
           newGroups
       }
       occupiedGroups.toSeq.sortBy(_._1._1).map(t => t._2).toArray
-      //occupiedGroups.map { case (k, v) => v }.toArray
     }
+
+    //wait for results
+    val spotlightAnnotation = Try(Await.result(futureSpotlight, 10.seconds)).getOrElse(List())
+    val clavinAnnotation =  Try(Await.result(futureClavin, 10.seconds)).getOrElse(List())
 
     new AnnotatedText(relations, clavinAnnotation, stanfordAnnotation, spotlightAnnotation)
   }
@@ -84,7 +87,7 @@ class TextAnalyzerPipeline {
 
 object TextAnalyzerPipeline {
 
-  def intersect(aStartEnd: (Int, Int), bStartEnd: (Int, Int)) = max(aStartEnd._1, bStartEnd._1) < min(aStartEnd._2, bStartEnd._2)
+  def intersect(a: (Int, Int), b: (Int, Int)) = max(a._1, b._1) < min(a._2, b._2)
 
   type Sentences = Array[Array[(String, String)]]
 
@@ -95,10 +98,10 @@ object TextAnalyzerPipeline {
                              sentences: Sentences, offsetConverter: OffsetConverter): RelationTree = {
 
     //get all key of coref clusters
-    //value coresponds to cluster id
+    //value corresponds to cluster id
     val keys: java.util.Set[Integer] = coreference.keySet()
 
-    //converts stanford sentence and tooken indices into char offset, counted from beginning of the text
+    //converts stanford sentence and token indices into char offset, counted from beginning of the text
     def calculateOffset(sentenceNr: Int, tokenBegin: Int, tokenEnd: Int, token: String): (Int, Int) =
       offsetConverter.sentenceToCharLevelOffset(sentenceNr, tokenBegin, tokenEnd, token)
 

@@ -7,6 +7,7 @@ import nlp.TextAnalyzerPipeline
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.Try
 
 /**
  * Created by yevgen on 20.05.15.
@@ -28,7 +29,7 @@ class QueryHandler {
     val annotatedText = analyzingPipe.analyzeText(query)
 
     //sparql pieline
-    val sparql = Future{
+    val sparql = Future {
       val queries = SparqlQueryCreator.createSparqlQuery(annotatedText)
       println("Number of queries: " + queries.size)
       val locations = queries.par.map { qs =>
@@ -36,7 +37,7 @@ class QueryHandler {
           (DBPediaClient.executeLocationQuery(qs._1), qs._2)
         }
         try{
-          Await.result(f, 10.seconds)
+          Await.result(f, 11.seconds)
         } catch {
           case e: Exception => println("Exception during waiting for dbpedia query execution: " + e); (List(),0.0)
         }
@@ -45,15 +46,15 @@ class QueryHandler {
     }
 
     //Relation KB pipeline
-    val rkb = Future{
+    val rkb = Future {
       val relations = RelationExtraction.extractRelations(annotatedText)
       val locations = RelationLocationFinder.findLocations(relations)
       Merge.mergeRelationLocations(locations)
     }
 
-    val elasticResult = Await.result(elastic, 15.seconds)
-    val sparqlResult =  Await.result(sparql, 15.seconds)
-    val rkbResult = Await.result(rkb, 15.seconds)
+    val elasticResult = Try(Await.result(elastic, 15.seconds)).getOrElse(Seq())
+    val sparqlResult =  Try(Await.result(sparql, 15.seconds)).getOrElse(Seq())
+    val rkbResult = Try(Await.result(rkb, 15.seconds)).getOrElse(Seq())
 
     val combined = Merge.combine(sparqlResult,elasticResult,rkbResult)
 

@@ -1,11 +1,9 @@
 package elasticsearch
 
-import elasticsearch.SpeechPattern
-
 import scala.util.matching.Regex
 
 /**
- * Created by yevgen on 22.05.15.
+ * Parses the query and extracts mentioned countries, languages and temperature
  */
 object DeepParsing {
 

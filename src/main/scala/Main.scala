@@ -37,17 +37,15 @@ object Main  extends App{
   //stanford.annotateText(s + "bla")
 */
 
-/*
+
 
   val analyzingPipe = new TextAnalyzerPipeline
-  val queryCreator = new SparqlQueryCreator
   val annotatedText = analyzingPipe.analyzeText(s)
-  val queries = queryCreator.createSparqlQuery(annotatedText)
+  val queries = SparqlQueryCreator.createSparqlQuery(annotatedText)
   println("Number of queries: " + queries.size)
-  val dbpediaCleint = new DBPediaClient
   val result = queries.par.map { qs =>
     val f = Future {
-      (dbpediaCleint.executeLocationQuery(qs._1), qs._2)
+      (DBPediaClient.executeLocationQuery(qs._1), qs._2)
     }
     try{
 
@@ -58,15 +56,14 @@ object Main  extends App{
   }
 
   result.foreach(l => println(l))
-*/
-
-  //println(ElasticsearchClient.matchTitle("Paris").flatten.mkString("\n"))
 
 
-/*
-  val l = "Paris is a nice cite."
-  println(ClavinClient.extractLocations("Berlin"))
-  */
+
+
+  //println(ClavinClient.extractLocations("Berlin"))
+  val spotlightClient = new SpotlightClient
+  println(spotlightClient.discoverEntities(s))
+
 /*
   val openie = new RelationExtractor
   println(openie.extractRelations(s))
@@ -77,12 +74,7 @@ object Main  extends App{
 
   */
 
-/*
-  val openie = new RelationExtractor
-  openie.extractRelations(s).foreach{
-    c => println(c)
-  }
-*/
+
 /*
   val r = new RawRelation(List("town"),(1,1),"has",(1,1),List("place"),(1,1), None,None)
   val elastic = new ElasticsearchClient
@@ -136,7 +128,7 @@ object Main  extends App{
   println(r.mkString("\n"))
 */
 
-  //println(ElasticsearchClient.phraseQuery(s, 100).flatten.map(x => x.title).mkString("\n"))
+  //println(ElasticsearchClient.matchTitle("Berlin").flatten.map(x => x.title).mkString("\n"))
 
 /*
   val handler = new QueryHandler
@@ -144,6 +136,6 @@ object Main  extends App{
   println(r.mkString("\n"))
 */
 
-  DeepParsing.parseQuery("Austria and UK are a nice countries. By the way Berlin is a capital of Germany. Spanish is spoken in Spain. In Brazil the most people speak German.")
+  //DeepParsing.parseQuery("Austria and UK are a nice countries. By the way Berlin is a capital of Germany. Spanish is spoken in Spain. In Brazil the most people speak German.")
 }
 

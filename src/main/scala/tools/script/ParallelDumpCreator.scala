@@ -31,6 +31,7 @@ object ParallelDumpCreator extends App {
  */
 class Master(paths: Array[String]) extends Actor with ActorLogging {
 
+  //TODO add configuration
   //number of actors
   val nrOfWorkers = 20
 

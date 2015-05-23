@@ -18,6 +18,7 @@ project/plugins/project/
 .worksheet
 
 bash_commands.txt
+Main.scala
 
 # Intelij
 .idea/
