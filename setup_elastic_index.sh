@@ -243,7 +243,7 @@ curl -XPUT 'localhost:9200/wikitravel' -d '
         "country": {
             "type": "string",
             "index":"not_analyzed"
-        },
+        }
         "paragraph_texts": {
             "type": "string",
             "position_offset_gap": 100,

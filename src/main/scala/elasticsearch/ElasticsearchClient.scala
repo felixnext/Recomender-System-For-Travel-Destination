@@ -12,6 +12,8 @@ import scalaj.http.Http
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
+import org.apache.commons.lang.StringEscapeUtils.{escapeJava => escape}
+
 /**
   * This class represents a elasticsearch client.
  * It makes possible to query elasticsearch REST Api und to parse results.
@@ -81,7 +83,7 @@ object ElasticsearchClient {
 
   //query all indices with given query string
   def matchQuery(query: String, topK: Int = 10, from: Int = 0): List[List[ElasticLocationDoc]] = {
-    val excapedQuery = org.apache.commons.lang.StringEscapeUtils.escapeJava(query)
+    val excapedQuery = escape(query)
     val jsonQuery =
       s"""
          |{
@@ -121,7 +123,7 @@ object ElasticsearchClient {
 
   //match query with phrase rescoring
   def phraseQuery(query: String, topK: Int = 10, from: Int = 0) = {
-    val excapedQuery = org.apache.commons.lang.StringEscapeUtils.escapeJava(query)
+    val excapedQuery = escape(query)
     val jsonQuery =
       s"""
          |{
@@ -307,9 +309,9 @@ object ElasticsearchClient {
 
   //Find similar relations within documents stored in elasticsearch index
   def findSimilarRelations(relation: RawRelation) = {
-    val obj = org.apache.commons.lang.StringEscapeUtils.escapeJava(relation.objectCandidates.mkString(" "))
-    val rel = org.apache.commons.lang.StringEscapeUtils.escapeJava(relation.relation)
-    val subj = org.apache.commons.lang.StringEscapeUtils.escapeJava(relation.subjectCandidates.mkString(" "))
+    val obj = escape(relation.objectCandidates.mkString(" "))
+    val rel = escape(relation.relation)
+    val subj = escape(relation.subjectCandidates.mkString(" "))
 
     val jsonQuery = if(relation.sentiment.isDefined) {
       val sent = relation.sentiment.getOrElse("-1")

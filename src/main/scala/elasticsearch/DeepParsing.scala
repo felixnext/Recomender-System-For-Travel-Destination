@@ -12,16 +12,22 @@ import tools.Math.{fahrenheitToCelsiusConverter => conv}
 object DeepParsing {
 
 
-
-  def createQuery(text: String) = {
+  /**
+   * Creates elastic query consider mentions of temperature, language and country within raw text
+   * @param text Full text query.
+   * @return Elastic query
+   */
+  def createQuery(text: String): String = {
     val extraction = parseQuery(text)
 
+    ""
   }
 
   /**
    * Parses query and extracts mentioned countries, languages and temperature.
    * Extraction is based on  language pattern.
    * @param text Query string
+   * @return Extracted information
    */
   def parseQuery(text: String) = {
 
