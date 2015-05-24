@@ -56,19 +56,22 @@ class MergeTest extends FlatSpec with Matchers {
     val clustersElastic = Merge.merge(locationsElastic)
 
     clustersElastic.size should be (6)
-
+    /*
     clustersElastic.foreach{c =>
       println("Cluster name: " + c.name + "\nScore: " + c.decayScore)
       println(c.ls.mkString("\n"))
       println("\n\n\n")
     }
+    */
 
     val clustersSparql = Merge.merge(locationsSparql)
 
     val clustersRKB = Merge.merge(locationsRKB)
 
     val combined = Merge.combine(clustersSparql, clustersElastic, clustersRKB)
+    combined.size should be (5)
 
+    /*
     combined.foreach{c =>
       println("Cluster name: " +c.name)
       println("lat " + c.lat)
@@ -79,6 +82,7 @@ class MergeTest extends FlatSpec with Matchers {
       println("popularity: " + c.popularityScore)
       println("\n\n\n")
     }
+    */
 
   }
 

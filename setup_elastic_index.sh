@@ -89,149 +89,197 @@ curl -XPUT 'localhost:9200/wikitravel' -d '
           "index":"not_analyzed"
         },
         "novMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "julLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "julMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "aprLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "marHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "janHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "febMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "augLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "aprHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "decHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "octLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "decLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "junMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "janLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "sepHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "mayLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "marMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "sepMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "julHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "janMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "decMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "novHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "marLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "febLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "junHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "novLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "junLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "augMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "mayHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "febHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "augHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "aprMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "octHighC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "octMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "sepLowC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "mayMeanC":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "novSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "sepSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "octSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "janSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "junSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "augSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "marSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "decSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "maySun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "aprSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "febSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "julSun":{
-          "type":"double"
-        },
+          "type":"string",
+          "index":"not_analyzed"
+          },
         "paragraph_names": {
             "type": "string",
             "index":"not_analyzed"
@@ -243,7 +291,7 @@ curl -XPUT 'localhost:9200/wikitravel' -d '
         "country": {
             "type": "string",
             "index":"not_analyzed"
-        }
+        },
         "paragraph_texts": {
             "type": "string",
             "position_offset_gap": 100,
