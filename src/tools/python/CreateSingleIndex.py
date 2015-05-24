@@ -1,10 +1,10 @@
 
 
-file1 = open("/Users/yevgen/Documents/data/master/dumps/elastic/wikipedia1.json", "r")
-file2 = open("/Users/yevgen/Documents/data/master/dumps/elastic/travellerspoint0.json", "r")
-file3 = open("/Users/yevgen/Documents/data/master/dumps/elastic/wikipedia0.json", "r")
-file4 = open("/Users/yevgen/Documents/data/master/dumps/elastic/wikitravel0.json", "r")
-path = "/Users/yevgen/Documents/data/master/dumps/elastic/target/"
+file1 = open("wikipedia1.json", "r")
+file2 = open("travellerspoint0.json", "r")
+file3 = open("wikipedia0.json", "r")
+file4 = open("wikitravel0.json", "r")
+path = "."
 
 
 doc_id = 0
