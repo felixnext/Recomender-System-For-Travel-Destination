@@ -27,7 +27,9 @@ object ParallelTfIdfCalculator extends App {
 
   //make relations available for parallel processing (as input)
   val distRelations = sc.parallelize(relations, Config.numberOfSparkTasks)
+  val distRelationsCached = distRelations.cache()
 
+  /*
   def tfIdf(rel: RDD[Relation], relBroadcast: Broadcast[Seq[Relation]],
             f: Seq[Relation] => Relation => Int ,sizeOfCorpora: Double): RDD[Relation] = {
     val countOccurrences = f(relBroadcast.value)
@@ -45,20 +47,22 @@ object ParallelTfIdfCalculator extends App {
     }
 
     relWithTfIdf
-  }
+  }*/
 
   lazy val sizeOfCorpora = sc.broadcast(relations.size)
 
   lazy val relWithTfIdf = distRelations.map{relation =>
-    val countOccurrences = RelationsUtils.countOccurrences(broadcastRelations.value)
+    lazy val rel = broadcastRelations.value
+    lazy val countOccurrences = RelationsUtils.countOccurrences(rel)
 
-    val tf = relation.tfIdf
+    lazy val tf = relation.tfIdf
 
     //approximation for speed up
-    val occurrenceInCorpus =  if(tf == 1) 1 else countOccurrences(relation).toDouble
+    lazy val occurrenceInCorpus =  if(tf == 1) 1 else countOccurrences(relation).toDouble
 
     //calculate Tf-Idf
-    val tfIdf = tf * log10(sizeOfCorpora.value / occurrenceInCorpus)
+    lazy val s = sizeOfCorpora.value
+    lazy val tfIdf = tf * log10(s / occurrenceInCorpus)
     relation.tfIdf = tfIdf
     relation
   }
@@ -69,7 +73,9 @@ object ParallelTfIdfCalculator extends App {
 
   //save the result
   lazy val writer = new JsonDumpWriter(args.head.replace(".json", "_idf.json"))
-  relWithTfIdf.collect().foreach(relation => writer.writeRelation(relation))
+  val collected = relWithTfIdf.collect()
+  //write the relations to file
+  collected.foreach(relation => writer.writeRelation(relation))
 
   sc.stop()
 
