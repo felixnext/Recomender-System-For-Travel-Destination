@@ -33,7 +33,7 @@ class Master(paths: Array[String]) extends Actor with ActorLogging {
 
   //TODO add configuration
   //number of actors
-  val nrOfWorkers = 20
+  val nrOfWorkers = 28
 
   log.debug("#########################################################")
   log.debug("Number of actors: " + nrOfWorkers)
