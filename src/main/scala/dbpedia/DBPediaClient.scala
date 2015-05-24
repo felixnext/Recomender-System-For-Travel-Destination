@@ -3,6 +3,7 @@ package dbpedia
 import com.hp.hpl.jena.query._
 import com.hp.hpl.jena.rdf.model.{Model, ModelFactory, Resource}
 import tools.Config
+import tools.Math._
 
 
 /**
@@ -48,7 +49,7 @@ object DBPediaClient {
           def cleanedDBpediaString: String = removeLastBracket(removeDBpediaURI(triple(2))).trim
           def cleanedDBPediaNumber: String = triple(2).trim.split("\"")(1)
 
-          def fahrenheitToCelsius = ((cleanedDBPediaNumber.toFloat - 32.0) / 1.8).toString
+          def fahrenheitToCelsius = fahrenheitToCelsiusConverter(cleanedDBPediaNumber.toFloat).toString
 
           if (triple(1).contains("country")) {
             addToResultMap("country", cleanedDBpediaString)

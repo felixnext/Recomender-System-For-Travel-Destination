@@ -59,3 +59,6 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x => old(x)
   }
 }
+
+evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false).
+  withWarnDirectEvictions(false).withWarnScalaVersionEviction(false)

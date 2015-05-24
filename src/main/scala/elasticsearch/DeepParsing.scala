@@ -1,26 +1,84 @@
 package elasticsearch
 
+import scala.util.Try
 import scala.util.matching.Regex
+import scala.language.implicitConversions
 
+import tools.Math.{fahrenheitToCelsiusConverter => conv}
 /**
  * Parses the query and extracts mentioned countries, languages and temperature
+ * thus elastic query could be reated w.r.t. mentioned information.
  */
 object DeepParsing {
 
 
-  def parseQuery(text: String) = {
 
-    val search: Seq[Regex] => String => Seq[String] = rs => s => rs.flatMap(r => for(c <- r.findAllIn(s).matchData) yield c.group(2))
-
-    val countries =  search(SpeechPattern.countries)(text)
-    val languages = search(SpeechPattern.language)(text)
-
-    println(countries.mkString("\n"))
-    println(languages.mkString("\n"))
-
-    //TODO make elastic request wrt languages country and temperature
+  def createQuery(text: String) = {
+    val extraction = parseQuery(text)
 
   }
+
+  /**
+   * Parses query and extracts mentioned countries, languages and temperature.
+   * Extraction is based on  language pattern.
+   * @param text Query string
+   */
+  def parseQuery(text: String) = {
+
+    //finds all matches within given string and certain regex
+    val search: Seq[Regex] => String => Seq[String] = rs => s => rs.flatMap(r => for(c <- r.findAllMatchIn(s)) yield c.group(2))
+
+
+    //find all mentioned countries
+    val countries =  search(SpeechPattern.countries)(text)
+    //find all mentioned languages
+    val languages = search(SpeechPattern.language)(text)
+
+    implicit def StringToFloat(s: String): Option[Float] = Try(Some(s.trim.toFloat)).getOrElse(None)
+
+    //extracts temperature value from string
+    val cleanTemperature: String => String = s => {
+      val Number = "\\W?[0-9]+\\.?[0-9]*".r
+      Number.findFirstIn(s).getOrElse("").replaceAll("[(|)]","")
+    }
+
+    type Range =  (Float, Float)
+    implicit def seqToRange(a: Array[Float]): Option[Range] = if(a.length == 2) Some(a.head,a.tail.head) else None
+
+    //extracts a range in a single string
+    val extractRnge: String => Option[Range] = range => {
+      val improvedRange = range.replaceAll("\\p{Pd}", 45.toChar.toString)
+      val split = if(improvedRange.contains("to")) improvedRange.split("to") else improvedRange.split(45.toChar.toString)
+      split.map(cleanTemperature).filter(_.isDefined).map(_.get)
+    }
+
+    //extract all mentioned temperature ranges within text
+    val range: Seq[Regex] => String => Seq[Range] = r => q => search(r)(q).view.map(extractRnge)
+      .filter(range => range.isDefined).map(range => range.get)
+
+    //temperature ranges which were mentioned in the query
+    val temperatureRange = {
+      val c: Seq[Range] => Seq[Range] = ranges => ranges.map(r =>  (conv(r._1),conv(r._2)))
+      val rangeC = range(SpeechPattern.rangeC)(text)
+      rangeC.size match {
+        case 0 => c(range(SpeechPattern.rangeF)(text))
+        case _ => rangeC
+      }
+    }
+
+    //all temperature mentions within the query text
+    val temperature: () => Seq[Float] = () => {
+      val temperatureC = search(SpeechPattern.temperatureC)(text).view.map(cleanTemperature).filter(_.isDefined).map(_.get)
+      temperatureC.size match {
+        case 0 =>  search(SpeechPattern.temperatureF)(text).view.map(cleanTemperature).filter(_.isDefined).map(v => conv(v.get))
+        case _ => temperatureC
+      }
+    }
+
+    new Extraction(languages, countries, temperatureRange, if(temperatureRange.size==0) temperature() else Seq())
+  }
+
+  case class Extraction(languages: Seq[String], countries: Seq[String],range: Seq[(Float,Float)], temperature: Seq[Float])
 }
 
 object SpeechPattern {
@@ -54,6 +112,13 @@ object SpeechPattern {
   lazy val lZ= "(.*?)\\W(Zaachila Zapotec|Zabana|Zacatepec Chatino|Zacatlán-Ahuacatlán-Tepetzintla Nahuatl|Zaghawa|Zaiwa|Zakhring|Zambian Sign Language|Zan Gula|Zanaki|Zande (individual language)|Zande languages|Zangskari|Zangwal|Zaniza Zapotec|Záparo|Zapotec|Zapotec, Aloápam|Zapotec, Amatlán|Zapotec, Ancient|Zapotec, Asunción Mixtepec|Zapotec, Ayoquesco|Zapotec, Cajonos|Zapotec, Chichicapan|Zapotec, Choapan|Zapotec, Coatecas Altas|Zapotec, Coatlán|Zapotec, El Alto|Zapotec, Elotepec|Zapotec, Guevea De Humboldt|Zapotec, Güilá|Zapotec, Isthmus|Zapotec, Lachiguiri|Zapotec, Lachixío|Zapotec, Lapaguía-Guivini|Zapotec, Loxicha|Zapotec, Mazaltepec|Zapotec, Miahuatlán|Zapotec, Mitla|Zapotec, Mixtepec|Zapotec, Ocotlán|Zapotec, Ozolotepec|Zapotec, Petapa|Zapotec, Quiavicuzas|Zapotec, Quioquitani-Quierí|Zapotec, Rincón|Zapotec, San Agustín Mixtepec|Zapotec, San Baltazar Loxicha|Zapotec, San Juan Guelavía|Zapotec, San Pedro Quiatoni|Zapotec, San Vicente Coatlán|Zapotec, Santa Catarina Albarradas|Zapotec, Santa Inés Yatzechi|Zapotec, Santa María Quiegolani|Zapotec, Santiago Xanica|Zapotec, Santo Domingo Albarradas|Zapotec, Sierra de Juárez|Zapotec, Southeastern Ixtlán|Zapotec, Southern Rincon|Zapotec, Tabaa|Zapotec, Tejalapan|Zapotec, Texmelucan|Zapotec, Tilquiapan|Zapotec, Tlacolulita|Zapotec, Totomachapan|Zapotec, Xadani|Zapotec, Xanaguía|Zapotec, Yalálag|Zapotec, Yareni|Zapotec, Yatee|Zapotec, Yatzachi|Zapotec, Yautepec|Zapotec, Zaachila|Zapotec, Zaniza|Zapotec, Zoogocho|Zaramo|Zari|Zarma|Zarphatic|Zauzou|Zay|Zayein Karen|Zaysete|Zayse-Zergulla|Zaza|Zazaki|Zazao|Zeem|Zeeuws|Zemba|Zeme Naga|Zemgalian|Zenag|Zenaga|Zenzontepec Chatino|Zerenkel|Zhaba|Zhang-Zhung|Zhire|Zhoa|Zhuang|Zhuang, Central Hongshuihe|Zhuang, Dai|Zhuang, Eastern Hongshuihe|Zhuang, Guibei|Zhuang, Guibian|Zhuang, Lianshan|Zhuang, Liujiang|Zhuang, Liuqian|Zhuang, Minz|Zhuang, Nong|Zhuang, Qiubei|Zhuang, Yang|Zhuang, Yongbei|Zhuang, Yongnan|Zhuang, Youjiang|Zhuang, Zuojiang|Zia|Zialo|Zigula|Zimakani|Zimba|Zimbabwe Sign Language|Zinza|Zire|Ziriya|Zizilivakan|Zo'é|Zokhuo|Zoogocho Zapotec|Zoque, Chimalapa|Zoque, Copainalá|Zoque, Francisco León|Zoque, Rayón|Zoque, Tabasco|Zoroastrian Dari|Zorop|Zotung Chin|Zou|Zulgo-Gemzek|Zulu|Zumaya|Zumbun|Zuni|Zuojiang Zhuang|Zyphe)\\W(.*?)".r
   lazy val language = Seq(lA,lC,lB,lE,lD,lG,lF,lI,lH,lK,lJ,lM,lL,lO,lN,lQ,lP,lS,lR,lU,lT,lW,lV,lY,lX,lZ)
 
+  //regex for all countries
   lazy val countries = Seq("(.*?)\\W(Afghanistan|Albania|Algeria|Andorra|Angola|Antigua and Deps|Argentina|Armenia|Australia|Austria|Azerbaijan|Bahamas|Bahrain|Bangladesh|Barbados|Belarus|Belgium|Belize|Benin|Bhutan|Bolivia|Bosnia Herzegovina|Botswana|Brazil|Brunei|Bulgaria|Burkina|Burundi|Cambodia|Cameroon|Canada|Cape Verde|Central African Rep|Chad|Chile|China|Colombia|Comoros|Congo|Congo Democratic Rep|Costa Rica|Croatia|Cuba|Cyprus|Czech Republic|Denmark|Djibouti|Dominica|Dominican Republic|East Timor|Ecuador|Egypt|El Salvador|Equatorial Guinea|Eritrea|Estonia|Ethiopia|Fiji|Finland|France|Gabon|Gambia|Georgia|Germany|Ghana|Greece|Grenada|Guatemala|Guinea|Guinea-Bissau|Guyana|Haiti|Honduras|Hungary|Iceland|India|Indonesia|Iran|Iraq|Ireland|Ireland Republic|Israel|Italy|Ivory Coast|Jamaica|Japan|Jordan|Kazakhstan|Kenya|Kiribati|Korea North|Korea South|Kosovo|Kuwait|Kyrgyzstan|Laos|Latvia|Lebanon|Lesotho|Liberia|Libya|Liechtenstein|Lithuania|Luxembourg|Macedonia|Madagascar|Malawi|Malaysia|Maldives|Mali|Malta|Marshall Islands|Mauritania|Mauritius|Mexico|Micronesia|Moldova|Monaco|Mongolia|Montenegro|Morocco|Mozambique|Myanmar, Burma|Namibia|Nauru|Nepal|Netherlands|New Zealand|Nicaragua|Niger|Nigeria|Norway|Oman|Pakistan|Palau|Panama|Papua New Guinea|Paraguay|Peru|Philippines|Poland|Portugal|Qatar|Romania|Russian Federation|Russia|Rwanda|St Kitts and Nevis|St Lucia|Saint Vincent & the Grenadines|Samoa|San Marino|Sao Tome and Principe|Saudi Arabia|Senegal|Serbia|Seychelles|Sierra Leone|Singapore|Slovakia|Slovenia|Solomon Islands|Somalia|South Africa|South Sudan|Spain|Sri Lanka|Sudan|Suriname|Swaziland|Sweden|Switzerland|Syria|Taiwan|Tajikistan|Tanzania|Thailand|Togo|Tonga|Trinidad and Tobago|Tunisia|Turkey|Turkmenistan|Tuvalu|Uganda|Ukraine|United Arab Emirates|United Kingdom|UK|England|United States|US|USA|usa|U\\.S\\.A\\.|u\\.s\\.a\\.|America|Uruguay|Uzbekistan|Vanuatu|Vatican City|Venezuela|Vietnam|Yemen|Zambia|Zimbabwe)\\W(.*?)".r)
+
+  //regex for temperature
+  lazy val temperatureC = Seq("(.*?)\\W(\\d+\\sC|\\d+\\s°C|\\d+\\.\\d+\\sC|\\d+\\.\\d+\\s°C|\\W\\d+\\sC|\\W\\d+\\s°C|\\W\\d+\\.\\d+\\sC|\\W\\d+\\.\\d+\\s°C)\\W(.*?)".r)
+  lazy val rangeC = Seq("(.*?)\\W(\\d+\\W\\d+\\sC|\\d+\\W\\d+\\s°C|\\W\\d+\\W\\d+\\sC|\\W\\d+\\W\\d+\\s°C|\\d+\\sto\\s\\d+\\sC|\\d+\\sto\\s\\d+\\s°C|\\W\\d+\\sto\\s\\d+\\sC|\\W\\d+\\sto\\s\\d+\\s°C|\\W\\d+\\sto\\s\\W\\d+\\sC|\\W\\d+\\sto\\s\\W\\d+\\s°C)\\W(.*?)".r)
+  lazy val temperatureF = Seq("(.*?)\\W(\\d+\\sF|\\d+\\s°F|\\d+\\.\\d+\\sF|\\d+\\.\\d+\\s°F|\\W\\d+\\sF|\\W\\d+\\s°F|\\W\\d+\\.\\d+\\sF|\\W\\d+\\.\\d+\\s°F)\\W(.*?)".r)
+  lazy val rangeF = Seq("(.*?)\\W(\\d+\\W\\d+\\sF|\\d+\\W\\d+\\s°F|\\W\\d+\\W\\d+\\sF|\\W\\d+\\W\\d+\\s°F|\\d+\\sto\\s\\d+\\sF|\\d+\\sto\\s\\d+\\s°F|\\W\\d+\\sto\\s\\d+\\sF|\\W\\d+\\sto\\s\\d+\\s°F|\\W\\d+\\sto\\s\\W\\d+\\sF|\\W\\d+\\sto\\s\\W\\d+\\s°F)\\W(.*?)".r)
 
 }

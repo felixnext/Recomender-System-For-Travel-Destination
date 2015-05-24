@@ -63,4 +63,6 @@ object Math {
     val aggregated = scores.sum
     score/aggregated
   }
+
+  val fahrenheitToCelsiusConverter: Float => Float = f =>  (f - 32.0f) / 1.8f
 }
