@@ -28,7 +28,7 @@ object ElasticsearchClient {
 
   //parses the elasticsearch response in json format and wraps the data into location object
   //responseBody is a string in json format
-  private def parseLocationResult(response: String): List[ElasticLocationDoc] = {
+  def parseLocationResult(response: String): List[ElasticLocationDoc] = {
 
     @tailrec
     //fetch data from json strings and wraps them into location object
@@ -434,7 +434,7 @@ object ElasticsearchClient {
 
   //makes elastic search request
   //index that should be used for search
-  private def request(jsonQuery: String, index: String): String = {
+  def request(jsonQuery: String, index: String): String = {
     try {
       Http(elasticUrl + index +"/_search").postData(jsonQuery)
         .timeout(connTimeoutMs = 2000, readTimeoutMs = 7000).asString.body

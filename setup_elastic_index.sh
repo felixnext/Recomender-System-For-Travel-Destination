@@ -290,7 +290,11 @@ curl -XPUT 'localhost:9200/wikitravel' -d '
         },
         "country": {
             "type": "string",
-            "index":"not_analyzed"
+            "analyzer":"my_english"
+        },
+        "language": {
+            "type": "string",
+            "analyzer":"my_english"
         },
         "paragraph_texts": {
             "type": "string",

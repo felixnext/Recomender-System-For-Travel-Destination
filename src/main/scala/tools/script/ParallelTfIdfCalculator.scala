@@ -50,7 +50,7 @@ object ParallelTfIdfCalculator extends App {
 
   //save the result
   lazy val writer = new JsonDumpWriter(args.head.replace(".json", "_idf.json"))
-  val collected = relWithTfIdf.collect()
+  lazy val collected = relWithTfIdf.collect()
   //write the relations to file
   collected.foreach(relation => writer.writeRelation(relation))
 

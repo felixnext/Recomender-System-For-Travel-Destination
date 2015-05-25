@@ -5,6 +5,8 @@ import scala.util.matching.Regex
 import scala.language.implicitConversions
 
 import tools.Math.{fahrenheitToCelsiusConverter => conv}
+
+import elasticsearch.ElasticsearchClient._
 /**
  * Parses the query and extracts mentioned countries, languages and temperature
  * thus elastic query could be reated w.r.t. mentioned information.
@@ -17,9 +19,76 @@ object DeepParsing {
    * @param text Full text query.
    * @return Elastic query
    */
-  def createQuery(text: String): String = {
+  def createQuery(text: String, topK: Int = 10, from: Int = 0): String = {
     val extraction = parseQuery(text)
 
+    val country =  extraction.countries.map(country =>
+      s"""
+         |{
+         |"match":{
+         |   "country":{
+         |      "query":"$country",
+         |      "boost":2
+         |   }
+         | }
+         |},
+       """.stripMargin).mkString("\n")
+
+    val language = extraction.languages.map(lang =>
+      s"""
+         |{
+         |  "match":{
+         |    "language":{
+         |      "query":"$lang",
+         |      "boost":2
+         |    }
+         |  }
+         |},
+       """.stripMargin).mkString("\n")
+
+
+    val window = topK * 10
+    val jsonQuery =
+      s"""
+         |{
+         |  "from":$from,
+         |  "size":$topK,
+         |  "query":{
+         |    "match":{
+         |      "paragraph_texts":{
+         |        "query":"$text",
+         |        "minimum_should_match":"30%"
+         |      }
+         |    }
+         |  },
+         |  "rescore":{
+         |    "window_size":$window,
+         |    "query":{
+         |      "rescore_query":{
+         |        "bool":{
+         |          "should":[
+         |          $country
+         |          $language
+         |            {
+         |              "match_phrase":{
+         |                "paragraph_texts":{
+         |                  "query":"$text",
+         |                  "slop":50,
+         |                  "boost":3
+         |                }
+         |              }
+         |            }
+         |          ]
+         |        }
+         |      }
+         |    }
+         |  }
+         |}
+         |
+       """.stripMargin
+
+    val locations  = indices.flatMap(index => parseLocationResult(request(jsonQuery, index)))
+    locations
     ""
   }
 
