@@ -1,7 +1,7 @@
 package core
 
 import dbpedia.DBPediaClient
-import elasticsearch.ElasticsearchClient
+import elasticsearch.{ElasticsearchClient, DeepParsing}
 import nlp.TextAnalyzerPipeline
 
 import scala.concurrent.{Await, Future}
@@ -22,7 +22,7 @@ class QueryHandler {
 
     //Elasticsearch location request
     val elastic = Future {
-      val locations = ElasticsearchClient.matchQuery(query).flatten
+      val locations = DeepParsing(query, 50)
       Merge.mergeElasticLocations(locations)
     }
 
@@ -37,7 +37,7 @@ class QueryHandler {
           (DBPediaClient.executeLocationQuery(qs._1), qs._2)
         }
         try{
-          Await.result(f, 11.seconds)
+          Await.result(f, 15.seconds)
         } catch {
           case e: Exception => println("Exception during waiting for dbpedia query execution: " + e); (List(),0.0)
         }
@@ -52,9 +52,9 @@ class QueryHandler {
       Merge.mergeRelationLocations(locations)
     }
 
-    val elasticResult = Try(Await.result(elastic, 15.seconds)).getOrElse(Seq())
-    val sparqlResult =  Try(Await.result(sparql, 15.seconds)).getOrElse(Seq())
-    val rkbResult = Try(Await.result(rkb, 15.seconds)).getOrElse(Seq())
+    val elasticResult = Try(Await.result(elastic, 20.seconds)).getOrElse(Seq())
+    val sparqlResult =  Try(Await.result(sparql, 20.seconds)).getOrElse(Seq())
+    val rkbResult = Try(Await.result(rkb, 20.seconds)).getOrElse(Seq())
 
     val combined = Merge.combine(sparqlResult,elasticResult,rkbResult)
 
@@ -62,7 +62,7 @@ class QueryHandler {
 
     val elapsedTime =  (t1 - t0) / 1000000000.0
     println("Elapsed time: " + elapsedTime + " s")
-    //TODO rank
+    //TODO ranking
 
     combined
   }
