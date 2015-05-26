@@ -118,9 +118,9 @@ class JsonDumpReader(filePath: String) extends Iterator[LocationArticle] {
 
 object IndexDisambiguation {
   val disambiguatedIndex: String => String => String = indexName => id => indexName match {
-    case "travellerspoint" => 1 + id
-    case "wikipedia" => 2 + id
-    case "wikitravel" => 3 + id
+    //case "travellerspoint" => 1 + id
+    //case "wikipedia" => 2 + id
+    //case "wikitravel" => 3 + id
     case _ => id
   }
 }
