@@ -47,7 +47,8 @@ class TextAnalyzerPipeline {
 
     //spotlight analysis
     val futureSpotlight = Future {
-      spotlight.discoverEntities(text)
+      //spotlight.discoverEntities(text)
+      List()
     }
 
     //nlp annotation
