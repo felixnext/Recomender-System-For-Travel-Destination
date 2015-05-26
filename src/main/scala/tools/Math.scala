@@ -65,4 +65,7 @@ object Math {
   }
 
   val fahrenheitToCelsiusConverter: Float => Float = f =>  (f - 32.0f) / 1.8f
+
+  val std: Vector[Double] => Double => Double = values => mean =>
+    sqrt(values.map(v => pow(v - mean, 2)).sum/values.size.toDouble)
 }

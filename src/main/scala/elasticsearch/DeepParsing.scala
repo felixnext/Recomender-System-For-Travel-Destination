@@ -4,12 +4,14 @@ import scala.util.Try
 import scala.util.matching.Regex
 import scala.language.implicitConversions
 
-import tools.Math.{fahrenheitToCelsiusConverter => conv}
+import tools.Math.{fahrenheitToCelsiusConverter => conv, std}
 
 import elasticsearch.ElasticsearchClient._
+
+import breeze.stats.distributions.Gaussian
 /**
  * Parses the query and extracts mentioned countries, languages and temperature
- * thus elastic query could be reated w.r.t. mentioned information.
+ * thus elastic query could be related w.r.t mentioned information.
  */
 object DeepParsing {
 
@@ -19,7 +21,7 @@ object DeepParsing {
    * @param text Full text query.
    * @return Elastic query
    */
-  def createQuery(text: String, topK: Int = 10, from: Int = 0): String = {
+  def deepExtraction(text: String, topK: Int = 10, from: Int = 0): List[ElasticLocationDoc] = {
     val extraction = parseQuery(text)
 
     val country =  extraction.countries.map(country =>
@@ -87,9 +89,74 @@ object DeepParsing {
          |
        """.stripMargin
 
+    implicit def StringToDouble(s: Option[String]): Option[Double] = Try(Some(s.get.toDouble)).getOrElse(None)
+
+    type TemperatureRange = (Option[Double],Option[Double],Option[Double])
+
+    //universal temperature mapping used in kb
+    val tempDist: Map[String,String] => String => TemperatureRange = clim => month => {
+      val mean = clim.get(month+"MeanC")
+      val max = clim.get(month+ "HighC")
+      val min = clim.get(month+ "LowC")
+      (min,mean,max)
+    }
+
+    //elastic search request
     val locations  = indices.flatMap(index => parseLocationResult(request(jsonQuery, index)))
+
+    //compute boost factor w.r.t temperature
+    val boostFactor: TemperatureRange => Extraction => Option[Double] = t => extraction => {
+      t match {
+        case (Some(min), Some(mean), Some(max)) =>
+          val sigma = std(Vector(min.toDouble,max.toDouble))(mean.toDouble)
+          val dist = new Gaussian(mean,sigma)
+
+          val tempInText = if (extraction.range.size > 0) extraction.range
+          else if(extraction.temperature.size > 0) extraction.temperature.map(t => (t,t))
+          else Seq()
+          Some(1.0 + tempInText.flatMap(tempRange => Seq(dist(tempRange._1), dist(tempRange._2))).max * dist.normalizer)
+        case _ => None
+      }
+    }
+
+    //boost found locations
+    val boostLocation: Map[String,String] => String => ElasticLocationDoc => Unit = clim => month => location => {
+      val t = tempDist(clim)("jan")
+      val factor = boostFactor(t)(extraction)
+      if(factor.isDefined && location.score.isDefined) location.score = Some(location.score.get * factor.get)
+    }
+
+    //boost rsult if temperature of found location match a temperature mentioned in the query
+    locations.foreach{ location =>
+      val clim = location.climate.getOrElse(Map())
+      extraction.months.foreach {
+        case "January" =>
+          boostLocation(clim)("jan")(location)
+        case "February" =>
+          boostLocation(clim)("feb")(location)
+        case "March" =>
+          boostLocation(clim)("mar")(location)
+        case "April" =>
+          boostLocation(clim)("apr")(location)
+        case "May" =>
+          boostLocation(clim)("may")(location)
+        case "June" =>
+          boostLocation(clim)("jun")(location)
+        case "July" =>
+          boostLocation(clim)("jul")(location)
+        case "August" =>
+          boostLocation(clim)("aug")(location)
+        case "September" =>
+          boostLocation(clim)("sep")(location)
+        case "October" =>
+          boostLocation(clim)("oct")(location)
+        case "November" =>
+          boostLocation(clim)("nov")(location)
+        case "December" =>
+          boostLocation(clim)("dec")(location)
+      }
+    }
     locations
-    ""
   }
 
   /**
@@ -150,10 +217,12 @@ object DeepParsing {
       }
     }
 
-    new Extraction(languages, countries, temperatureRange, if(temperatureRange.size==0) temperature() else Seq())
+    val months = search(SpeechPattern.month)(text)
+
+    new Extraction(languages, countries, temperatureRange, if(temperatureRange.size==0) temperature() else Seq(), months)
   }
 
-  case class Extraction(languages: Seq[String], countries: Seq[String],range: Seq[(Float,Float)], temperature: Seq[Float])
+  case class Extraction(languages: Seq[String], countries: Seq[String],range: Seq[(Float,Float)], temperature: Seq[Float], months: Seq[String])
 }
 
 object SpeechPattern {
@@ -195,5 +264,7 @@ object SpeechPattern {
   lazy val rangeC = Seq("(.*?)\\W(\\d+\\W\\d+\\sC|\\d+\\W\\d+\\s°C|\\W\\d+\\W\\d+\\sC|\\W\\d+\\W\\d+\\s°C|\\d+\\sto\\s\\d+\\sC|\\d+\\sto\\s\\d+\\s°C|\\W\\d+\\sto\\s\\d+\\sC|\\W\\d+\\sto\\s\\d+\\s°C|\\W\\d+\\sto\\s\\W\\d+\\sC|\\W\\d+\\sto\\s\\W\\d+\\s°C)\\W(.*?)".r)
   lazy val temperatureF = Seq("(.*?)\\W(\\d+\\sF|\\d+\\s°F|\\d+\\.\\d+\\sF|\\d+\\.\\d+\\s°F|\\W\\d+\\sF|\\W\\d+\\s°F|\\W\\d+\\.\\d+\\sF|\\W\\d+\\.\\d+\\s°F)\\W(.*?)".r)
   lazy val rangeF = Seq("(.*?)\\W(\\d+\\W\\d+\\sF|\\d+\\W\\d+\\s°F|\\W\\d+\\W\\d+\\sF|\\W\\d+\\W\\d+\\s°F|\\d+\\sto\\s\\d+\\sF|\\d+\\sto\\s\\d+\\s°F|\\W\\d+\\sto\\s\\d+\\sF|\\W\\d+\\sto\\s\\d+\\s°F|\\W\\d+\\sto\\s\\W\\d+\\sF|\\W\\d+\\sto\\s\\W\\d+\\s°F)\\W(.*?)".r)
+
+  lazy val month = Seq("(.*?)\\W(January|February|March|April|May|June|July|August|September|October|November|December)\\W(.*?)".r)
 
 }

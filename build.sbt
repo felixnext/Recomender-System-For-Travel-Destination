@@ -23,6 +23,8 @@ mainClass in assembly := Some("tools.script.ParallelDumpCreator")
 //dependencies
 
 libraryDependencies ++= Seq(
+  "org.scalanlp" %% "breeze" % "0.10",
+  "org.scalanlp" %% "breeze-viz" % "0.10",
   "org.apache.spark" %% "spark-core" % "1.3.1",
   "org.apache.spark" % "spark-mllib_2.10" % "1.3.1",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test",
@@ -59,6 +61,10 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x => old(x)
   }
 }
+
+resolvers ++= Seq(
+  "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"
+)
 
 evictionWarningOptions in update := EvictionWarningOptions.default.withWarnTransitiveEvictions(false).
   withWarnDirectEvictions(false).withWarnScalaVersionEviction(false)
