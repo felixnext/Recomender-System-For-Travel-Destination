@@ -21,7 +21,7 @@ object DeepParsing {
    * @param text Full text query.
    * @return Elastic query
    */
-  def deepExtraction(text: String, topK: Int = 10, from: Int = 0): List[ElasticLocationDoc] = {
+  def apply(text: String, topK: Int = 10, from: Int = 0): List[ElasticLocationDoc] = {
     val extraction = parseQuery(text)
 
     val country =  extraction.countries.map(country =>
@@ -114,14 +114,16 @@ object DeepParsing {
           val tempInText = if (extraction.range.size > 0) extraction.range
           else if(extraction.temperature.size > 0) extraction.temperature.map(t => (t,t))
           else Seq()
-          Some(1.0 + tempInText.flatMap(tempRange => Seq(dist(tempRange._1), dist(tempRange._2))).max * dist.normalizer)
+          if(tempInText.size > 0)
+            Some(1.0 + tempInText.flatMap(tempRange => Seq(dist(tempRange._1), dist(tempRange._2))).max * dist.normalizer)
+          else None
         case _ => None
       }
     }
 
     //boost found locations
     val boostLocation: Map[String,String] => String => ElasticLocationDoc => Unit = clim => month => location => {
-      val t = tempDist(clim)("jan")
+      val t = tempDist(clim)(month)
       val factor = boostFactor(t)(extraction)
       if(factor.isDefined && location.score.isDefined) location.score = Some(location.score.get * factor.get)
     }

@@ -14,6 +14,7 @@ class DeepParsingTest extends FlatSpec with Matchers {
   val t3 = "The average annual temperature of the sea is 24 °C (75 °F), ranging from 21 °C (70 °F) in February and March to 28 °C (82 °F) in August."
 
   val t4 = "The average annual temperature of the sea is 75 °F, ranging from 70 °F in February and March to 82 °F in August."
+
   "result" should "contain all temperature mentions" in {
     val r1 = dp.parseQuery(t1)
 
