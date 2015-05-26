@@ -18,7 +18,7 @@ fork in run := true
 
 fork in Test := true
 
-mainClass in assembly := Some("tools.script.ParallelDumpCreator")
+mainClass in assembly := Some("tools.script.TrainDataCreator")
 
 //dependencies
 

@@ -26,7 +26,7 @@ object TrainDataCreator extends App {
     articles.flatMap(i => i.toSeq)
   }
 
-  lazy val articles = sc.parallelize(data, Config.numberOfSparkTasks).cache()
+  lazy val articles = sc.parallelize(data.slice(0,100), Config.numberOfSparkTasks).cache()
 
   lazy val handler = new QueryHandler
 
